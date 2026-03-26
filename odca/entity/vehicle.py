@@ -636,6 +636,11 @@ class Vehicle:
             self.env.now, self, blockage_dist, self.speed,
         )
 
+    # Minimum creep speed (cells/s) when following a moving leader at
+    # tight spacing. Prevents permanent zero-speed deadlock when the
+    # Newell model computes v_des <= 0 due to spacing < d.
+    _MIN_CREEP_SPEED = 0.1
+
     def _speed_for_leader(self, leader, v_max: float):
         """Newell car-following with fractional spacing."""
         spacing = leader.fractional_position - self.fractional_position
@@ -648,6 +653,12 @@ class Vehicle:
             current_spacing=spacing, leader_speed=leader.speed,
             tau=self.tau, d=self.d, v_max=v_max,
         )
+
+        # Prevent zero-speed deadlock: if leader is moving and there is
+        # physical space (spacing > 0), creep forward so spacing can grow.
+        if self.speed <= 0 and leader.speed > 0 and spacing > 0:
+            self.speed = self._MIN_CREEP_SPEED
+
         self.count_cf_evaluations += 1
         logger.debug(
             "t=%.2f  %s car-following: spacing=%.1f, leader_v=%.2f → v=%.2f",

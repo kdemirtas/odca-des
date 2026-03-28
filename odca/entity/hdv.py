@@ -30,6 +30,7 @@ class HDV(Vehicle):
             dlc_k=params.dlc_k,
             dlc_v0=params.dlc_v0,
             dlc_cooldown=params.dlc_cooldown,
+            dlc_enabled=params.dlc_enabled,
             safety_gap_front=params.safety_gap_front,
             safety_gap_rear=params.safety_gap_rear,
             look_ahead=params.look_ahead,

@@ -75,6 +75,7 @@ class Vehicle:
         look_ahead: int,
         look_behind: int,
         # Route
+        dlc_enabled: bool = True,
         origin_cell: Optional[Cell] = None,
         destination_cell_idx: Optional[int] = None,
         destination_lane: int = 1,  # rightmost lane for off-ramp exits
@@ -102,6 +103,7 @@ class Vehicle:
         self.dlc_k = dlc_k
         self.dlc_v0 = dlc_v0
         self.dlc_cooldown = dlc_cooldown
+        self.dlc_enabled = dlc_enabled
         self.safety_gap_front = safety_gap_front
         self.safety_gap_rear = safety_gap_rear
         self.look_ahead = look_ahead
@@ -710,8 +712,11 @@ class Vehicle:
                 self.desired_direction = self._direction_toward_destination()
                 return
 
-        # DLC: speed incentive
-        self._evaluate_dlc()
+        # DLC: speed incentive (skip for centrally controlled vehicles)
+        if self.dlc_enabled:
+            self._evaluate_dlc()
+        else:
+            self.desired_direction = Direction.FORWARD
 
     def _evaluate_dlc(self):
         """Check if a discretionary lane change is beneficial.

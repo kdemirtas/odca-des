@@ -112,3 +112,14 @@ def test_bad_demand_is_refused(demand, message):
     from odca.simulation.engine import Simulation
     with pytest.raises(ValueError, match=message):
         Simulation(sim_config(demand=demand))
+
+
+def test_whole_numbers_are_accepted_in_float_tables():
+    from odca.params import NetworkConfig, SimConfig
+    network = NetworkConfig.corridor(1, 50, 5.2)
+    cfg = validate(SimConfig, {"network": network, "demand": {"mainline_lane_1": {"end": 400}},
+                               "hdv_vehicle": "odca://hdv_vehicle.yaml",
+                               "hdv_driver": "odca://hdv_driver.yaml",
+                               "av_vehicle": "odca://av_vehicle.yaml",
+                               "av_driver": "odca://av_driver.yaml"})
+    assert cfg.demand == {"mainline_lane_1": {"end": 400.0}}

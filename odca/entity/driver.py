@@ -294,10 +294,10 @@ class Driver:
             if leader_dist < 0:
                 leader_dist = (leader.cell.idx - cell.idx) % cell.lane.num_cells
             if leader_dist < blockage_dist:
-                # Leader is closer than blockage — follow the queue
+                # Leader is closer than blockage: follow the queue
                 self._speed_for_leader(leader, v_max)
             else:
-                # Direct view of blockage — decelerate for it
+                # Direct view of blockage: decelerate for it
                 self._speed_for_blockage(blockage_dist, v_max)
             return
 

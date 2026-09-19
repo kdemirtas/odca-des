@@ -381,7 +381,7 @@ class Vehicle:
             return
 
         if is_lateral:
-            # Lateral move — the cut-in follower in the target lane is
+            # Lateral move: the cut-in follower in the target lane is
             # most affected, then the old follower in the origin lane.
             ordered_cells = [
                 c.previous,                          # new follower (cut-in)
@@ -393,7 +393,7 @@ class Vehicle:
                 c.right_prev, c.right_next,          # far diagonals
             ]
         else:
-            # Forward move — the follower behind benefits most (gap opened).
+            # Forward move: the follower behind benefits most (gap opened).
             ordered_cells = [
                 c.previous,                          # follower (gap opened)
                 c.left_prev, c.right_prev,           # behind-diagonal
@@ -467,7 +467,7 @@ class Vehicle:
         )
         self.time_exited = self.env.now
         self.active = False
-        # Hold cell for tau seconds — enforces outflow capacity at boundary
+        # Hold cell for tau seconds: enforces outflow capacity at boundary
         yield self.env.timeout(self.driver.tau)
         self._release(self.cell)
         self._on_cell_change(None)

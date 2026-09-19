@@ -9,7 +9,14 @@ rule in, refactor design settled; next is the refactor N2 to N8 (ranked list in 
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after the named-places demand (D-2026-09-19-26); `uv run pytest` 59/59 passed.
+after the named-places demand (D-2026-09-19-26); unchanged by N3 and N4; `uv run pytest` 66/66 passed.
+
+
+## 2026-09-19 (N4): driver split from the vehicle
+- `Vehicle(env, cfg, driver, origin_cell, destination)` keeps the physical side; `Driver`, `HumanDriver` (own process), `AutonomousDriver` (registers with `AutonomousController`, renamed from `AVController`) hold the decisions; `VehicleFactory` builds every vehicle; `HDV`, `AV`, `VehicleType`, `config_kwargs` gone; the seven class constants are config fields with the same defaults (D-2026-09-19-30, assumptions A-12 to A-14 made unattended).
+- Proof: golden 24/24 exact; paper demand sweep, ring-road FD and car-following scripts byte-identical old against new; 66 tests. Review: correctness 0 findings, conformance 2 em-dashes (fixed).
+- `validate` now accepts whole numbers in float tables (a demand of `400` was refused).
+- ⏳ Found while plotting the demo: a lane-change request persists after the change, so one decision makes several lane changes in a row (S1: 3.9 lane changes per vehicle-km, half away from the needed lane). Fixed next as its own PR (golden moves). The zero-advantage DLC rate (0.047/s) is the rest of the excess; left to Kerem (AGENDA-style open question in `docs/lane-change-rate.md`).
 
 ## 2026-09-19 (night): N3 one trait sampler
 - `odca/entity/driver.py`: `DriverTraits` and `TraitSampler`, the only copy of the driver

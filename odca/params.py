@@ -317,6 +317,8 @@ def _build(tp: Any, value: Any, base_dir: Path) -> Any:
         if isinstance(value, dict) and get_origin(tp) is dict:
             return {key: _build(args[1], item, base_dir) for key, item in value.items()}
         return _build(args[0], value, base_dir) if len(args) == 1 else value
+    if tp is float and isinstance(value, int) and not isinstance(value, bool):
+        return float(value)  # omegaconf refuses an int inside a table typed float
     if not (isinstance(tp, type) and is_dataclass(tp) and isinstance(value, dict)):
         return value
     if issubclass(tp, ConfigFamily):

@@ -21,12 +21,32 @@ import simpy
 
 from odca.infrastructure.cell import Cell
 from odca.models.car_following import newell
+from odca.params import DriverConfig, VehicleConfig
 from odca.models.lane_changing.mandatory import MLC_REFERENCE_CELLS, mlc_probability
 from odca.models.lane_changing.discretionary import dlc_probability
 from odca.models.lane_changing.rate import probability_over
 
 logger = logging.getLogger(__name__)
 
+
+
+def config_kwargs(vehicle: VehicleConfig, driver: DriverConfig) -> dict:
+    """The `Vehicle.__init__` keyword arguments a vehicle config and a driver config give.
+
+    Args:
+        vehicle: top speed and jam spacing.
+        driver: decision parameters, including the lane-change model.
+    """
+    lc = driver.lane_change
+    return dict(
+        tau=driver.tau, standstill_spacing=vehicle.standstill_spacing, v_max=vehicle.v_max,
+        slowdown_prob=driver.slowdown_prob, slowdown_delta=driver.slowdown_delta,
+        action_interval=driver.action_interval, mlc_k=lc.mlc_k, mlc_r0=lc.mlc_r0,
+        dlc_k=lc.dlc_k, dlc_v0=lc.dlc_v0, dlc_cooldown=lc.dlc_cooldown,
+        dlc_enabled=lc.dlc_enabled, safety_gap_front=lc.safety_gap_front,
+        safety_gap_rear=lc.safety_gap_rear, look_ahead=driver.look_ahead,
+        look_behind=driver.look_behind,
+    )
 
 class VehicleType(Enum):
     HDV = "hdv"
@@ -204,11 +224,23 @@ class Vehicle:
     # ------------------------------------------------------------------
 
     def start(self):
-        """Entry point: seize origin cell, then run movement + driver."""
+        """Entry point: seize origin cell, then run movement + driver.
+
+        A metered origin (an `OriginCell` with a speed limit, D-2026-09-19-27) is passed first.
+        """
+        meter = self.origin_cell.entry
+        metered = meter is not None and meter.limited
+        if metered:
+            meter_req = self._request(meter)
+            yield meter_req
+            meter_req._vehicle = self
+            yield self.env.timeout(1.0 / min(self.v_max, meter.speed_limit))
         # Seize origin
         req = self._request(self.origin_cell)
         yield req
         req._vehicle = self
+        if metered:
+            self._delayed_release(meter)
         self.speed = self.v_max
         self.active = True
         self.time_entered = self.env.now
@@ -243,6 +275,8 @@ class Vehicle:
             target = self._resolve_next_target()
             if target is None:
                 if self.cell.next is None:  # end of the road: the only other way out
+                    if self.destination_lane not in (None, self.cell.lane.idx):
+                        self.count_missed_exits += 1  # its end lane not reached (D-2026-09-19-26)
                     yield self.env.process(self._exit())
                     return
                 yield self.env.timeout(self.action_interval)
@@ -261,9 +295,11 @@ class Vehicle:
     def _retarget_missed_exit(self):
         """Take the next off-ramp downstream, or the segment end from any lane (D-2026-09-19-17)."""
         freeway = self.cell.lane.freeway
-        later_ramps = [c for c in freeway.offramp_cells if c > self.cell.idx]
+        later_ramps = [d for d in freeway.destinations.values()
+                       if d.is_offramp and d.cell_idx > self.cell.idx]
         if later_ramps:
-            self.destination_cell_idx = min(later_ramps)
+            ramp = min(later_ramps, key=lambda d: d.cell_idx)
+            self.destination_cell_idx, self.destination_lane = ramp.cell_idx, ramp.lane
         else:
             self.destination_cell_idx = freeway.num_cells
             self.destination_lane = None
@@ -566,8 +602,25 @@ class Vehicle:
             )
         return safe
 
+    def _exit_cell(self):
+        """The destination cell this vehicle leaves into from its current cell, if any."""
+        for exit_cell in self.cell.exits:
+            dest = exit_cell.destination
+            if dest.cell_idx == self.destination_cell_idx and dest.lane == self.destination_lane:
+                return exit_cell
+        return None
+
     def _exit(self):
-        """Exit the freeway: release current cell after tau (outflow rate)."""
+        """Exit the freeway: release current cell after tau (outflow rate).
+
+        A throttled destination (a `DestinationCell` with a speed limit, D-2026-09-19-27) is
+        entered like a road cell: the vehicle takes it, passes it at the limit, and holds it
+        for tau after leaving.
+        """
+        exit_cell = self._exit_cell()
+        if exit_cell is not None and exit_cell.limited:
+            yield self.env.process(self._exit_through(exit_cell))
+            return
         logger.debug(
             "t=%.2f  %s exiting (travel_time=%.2fs)",
             self.env.now, self,
@@ -579,6 +632,24 @@ class Vehicle:
         yield self.env.timeout(self.tau)
         self._release(self.cell)
         self._on_cell_change(None)
+
+    def _exit_through(self, exit_cell):
+        """Leave through a throttled destination cell.
+
+        Args:
+            exit_cell: the limited `DestinationCell`.
+        """
+        req = self._request(exit_cell)
+        yield req
+        req._vehicle = self
+        self._delayed_release(self.cell)
+        speed = min(self.speed, exit_cell.speed_limit) if self.speed > 0 else exit_cell.speed_limit
+        yield self.env.timeout(1.0 / speed)
+        self.time_exited = self.env.now
+        self.active = False
+        self._on_cell_change(None)
+        yield self.env.timeout(self.tau)
+        self._release(exit_cell)
 
     # ------------------------------------------------------------------
     # Driver process (concurrent, decoupled from movement)

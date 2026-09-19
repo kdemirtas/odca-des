@@ -9,13 +9,14 @@ import simpy
 
 import numpy as np
 
-from config import SimConfig, VehicleParams
 from odca.infrastructure.freeway import Freeway
-from odca.simulation.generator import VehicleGenerator
+from odca.infrastructure.incident import Incident
+from odca.simulation.generator import ODPair, VehicleGenerator
 from odca.entity.av import AV
 from odca.entity.hdv import HDV
 from odca.entity.vehicle import Vehicle, VehicleType
 from odca.entity.av_controller import AVController
+from odca.params import ConfigMixin, HumanDriverConfig, SimConfig
 from odca.rng import RNGRegistry
 
 logger = logging.getLogger(__name__)
@@ -38,9 +39,18 @@ class CountingEnvironment(simpy.Environment):
         super().step()
 
 
-class Simulation:
-    def __init__(self, config: SimConfig):
-        self.config = config
+class Simulation(ConfigMixin):
+    """One ODCA-DES run: freeway, generators, AV controller and the RNG streams."""
+
+    Config = SimConfig
+
+    def __init__(self, cfg: SimConfig):
+        """Validate `cfg` (once per run, D-2026-09-19-23) and build the run.
+
+        Args:
+            cfg: the run config, as a `SimConfig`, a mapping or a YAML path.
+        """
+        config = self.cfg = self.validate_config(cfg)
 
         # Central RNG registry: all randomness flows from this master seed
         self.rng_registry = RNGRegistry(master_seed=config.seed)
@@ -53,20 +63,10 @@ class Simulation:
 
         # Build freeway
         net = config.network
-        self.freeway = Freeway(
-            env=self.env,
-            num_lanes=net.num_lanes,
-            num_cells=net.num_cells,
-            speed_limit=net.speed_limit,
-            onramp_cells=net.onramp_cells,
-            offramp_cells=net.offramp_cells,
-        )
+        self.freeway = Freeway(self.env, net)
 
         # Central AV controller
-        self.av_controller = AVController(
-            env=self.env,
-            controller_dt=config.av_controller_dt,
-        )
+        self.av_controller = AVController(config.controller, self.env)
 
         # RNG streams: one per source of randomness (shared across all vehicles)
         # Runtime behavioral RNGs
@@ -89,22 +89,17 @@ class Simulation:
         # Vehicles placed at t=0 (initial condition)
         self._seeded_vehicles: List[Vehicle] = []
 
+        self.incidents = [Incident(cfg, self.freeway) for cfg in config.incidents]
         self.generators: List[VehicleGenerator] = []
-        for i, od in enumerate(config.od_flows):
-            entry_lane, entry_cell = self._resolve_origin(od.origin_id)
-            rng_gen = self.rng_registry.spawn(f"generator_{od.origin_id}_{i}")
+        for i, od in enumerate(self._od_pairs(config)):
+            rng_gen = self.rng_registry.spawn(f"generator_{od.origin}_{od.destination}_{i}")
             gen = VehicleGenerator(
                 env=self.env,
                 freeway=self.freeway,
-                od_flow=od,
-                hdv_params=config.hdv_params,
-                av_params=config.av_params,
-                av_penetration=config.av_penetration,
-                sim_duration=config.sim_duration,
+                od=od,
+                sim=config,
                 rng_gen=rng_gen,
                 av_controller=self.av_controller,
-                entry_lane=entry_lane,
-                entry_cell=entry_cell,
                 rng_slowdown=rng_slowdown,
                 rng_mlc=rng_mlc,
                 rng_dlc=rng_dlc,
@@ -114,22 +109,31 @@ class Simulation:
             )
             self.generators.append(gen)
 
-    def _resolve_origin(self, origin_id: str):
-        """Map origin ID to (lane_idx, cell_idx)."""
-        if origin_id == "mainline":
-            return 1, 0
-        elif origin_id.startswith("mainline_lane_"):
-            lane_idx = int(origin_id.split("_")[-1])
-            return lane_idx, 0
-        elif origin_id.startswith("onramp_"):
-            ramp_num = int(origin_id.split("_")[1])
-            ramp_cells = sorted(self.config.network.onramp_cells)
-            cell_idx = ramp_cells[ramp_num - 1]
-            return 1, cell_idx
-        raise ValueError(f"Unknown origin: {origin_id}")
+    def _od_pairs(self, config: SimConfig) -> List[ODPair]:
+        """The demand table as OD pairs, in table order, checked against the freeway.
 
-    def _sample_driver_params(self, params: VehicleParams) -> VehicleParams:
-        """Sample per-driver heterogeneous parameters (same logic as generator)."""
+        Args:
+            config: the run config holding the demand table.
+
+        Raises:
+            ValueError: an unknown origin or destination, or a rate that is not positive.
+        """
+        pairs = []
+        for origin, row in config.demand.items():
+            self.freeway.origin(origin)
+            for destination, rate in row.items():
+                self.freeway.destination(destination)
+                if rate <= 0:
+                    raise ValueError(f"demand {origin} -> {destination} is {rate} veh/h")
+                pairs.append(ODPair(origin, destination, rate))
+        return pairs
+
+    def _sample_driver_params(self, params: HumanDriverConfig) -> HumanDriverConfig:
+        """Sample per-driver heterogeneous parameters (same logic as generator).
+
+        Args:
+            params: the human driver population config (means and spreads).
+        """
         from dataclasses import replace
         overrides = {}
         if self._rng_tau is not None and params.tau_std > 0:
@@ -152,19 +156,17 @@ class Simulation:
             return replace(params, **overrides)
         return params
 
-    def seed_vehicles(self, spacing: int, destination_cell_idx: int):
+    def seed_vehicles(self, spacing: int, destination: str):
         """Place vehicles uniformly on all lanes at t=0.
 
-        Parameters
-        ----------
-        spacing : int
-            Cell spacing between vehicles (e.g. 15 cells ≈ free-flow
-            density of ~8.9 veh/km at 7.5 m cells).
-        destination_cell_idx : int
-            Destination cell index for all seeded vehicles.
+        Args:
+            spacing: cells between vehicles (15 cells is about 8.9 veh/km at 7.5 m cells).
+            destination: destination name for every placed vehicle, e.g. `end`.
         """
-        num_lanes = self.config.network.num_lanes
-        num_cells = self.config.network.num_cells
+        exit_to = self.freeway.destination(destination)
+        destination_cell, destination_lane = exit_to.cell_idx, exit_to.lane
+        num_lanes = self.cfg.network.num_lanes
+        num_cells = self.cfg.network.num_cells
         # initial vehicles follow the AV share (D-2026-09-19-19); spawned last, after the
         # generator streams, so the earlier streams keep their seeds
         rng_vehicle_type = self.rng_registry.spawn("initial_vehicle_type")
@@ -175,19 +177,20 @@ class Simulation:
                 cell = lane.cells[cell_idx]
                 if cell._blocked:
                     continue  # skip blocked cells (e.g. lane closure)
-                is_av = rng_vehicle_type.random() < self.config.av_penetration
+                is_av = rng_vehicle_type.random() < self.cfg.av_penetration
                 vehicle_class = AV if is_av else HDV
-                params = (self.config.av_params if is_av
-                          else self._sample_driver_params(self.config.hdv_params))
+                vehicle_cfg = self.cfg.av_vehicle if is_av else self.cfg.hdv_vehicle
+                driver_cfg = (self.cfg.av_driver if is_av
+                              else self._sample_driver_params(self.cfg.hdv_driver))
                 veh = vehicle_class(
                     env=self.env,
                     rng_slowdown=self._rng_slowdown,
                     rng_mlc=self._rng_mlc,
                     rng_dlc=self._rng_dlc,
-                    params=params,
+                    vehicle=vehicle_cfg, driver=driver_cfg,
                     origin_cell=cell,
-                    destination_cell_idx=destination_cell_idx,
-                    destination_lane=None,  # segment end: any lane (D-2026-09-19-11)
+                    destination_cell_idx=destination_cell,
+                    destination_lane=destination_lane,
                 )
                 if is_av:
                     self.av_controller.register(veh)
@@ -207,9 +210,11 @@ class Simulation:
         # Start all generators
         for gen in self.generators:
             self.env.process(gen.run())
+        for incident in self.incidents:
+            self.env.process(incident.run(self.env))
 
-        logger.info(f"Running simulation for {self.config.sim_duration}s...")
-        self.env.run(until=self.config.sim_duration)
+        logger.info(f"Running simulation for {self.cfg.sim_duration}s...")
+        self.env.run(until=self.cfg.sim_duration)
         logger.info(
             f"Simulation complete. t={self.env.now:.1f}s, "
             f"RNG streams spawned: {self.rng_registry.num_streams}"
@@ -248,7 +253,7 @@ class Simulation:
             "vehicles": all_vehicles,
             "completed_vehicles": completed,
             "counters": counters,
-            "config": self.config,
+            "config": self.cfg,
         }
 
         logger.info(

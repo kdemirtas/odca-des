@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 
-from config import CELL_LENGTH_M
+from odca.params import CELL_LENGTH_M
 from odca.entity.vehicle import Vehicle, TrajectoryRecord
 
 

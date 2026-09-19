@@ -18,15 +18,13 @@ EXCLUDED_STATS = {"wall_time_s"}  # machine-dependent
 
 
 def _load_paper(paper_dir: Path):
-    """Import one paper's config and scenarios, plus a fresh odca bound to that config.
+    """Import one paper's config and scenarios.
 
-    Each paper names its modules `config` and `scenarios`, and odca still imports `config`
-    (until N2), so all three are dropped from the module cache before each paper loads. Runs
-    collected for an earlier paper keep references to the odca objects built for it.
+    Every paper names its modules `config` and `scenarios`, so both are dropped from the module
+    cache before each paper loads; runs collected for an earlier paper keep their own objects.
     """
-    for name in list(sys.modules):
-        if name in ("config", "scenarios") or name == "odca" or name.startswith("odca."):
-            del sys.modules[name]
+    for name in ("config", "scenarios"):
+        sys.modules.pop(name, None)
     sys.path.insert(0, str(paper_dir))
     try:
         return importlib.import_module("scenarios")

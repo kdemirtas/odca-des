@@ -7,6 +7,11 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-19-29 | 2026-09-19 | Scenario data (network, demand) belongs to the papers; `SimConfig` requires it and keeps only generic defaults | ASSUMPTIONS A-2026-09-19-8, accepted by Kerem | none |
+| D-2026-09-19-28 | 2026-09-19 | `Incident`: cells blocked or slowed for a set time, then restored; listed in `SimConfig.incidents` | Kerem | none |
+| D-2026-09-19-27 | 2026-09-19 | `OriginCell` and `DestinationCell` subclass `Cell`; transparent unless given a speed limit, which meters inflow or throttles outflow | Kerem | none |
+| D-2026-09-19-26 | 2026-09-19 | Demand is veh/h per named (origin, destination) pair, one generator per pair; the network declares its origins and destinations, including one end per lane; S1 spreads end traffic over the four lane ends | Kerem | D-2026-09-19-11 (any-lane segment end, for S1) |
+| D-2026-09-19-25 | 2026-09-19 | YAML configs: package defaults (vehicle, driver, controller) in `odca/configs/`, scenarios in each paper's `code/configs/`; `odca://`, file references and `_base_` overrides; `model` picks a lane-change family member | Kerem | none |
 | D-2026-09-19-24 | 2026-09-19 | Driver split from Vehicle: `HumanDriver` (own process) and `AutonomousDriver` (called by `AutonomousController`); two-way link with a narrow contract; `HDV`/`AV` subclasses and the `vtype`/`dlc_enabled`-by-type switches go | Kerem | none |
 | D-2026-09-19-23 | 2026-09-19 | One config per class: dataclass schemas plus `ConfigMixin`, all in `odca/params.py`; omegaconf validates once per run, frozen dataclasses inside; runtime objects (env, streams, cells) passed beside the config | Kerem | none |
 | D-2026-09-19-22 | 2026-09-19 | MLC probability is per 5.2 cells driven, DLC probability per second (cooldown stays a refractory period); each evaluation converts over its exposure, q = 1-(1-p)^x | Kerem | none |
@@ -24,6 +29,68 @@
 | D-2026-09-19-8 | 2026-09-19 | Papers use this package as an editable path dependency; each paper's golden fingerprint is a test here | inherited: paper-odca-des D-2026-09-19-8 | none |
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
+
+## D-2026-09-19-29: scenario data belongs to the papers
+**What.** The network and demand of a scenario live in the paper's YAML; `SimConfig` requires them
+and has defaults only for generic settings (duration, warm-up, seed, controller rate).
+**Evidence.** ASSUMPTIONS A-2026-09-19-8, Kerem 2026-09-19: "Assumption OK".
+**Replaces.** nothing.
+**Cited by.** `odca/params.py` (`SimConfig`), paper-odca-des `code/configs/`.
+
+## D-2026-09-19-28: incidents
+**What.** `IncidentConfig` (start, duration, a lane and cell range or an origin or destination
+name, and a speed limit, None meaning blocked) in `SimConfig.incidents`; `Incident.run` saves
+each cell's state, applies the change, waits the duration and restores it. An origin or
+destination can be throttled, not blocked. `odca/infrastructure/incident.py`.
+**Evidence.** Kerem, 2026-09-19: "Let's also add Incident or Event Classes which can adjust the
+outflow capacity of certain cells or compeletely block them. Since Event is very simpyish, I
+would go for the wording Incident. It will just change the state of the cell(s) for a given
+amount of time and resolve." paper-odca-des `run_incident.py` now uses it.
+**Replaces.** nothing.
+**Cited by.** `odca/infrastructure/incident.py`, `tests/test_incidents_and_endpoints.py`.
+
+## D-2026-09-19-27: origin and destination cells
+**What.** `OriginCell` and `DestinationCell` subclass `Cell` (`EndpointCell`). An origin has one
+origin cell joined to its road cell; a destination has one destination cell per lane it is left
+from. Without a speed limit an endpoint is transparent (no time, no lock), so trips run as
+before; with one, a vehicle passes it at the limit and holds it tau more, capping flow at
+3600 / (tau + 1 / limit) veh/h per lane. `Origin.set_speed_limit`, `Destination.set_speed_limit`.
+**Evidence.** Kerem, 2026-09-19: "it would be a better way to model it since we can adjust a
+cell's outflow at anytime by its v_max to create artificial bottlenecks at offramps or mainline
+ends"; default answered "Transparent: same timing as today". Golden exact against the recording
+before the change.
+**Replaces.** nothing.
+**Cited by.** `odca/infrastructure/cell.py`, `freeway.py`, `Vehicle.start`, `Vehicle._exit`.
+
+## D-2026-09-19-26: named origins and destinations, OD demand in veh/h
+**What.** `NetworkConfig` declares `origins` (lane, cell) and `destinations` (cell, lane, None
+for any lane) by name; the freeway builds them and refuses unknown names or places off the road.
+`SimConfig.demand` gives veh/h per (origin, destination) pair; one generator per pair. A vehicle
+reaching the last cell outside its end lane leaves and counts as a missed exit. S1 keeps its
+network and per-origin totals; the end-of-segment share of each origin is spread evenly over
+`end_lane_1..4`. `NetworkConfig.corridor` gives a ramp-free segment with every lane end and
+`end` (any lane).
+**Evidence.** Kerem, 2026-09-19: "the way we define demand is stupid ... We should first define
+destinations"; "I am leaning towards 2 because I want to introduce some lane changing by starting
+from lane 1 and end the stretch at lane 4"; S1 answered "Keep 6 km S1, spread end lanes".
+Dissertation 4.1: "The downstream ends of the lanes are destinations A, B, C and D"; 4.1.1: "For
+each OD flow, a fixed demand rate is specified, denoted as λ vehicles per hour". Golden: every
+run moved; seed 1 S1 lane changes per km 2.09 -> 4.98, delay 29.1 -> 30.6 s.
+**Replaces.** D-2026-09-19-11 for S1-S4 (their segment end was any lane).
+**Cited by.** `Freeway`, `NetworkConfig`, `Simulation._od_pairs`, `VehicleGenerator`.
+⚠️ Mine, not Kerem's: readable names instead of the dissertation letters (A-2026-09-19-9); `end`
+kept for the lane-drop runs (A-2026-09-19-10); wrong end lane counted as missed (A-2026-09-19-11).
+
+## D-2026-09-19-25: YAML configs, package defaults and paper scenarios
+**What.** `odca/configs/` ships the published vehicle, driver and controller YAML; a paper keeps
+its network, demand and run YAML in `code/configs/`. A string where a config, list or table
+belongs names a file (relative, or `odca://` for the package); `_base_` plus keys starts from a
+file and overrides at any depth; `model:` picks the member of a config family (lane change).
+**Evidence.** Kerem, 2026-09-19: "I want YAML."; "We can have separate config.yaml files in
+different places. For example a config folder inside odca"; placement answered "Defaults in
+odca, scenarios in paper"; "scenario can override the defaults right?".
+**Replaces.** nothing.
+**Cited by.** `odca/params.py` (`validate`, `ConfigFamily`), `odca/configs/`.
 
 ## D-2026-09-19-24: driver split from vehicle
 **What.** `Vehicle` keeps only the physical process common to every vehicle: position label,

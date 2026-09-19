@@ -1,0 +1,13 @@
+# S1 baseline run. Vehicle and driver values are the odca package defaults; a scenario
+# overrides any of them with `_base_` plus the keys it changes, or with a Python replace().
+network: network_s1.yaml
+demand: demand_s1.yaml
+hdv_vehicle: odca://hdv_vehicle.yaml
+hdv_driver: odca://hdv_driver.yaml
+av_vehicle: odca://av_vehicle.yaml
+av_driver: odca://av_driver.yaml
+controller: odca://controller.yaml
+av_penetration: 0.0
+sim_duration: 3600.0    # s
+warmup: 300.0           # s
+seed: 42

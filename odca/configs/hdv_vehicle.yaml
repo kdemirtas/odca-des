@@ -1,0 +1,3 @@
+# Human-driven vehicle: top speed (cells/s) and jam spacing (cells).
+v_max: 5.2
+standstill_spacing: 1.0

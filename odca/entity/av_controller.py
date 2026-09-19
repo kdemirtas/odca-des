@@ -18,17 +18,28 @@ from typing import List
 
 import simpy
 
+from odca.params import ConfigMixin, ControllerConfig
+
 from odca.entity.vehicle import Vehicle, VehicleType
 
 logger = logging.getLogger(__name__)
 
 
-class AVController:
+class AVController(ConfigMixin):
     """Central controller for all autonomous vehicles."""
 
-    def __init__(self, env: simpy.Environment, controller_dt: float = 0.1):
+    Config = ControllerConfig
+
+    def __init__(self, cfg: ControllerConfig, env: simpy.Environment):
+        """Controller deciding for every registered AV each `cfg.dt` seconds.
+
+        Args:
+            cfg: the controller config.
+            env: the SimPy environment it runs in.
+        """
+        self.cfg = cfg
         self.env = env
-        self.controller_dt = controller_dt
+        self.controller_dt = cfg.dt
         self._vehicles: List[Vehicle] = []
         self.num_updates = 0
 

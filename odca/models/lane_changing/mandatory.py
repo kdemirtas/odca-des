@@ -12,6 +12,11 @@ where:
 
 import math
 
+# The MLC curve is a probability per this many cells driven: one second of free flow at
+# v_max = 5.2 cells/s, so free-flow HDV behaviour matches the per-decision calibration
+# (D-2026-09-19-22).
+MLC_REFERENCE_CELLS = 5.2
+
 
 def mlc_probability(
     remaining_ratio: float,

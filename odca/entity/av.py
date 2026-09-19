@@ -12,7 +12,8 @@ class AV(Vehicle):
                  rng_mlc: np.random.Generator,
                  rng_dlc: np.random.Generator,
                  params: VehicleParams,
-                 origin_cell=None, destination_cell_idx=None, destination_lane=1):
+                 origin_cell=None, destination_cell_idx=None,
+                 destination_lane=1):
         super().__init__(
             env=env,
             rng_slowdown=rng_slowdown,

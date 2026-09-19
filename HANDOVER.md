@@ -2,15 +2,13 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: N4 to N7 shipped (2026-09-19)
-- Decisions to D-2026-09-19-34; golden re-recorded for D-2026-09-19-31 (every run moved, STATUS N4b), unchanged by N5 to N7.
-- Open: assumptions A-1 to A-7, A-9 to A-17; paper-odca-des N11 restates the numbers.
-**RESUME:** N8, the Opus code review findings (`docs/code-review-2026-09-19.md`).
+## CURRENT: refactor N2 to N8 shipped (2026-09-19)
+- Decisions to D-2026-09-19-35; golden re-recorded for D-2026-09-19-31 (every run moved, STATUS N4b), unchanged by N5 to N8.
+- Open: assumptions A-1 to A-7, A-9 to A-17, A-19; the discretionary lane-change question (`docs/lane-change-rate.md`, paper-odca-des AGENDA).
+**RESUME:** no ranked item left here; paper-odca-des N9 to N11 drive what comes next. BACKLOG B7 to B9 hold the review's non-neutral speed and memory items.
 
 ## NEXT STEPS (pick up here)
-Ranked; proof for each: `uv run pytest` (goldens may be re-recorded during the refactor; say what moved).
-
-1. **N8. Opus code review findings** (paper-odca-des session 2026-09-19, report copied to `docs/code-review-2026-09-19.md`), triaged with Kerem; correctness findings jump ahead.
+None ranked. A capability a paper needs is added here, off by default, with its golden (D-2026-09-19-6).
 
 ## Infra
 - Repo: `kdemirtas/odca-des` (kdemirtas, private until publication with paper-odca-des); push with `GH_TOKEN=$(gh auth token --user kdemirtas)`.

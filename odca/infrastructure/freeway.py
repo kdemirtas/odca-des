@@ -124,10 +124,24 @@ class Freeway:
             if i < num_lanes - 1:
                 self.lanes[i].left = self.lanes[i + 1]
 
+        self.link_neighbours()
+
         # Quick lookup by lane index (1-based)
         self._lane_by_idx: Dict[int, Lane] = {l.idx: l for l in self.lanes}
         self._build_endpoints()
         self.cell_incidents: Dict[Cell, object] = {}  # incident records by cell (incident.py)
+
+    def link_neighbours(self):
+        """Set every road cell's side and diagonal links from the lane links."""
+        for lane in self.lanes:
+            for cell in lane.cells:
+                left = lane.left.cells[cell.idx] if lane.left else None
+                right = lane.right.cells[cell.idx] if lane.right else None
+                cell.left, cell.right = left, right
+                cell.left_next = left.next if left else None
+                cell.left_prev = left.previous if left else None
+                cell.right_next = right.next if right else None
+                cell.right_prev = right.previous if right else None
 
     def lane(self, idx: int) -> Lane:
         """Get lane by 1-based index."""

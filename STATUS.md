@@ -5,12 +5,17 @@
 
 ## TL;DR
 Shared ODCA simulator, extracted from paper-odca-des 2026-09-19. Bugs fixed, lane-change rate
-rule in, refactor design settled; next is the refactor N2 to N8 (ranked list in `HANDOVER.md`).
+rule in, refactor N2 to N8 shipped 2026-09-19; next is whatever paper-odca-des N11 needs, and BACKLOG.
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N7; `uv run pytest` 80/80 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8; `uv run pytest` 83/83 passed.
 
+
+## 2026-09-19 (N8): neutral speed-ups from the code review
+- Cell neighbour links and occupant as plain slots set at build time, `Lane.make_periodic`, per-lane closed-cell count, exited AVs pruned from the controller, dead code removed (D-2026-09-19-35, assumption A-19). Non-neutral review items parked as BACKLOG B7 to B9; the review's correctness items were fixed earlier (D-2026-09-19-11 to -20).
+- Proof: golden 24/24 exact; paper ring-road FD points byte-identical against main; `tests/test_infrastructure.py`; 83 tests. Wall time (300 s quick, best of 3): S1 7.40 to 7.17 s, S3 10.34 to 8.90 s. Review: conformance 1 (`Cell` type hint imported `entity`, removed), correctness 0.
+- The paper's `diagnose_fd_capacity.py` must use `lane.make_periodic()` with this change (paper N10).
 
 ## 2026-09-19 (N7): viewers in the package
 - `odca.viewer` (snapshots, matplotlib animation and time-space diagram, pygame playback), each from a `SimulationResult` (D-2026-09-19-34, assumption A-17). The paper's `visualize.py` and `animate.py` are thin CLIs.

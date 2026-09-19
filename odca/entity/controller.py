@@ -45,10 +45,21 @@ class AutonomousController(ConfigMixin):
         """
         self._drivers.append(driver)
 
-    @property
     def active_drivers(self) -> List[AutonomousDriver]:
-        """The registered drivers whose vehicle is on the road."""
-        return [d for d in self._drivers if d.vehicle.active]
+        """The registered drivers whose vehicle is on the road, in registration order.
+
+        Drivers whose vehicle has left are dropped from the register here, so a tick costs
+        the vehicles still to come or on the road, not every vehicle ever registered.
+        """
+        waiting_or_driving, active = [], []
+        for driver in self._drivers:
+            vehicle = driver.vehicle
+            if vehicle.time_exited is None:
+                waiting_or_driving.append(driver)
+                if vehicle.active:
+                    active.append(driver)
+        self._drivers = waiting_or_driving
+        return active
 
     def run(self):
         """SimPy process: decide for every active driver each `dt`."""
@@ -56,7 +67,7 @@ class AutonomousController(ConfigMixin):
         while True:
             yield self.env.timeout(self.cfg.dt)
 
-            active = self.active_drivers
+            active = self.active_drivers()
             if not active:
                 continue
 

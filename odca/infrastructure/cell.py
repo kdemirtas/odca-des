@@ -1,4 +1,4 @@
-"""Cell: the fundamental spatial unit of the ODCA-DES framework.
+"""Cell: the fundamental spatial unit of the ODCA-DES framework (D-2026-09-19-35).
 
 Each cell is a SimPy PriorityResource with capacity 1, meaning at most one
 vehicle can occupy it at a time. Cells form a linked list within a lane
@@ -16,124 +16,114 @@ if TYPE_CHECKING:
 
 
 class Cell:
+    """One cell: a capacity-1 resource, its occupant, its neighbours and its speed limit.
+
+    The neighbour links (`next`, `previous`, `left`, `right` and the four diagonals) are plain
+    attributes, set when the lanes are built and linked (`Lane`, `Freeway.link_neighbours`).
+    """
+
     __slots__ = (
-        "idx", "lane", "resource",
-        "_next", "_prev", "_vehicle", "_blocked",
-        "speed_limit", "exits", "entry",
+        "idx", "lane", "resource", "next", "previous", "left", "right",
+        "left_next", "left_prev", "right_next", "right_prev",
+        "vehicle", "_blocked", "speed_limit", "exits", "entry",
     )
 
     def __init__(self, idx: int, env: simpy.Environment,
                  speed_limit: float = float("inf")):
+        """An empty, open cell with no links yet.
+
+        Args:
+            idx: position along the lane.
+            env: the SimPy environment of its resource.
+            speed_limit: cells/s.
+        """
         self.idx = idx
         self.lane: Optional[Lane] = None
         self.resource = simpy.PriorityResource(env, capacity=1)
-        self._next: Optional[Cell] = None
-        self._prev: Optional[Cell] = None
-        self._vehicle = None  # currently registered vehicle
+        self.next: Optional[Cell] = None
+        self.previous: Optional[Cell] = None
+        self.left: Optional[Cell] = None         # same index, lane to the left
+        self.right: Optional[Cell] = None        # same index, lane to the right
+        self.left_next: Optional[Cell] = None    # diagonals
+        self.left_prev: Optional[Cell] = None
+        self.right_next: Optional[Cell] = None
+        self.right_prev: Optional[Cell] = None
+        self.vehicle = None  # the vehicle whose position this cell is
         self._blocked: bool = False
         self.speed_limit: float = speed_limit  # cell-level speed limit (cells/s)
         self.exits: list = []  # DestinationCells a vehicle leaves into from here (set by Freeway)
         self.entry = None  # the OriginCell vehicles come in through, if any (set by Freeway)
 
-    # --- Linked-list navigation ---
-
-    @property
-    def next(self) -> Optional[Cell]:
-        return self._next
-
-    @property
-    def previous(self) -> Optional[Cell]:
-        return self._prev
-
-    @property
-    def left(self) -> Optional[Cell]:
-        """Cell at same index in the left (higher-index) lane."""
-        if self.lane and self.lane.left:
-            return self.lane.left.cells[self.idx]
-        return None
-
-    @property
-    def right(self) -> Optional[Cell]:
-        """Cell at same index in the right (lower-index) lane."""
-        if self.lane and self.lane.right:
-            return self.lane.right.cells[self.idx]
-        return None
-
-    @property
-    def left_next(self) -> Optional[Cell]:
-        """Diagonal forward-left cell."""
-        left = self.left
-        return left.next if left and left.next else None
-
-    @property
-    def left_prev(self) -> Optional[Cell]:
-        """Diagonal backward-left cell."""
-        left = self.left
-        return left.previous if left and left.previous else None
-
-    @property
-    def right_next(self) -> Optional[Cell]:
-        """Diagonal forward-right cell."""
-        right = self.right
-        return right.next if right and right.next else None
-
-    @property
-    def right_prev(self) -> Optional[Cell]:
-        """Diagonal backward-right cell."""
-        right = self.right
-        return right.previous if right and right.previous else None
-
     # --- Occupancy ---
 
     @property
-    def vehicle(self):
-        return self._vehicle
-
-    @vehicle.setter
-    def vehicle(self, v):
-        self._vehicle = v
-
-    @property
     def is_occupied(self) -> bool:
+        """Whether a vehicle holds the cell's lock."""
         return len(self.resource.users) > 0
 
     @property
     def blocked(self) -> bool:
+        """Whether the cell is closed to vehicles."""
         return self._blocked
 
     @blocked.setter
     def blocked(self, value: bool):
+        """Open or close the cell, keeping its lane's count of closed cells.
+
+        Args:
+            value: closed.
+        """
+        value = bool(value)
+        if value != self._blocked and self.lane is not None:
+            self.lane.blocked_count += 1 if value else -1
         self._blocked = value
 
     # --- Leader / follower detection ---
 
     def find_leader(self, look_ahead: int):
-        """Scan forward up to look_ahead cells for an occupying vehicle."""
+        """The nearest vehicle ahead within `look_ahead` cells, or None.
+
+        Args:
+            look_ahead: cells to scan.
+        """
         cell = self
         for _ in range(look_ahead):
-            cell = cell._next
+            cell = cell.next
             if cell is None:
                 return None
-            if cell._vehicle is not None:
-                return cell._vehicle
+            if cell.vehicle is not None:
+                return cell.vehicle
         return None
 
     def find_follower(self, look_behind: int):
-        """Scan backward up to look_behind cells for an occupying vehicle."""
+        """The nearest vehicle behind within `look_behind` cells, or None.
+
+        Args:
+            look_behind: cells to scan.
+        """
         cell = self
         for _ in range(look_behind):
-            cell = cell._prev
+            cell = cell.previous
             if cell is None:
                 return None
-            if cell._vehicle is not None:
-                return cell._vehicle
+            if cell.vehicle is not None:
+                return cell.vehicle
         return None
 
     def find_blockage(self, look_ahead: int) -> Optional[int]:
-        """Scan forward for a blocked cell. Returns distance if found, None otherwise."""
+        """Distance to the nearest closed cell ahead within `look_ahead` cells, or None.
+
+        A lane with no closed cell answers at once (`Lane.blocked_count`).
+
+        Args:
+            look_ahead: cells to scan.
+        """
+        lane = self.lane
+        if lane is not None and not lane.blocked_count:
+            return None
         cell = self
         for d in range(1, look_ahead + 1):
-            cell = cell._next
+            cell = cell.next
             if cell is None:
                 return None
             if cell._blocked:

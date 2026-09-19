@@ -2,15 +2,15 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: N2 shipped with YAML, named places, endpoint cells, incidents (2026-09-19)
-- Decisions D-2026-09-19-23, -25 to -29; golden re-recorded (every run moved with the new S1 demand).
-- Open: assumptions A-1 to A-7, A-9 to A-11; paper-odca-des N11 restates the numbers.
-**RESUME:** N4, the Driver split (D-2026-09-19-24, `docs/config-and-driver-design.md`).
+## CURRENT: N4 driver split shipped (2026-09-19)
+- Decisions to D-2026-09-19-30; golden unchanged since D-2026-09-19-26.
+- Open: assumptions A-1 to A-7, A-9 to A-14; paper-odca-des N11 restates the numbers.
+**RESUME:** N4b, one lane-change request makes one lane change (golden moves), then N5.
 
 ## NEXT STEPS (pick up here)
 Ranked; proof for each: `uv run pytest` (goldens may be re-recorded during the refactor; say what moved).
 
-1. **N4. Driver split** (D-2026-09-19-24): `Vehicle(cfg, driver, env, route)` keeps the physical process; `HumanDriver`, `AutonomousDriver`, `AutonomousController` own the decisions and the decision state; class constants become config fields; `HDV`/`AV` and the type switches go. Inits at 6 parameters or fewer.
+1. **N4b. One lane-change request, one lane change**: `Vehicle._advance_to` resets the request after a lateral move; re-record the golden and state what moved.
 2. **N5. `SimulationResult` dataclass**, carrying the resolved config (`save_config`).
 3. **N6. `odca.experiment` kit** and `odca.analysis.mean_ci95` (paper-odca-des D-2026-09-19-9).
 4. **N7. Viewers into `odca.viewer`** (from paper-odca-des `visualize.py`, `animate.py`).

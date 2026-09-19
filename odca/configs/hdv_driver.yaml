@@ -16,6 +16,11 @@ lane_change:
   mlc_r0: 0.3
   dlc_k: 3.0
   dlc_v0: 1.0
+lc_patience: 3.0
+min_reeval_ratio: 0.5
+blockage_scan_mult: 3
+min_creep_speed: 0.1
+slowdown_min_speed: 0.5
 tau_std: 0.3
 action_interval_std: 0.2
 slowdown_prob_std: 0.05

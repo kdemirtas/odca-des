@@ -1,3 +1,6 @@
 # Autonomous vehicle: top speed (cells/s) and jam spacing (cells).
 v_max: 5.2
 standstill_spacing: 1.0
+progressive_speed_threshold: 1.0
+traversal_dt: 0.25
+escape_speed: 1.0

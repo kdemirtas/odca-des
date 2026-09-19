@@ -3,7 +3,7 @@
 import pytest
 from omegaconf.errors import ConfigKeyError, MissingMandatoryValue, ValidationError
 
-from odca.entity.av_controller import AVController
+from odca.entity.controller import AutonomousController
 from odca.params import (
     BaseLaneChangeConfig,
     ControllerConfig,
@@ -45,7 +45,7 @@ def test_bad_config_is_refused(bad, error):
 def test_yaml_file_and_save_round_trip(tmp_path):
     path = tmp_path / "controller.yaml"
     path.write_text("dt: 0.2\n")
-    controller = AVController.from_config(path, env=None)
+    controller = AutonomousController.from_config(path, env=None)
     assert controller.cfg == ControllerConfig(dt=0.2)
     saved = tmp_path / "saved.yaml"
     saved.write_text(controller.save_config())
@@ -112,3 +112,14 @@ def test_bad_demand_is_refused(demand, message):
     from odca.simulation.engine import Simulation
     with pytest.raises(ValueError, match=message):
         Simulation(sim_config(demand=demand))
+
+
+def test_whole_numbers_are_accepted_in_float_tables():
+    from odca.params import NetworkConfig, SimConfig
+    network = NetworkConfig.corridor(1, 50, 5.2)
+    cfg = validate(SimConfig, {"network": network, "demand": {"mainline_lane_1": {"end": 400}},
+                               "hdv_vehicle": "odca://hdv_vehicle.yaml",
+                               "hdv_driver": "odca://hdv_driver.yaml",
+                               "av_vehicle": "odca://av_vehicle.yaml",
+                               "av_driver": "odca://av_driver.yaml"})
+    assert cfg.demand == {"mainline_lane_1": {"end": 400.0}}

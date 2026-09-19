@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-19-30 | 2026-09-19 | Driver split as built: `Vehicle(env, cfg, driver, origin_cell, destination)`, `HumanDriver`, `AutonomousDriver` registering with `AutonomousController`, one `VehicleFactory`; the seven `Vehicle` constants become `VehicleConfig`/`DriverConfig` fields with the same defaults; the link contract widened to the calls the vehicle already made | ASSUMPTIONS A-2026-09-19-12 to -14, made unattended (orchestrate loop) | none |
 | D-2026-09-19-29 | 2026-09-19 | Scenario data (network, demand) belongs to the papers; `SimConfig` requires it and keeps only generic defaults | ASSUMPTIONS A-2026-09-19-8, accepted by Kerem | none |
 | D-2026-09-19-28 | 2026-09-19 | `Incident`: cells blocked or slowed for a set time, then restored; listed in `SimConfig.incidents` | Kerem | none |
 | D-2026-09-19-27 | 2026-09-19 | `OriginCell` and `DestinationCell` subclass `Cell`; transparent unless given a speed limit, which meters inflow or throttles outflow | Kerem | none |
@@ -30,6 +31,12 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-19-30: driver split as built
+**What.** `Vehicle` keeps the physical side (position, lock, movement, exit, trajectory, move counters) and takes `(env, cfg, driver, origin_cell, destination)`. `Driver` in `odca/entity/driver.py` holds every decision and its state; `HumanDriver` decides in its own process, `AutonomousDriver` registers with `AutonomousController` (`odca/entity/controller.py`, renamed from `AVController`) and acts at its `dt`. `VehicleFactory` (`odca/simulation/factory.py`) builds each vehicle with its driver for the generators and for the vehicles placed at t=0. `HDV`, `AV`, `VehicleType` and `config_kwargs` are gone; reporting reads `vehicle.kind`. The seven class constants become config fields with today's values as defaults: `progressive_speed_threshold`, `traversal_dt`, `escape_speed` in `VehicleConfig`; `lc_patience`, `min_reeval_ratio`, `blockage_scan_mult`, `min_creep_speed`, `slowdown_min_speed` in `DriverConfig`. The vehicle-to-driver calls are the ones it already made: wake, react now (speed-limit change), gap and blockage judgement, and reads of tau, action interval, patience and merge priority.
+**Evidence.** Golden fingerprint 24/24 exact; the paper's demand sweep, ring-road FD and car-following scripts give byte-identical output before and after. Made unattended in the orchestrate loop; the calls are ASSUMPTIONS A-2026-09-19-12 to -14, open for Kerem.
+**Replaces.** nothing (implements D-2026-09-19-24).
+**Cited by.** `odca/entity/vehicle.py`, `odca/entity/driver.py`, `odca/entity/controller.py`, `odca/simulation/factory.py`, `ARCHITECTURE.md` invariant 6.
 
 ## D-2026-09-19-29: scenario data belongs to the papers
 **What.** The network and demand of a scenario live in the paper's YAML; `SimConfig` requires them

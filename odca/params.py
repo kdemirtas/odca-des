@@ -34,6 +34,11 @@ class VehicleConfig:
 
     v_max: float               # maximum speed (cells/s)
     standstill_spacing: float  # jam spacing d (cells)
+    # below this speed a cell is crossed in steps of traversal_dt, so a speed change
+    # mid-cell takes effect (cells/s, s)
+    progressive_speed_threshold: float = 1.0
+    traversal_dt: float = 0.25
+    escape_speed: float = 1.0  # speed of a stopped vehicle moving sideways (cells/s)
 
 
 class ConfigFamily:
@@ -104,6 +109,11 @@ class DriverConfig:
     look_ahead: int            # cells scanned forward
     look_behind: int           # cells scanned backward
     lane_change: BaseLaneChangeConfig
+    lc_patience: float = 3.0         # longest wait for a lane-change target cell (s)
+    min_reeval_ratio: float = 0.5    # a wake-up within this share of tau is skipped
+    blockage_scan_mult: int = 3      # blockages are seen this many look_aheads away
+    min_creep_speed: float = 0.1     # speed behind a moving leader when Newell gives 0 (cells/s)
+    slowdown_min_speed: float = 0.5  # a random slowdown never goes below this (cells/s)
 
 
 @dataclass(**_FROZEN_FAMILY)
@@ -307,6 +317,8 @@ def _build(tp: Any, value: Any, base_dir: Path) -> Any:
         if isinstance(value, dict) and get_origin(tp) is dict:
             return {key: _build(args[1], item, base_dir) for key, item in value.items()}
         return _build(args[0], value, base_dir) if len(args) == 1 else value
+    if tp is float and isinstance(value, int) and not isinstance(value, bool):
+        return float(value)  # omegaconf refuses an int inside a table typed float
     if not (isinstance(tp, type) and is_dataclass(tp) and isinstance(value, dict)):
         return value
     if issubclass(tp, ConfigFamily):

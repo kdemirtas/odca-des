@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 
 from odca.analysis.intervals import mean_ci95
-from odca.experiment import (RunRecord, aggregate, numpy_default, read_runs,
+from odca.simulation.engine import Simulation
+from odca.experiment import (RunRecord, aggregate, numpy_default, read_runs, run_once,
                              write_aggregate_csv, write_run)
 
 
@@ -64,3 +65,34 @@ def test_aggregate_groups_and_writes_the_csv_schema(tmp_path):
     assert list(first) == ["scenario", "av_penetration", "hdv_action_interval", "metric", "n",
                            "mean", "std", "ci95_lo", "ci95_hi"]
     assert first["mean"] == "2.000000"
+
+
+def test_run_once_prepares_runs_and_records(tmp_path):
+    import sys
+    from dataclasses import asdict
+    sys.path.insert(0, "tests/golden/paper_odca_des")
+    try:
+        from config import sim_config
+    finally:
+        sys.path.remove("tests/golden/paper_odca_des")
+        sys.modules.pop("config", None)
+    from odca.params import NetworkConfig
+    config = sim_config(network=NetworkConfig.corridor(2, 60, 5.2),
+                        demand={"mainline_lane_1": {"end": 600.0}},
+                        sim_duration=60.0, warmup=0.0, seed=5)
+    seen = []
+    record, result = run_once("demo", config, lambda r: {"completed": r.num_completed},
+                              prepare=lambda sim: (seen.append(sim),
+                                                   sim.seed_vehicles(20, "end")))
+    assert len(seen) == 1 and result.num_generated < len(result.vehicles)  # placed at t=0
+    assert record.key == ("demo", 0.0, config.hdv_driver.action_interval, 5)
+    assert record.counters == asdict(result.counters)
+    assert record.stats["completed"] == result.num_completed and "wall_time_s" in record.stats
+    assert Simulation(config).run().counters != result.counters  # the prepare hook mattered
+
+
+def test_extra_keys_cannot_overwrite_the_record():
+    record = _record(1)
+    record.extra["seed"] = 99
+    with pytest.raises(ValueError, match="seed"):
+        record.to_json()

@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #5: One lane-change request makes one lane change (N4b) (2026-09-19)
 - PR #4: Split the driver from the vehicle (N4) (2026-09-19, closes N4)
 - PR #3: One trait sampler for human drivers (N3) (2026-09-19, closes N3)
 - PR #2: Configs with ConfigMixin and YAML, named origins and destinations, endpoint cells, incidents (2026-09-19, closes N2)

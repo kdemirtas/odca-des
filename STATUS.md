@@ -29,6 +29,7 @@ after one lane-change request makes one lane change (D-2026-09-19-31); unchanged
 | BN 0% AV seed 1 | 1.07 to 0.94 | 80.7 to 84.4 | 2460 to 2393 | 0 to 0 |
 | BN 70% AV seed 1 | 0.42 to 0.34 | 4.8 to 6.1 | 3547 to 3540 | 0 to 0 |
 
+- Not all one way: with no AVs the bottleneck delay rises on seeds 1 and 3 (80.7 to 84.4 s, 67.5 to 69.9 s) and falls on seed 2 (69.1 to 66.7 s); a vehicle leaving the closed lane now needs one decision per lane change. Review (correctness): also noted that a DLC can take the next decision of a vehicle still short of its exit lane, part of the open DLC question below.
 - ⏳ S1 still makes about 2.3 lane changes per vehicle-km, 45% away from the needed lane, from the zero-advantage DLC rate; two candidate rules measured in `docs/lane-change-rate.md`, Kerem decides.
 
 ## 2026-09-19 (N4): driver split from the vehicle

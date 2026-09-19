@@ -4,12 +4,13 @@ Uses numpy's SeedSequence to create independent RNG streams for each
 source of randomness. This ensures:
   1. Full reproducibility given the same master seed
   2. Independence between streams (no cross-contamination)
-  3. Each vehicle gets its own RNG for behavioral stochasticity
+  3. One stream per source of randomness, shared by all vehicles (D-2026-03-14-1 in
+     paper-odca-des): slowdowns, MLC, DLC, the three driver traits, each generator
 
 Usage:
     rng_registry = RNGRegistry(master_seed=42)
     gen_rng = rng_registry.spawn("vehicle_generation")
-    veh_rng = rng_registry.spawn("vehicle_123_behavior")
+    slowdown_rng = rng_registry.spawn("slowdown")
 """
 
 from typing import Dict

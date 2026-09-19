@@ -52,7 +52,7 @@ fields.
 | Type | Meaning | Defined in |
 |---|---|---|
 | `VehicleConfig`, `HumanDriverConfig`, `AutonomousDriverConfig`, `ControllerConfig` | one class's parameters each, population values (means and spreads for humans); validated by omegaconf once per run, frozen dataclasses after | `odca/params.py`. Lane-change models are a family: `BaseLaneChangeConfig` (gaps, cooldown), `LogisticLaneChangeConfig`. drift: `HDV`/`AV` still unpack them into a 24-parameter `Vehicle.__init__` (N4) |
-| `DriverTraits` | one driver's sampled values (tau, action interval, slowdown probability), drawn once at creation | `odca/entity/driver.py` (planned, N3) |
+| `DriverTraits` | one driver's sampled values (tau, action interval, slowdown probability), drawn once at creation by `TraitSampler` | `odca/entity/driver.py` |
 | `SimConfig`, `NetworkConfig`, `ODFlow`, `Destination` | one run: geometry, demand, the two vehicle types, AV penetration, seed, duration, warm-up; values come from the paper's YAML | `odca/params.py`. drift: the traversal sub-step is still a `Vehicle` constant (N4) |
 | `Cell`, `Lane`, `Freeway` | the spatial resources | `odca/infrastructure/` |
 | `Origin`, `Destination` (with `OriginCell`, `DestinationCell`) | named places where trips start and end, declared in the network config; an endpoint cell is transparent unless given a speed limit, which meters inflow or throttles outflow | `odca/infrastructure/` (D-2026-09-19-26, -27) |
@@ -68,7 +68,7 @@ What must hold after every run, each with the check that proves it.
 1. **One vehicle per cell.** `Cell.resource` has capacity 1. Checked by construction (`cell.py`), no test.
 2. **Headway by delayed release.** A cell is released tau seconds after its vehicle leaves it (`_delayed_release`, `_exit`), so homogeneous single-lane capacity is 3600 / (tau + d / v_max) = 2127 veh/h at HDV defaults. Checked by eye in `diagnose_fd_capacity.py`; no assertion (BACKLOG B2).
 3. **Same config and seed, same numbers.** `Simulation` spawns its streams in a fixed order: six behaviour streams, then one per OD flow in `od_flows` order. A new stream goes last, or every number moves. Checked by `tests/test_golden.py`.
-4. **One driver-heterogeneity rule.** tau LogNormal clipped to [0.5, 3.0], action_interval LogNormal clipped to [0.3, 3.0], slowdown_prob Normal clipped to [0, 1], drawn in that order from their own streams. drift: copied in `generator.py` and `engine.py` here, and in two paper-odca-des scripts (N3).
+4. **One driver-heterogeneity rule.** tau LogNormal clipped to [tau_min, tau_max] (0.5, 3.0), action_interval LogNormal clipped to [0.3, 3.0], slowdown_prob Normal clipped to [0, 1], drawn in that order from their own streams, only when the spread is above 0: `odca.entity.driver.TraitSampler`, the only copy (N3). Checked by `tests/test_driver_traits.py` and the golden.
 5. **Units stay inside.** Cells, cells/s and seconds everywhere in `odca/`; km/h, veh/h and veh/km appear only at the reporting edge, through `CELL_LENGTH_M`.
 6. **Driver and vehicle keep to the link contract** (D-2026-09-19-24). The driver reads its vehicle's state and neighbours through cells, and changes the vehicle only through its commands (target speed, lane-change request); the vehicle calls its driver only to wake it and to read tau. Checked by review; a driver writing a vehicle field is a finding.
 7. **A new capability is off by default,** and every paper's golden matches with it off. Checked by `tests/test_golden.py`.

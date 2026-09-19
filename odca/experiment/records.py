@@ -51,8 +51,15 @@ class RunRecord:
         return (self.label, self.av_penetration, self.hdv_action_interval, self.seed)
 
     def to_json(self) -> Dict[str, Any]:
-        """The per-seed JSON object."""
+        """The per-seed JSON object.
+
+        Raises:
+            ValueError: an extra key would overwrite one of the record's own keys.
+        """
         body = {k: v for k, v in asdict(self).items() if k != "extra"}
+        clash = body.keys() & self.extra.keys()
+        if clash:
+            raise ValueError(f"extra keys {sorted(clash)} would overwrite the record's own")
         return {**body, **self.extra}
 
     @classmethod

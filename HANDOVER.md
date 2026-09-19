@@ -2,17 +2,16 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: N4, N4b and N5 shipped (2026-09-19)
-- Decisions to D-2026-09-19-32; golden re-recorded for D-2026-09-19-31 (every run moved, STATUS N4b), unchanged by N5.
-- Open: assumptions A-1 to A-7, A-9 to A-15; paper-odca-des N11 restates the numbers.
-**RESUME:** N6, the `odca.experiment` kit.
+## CURRENT: N4 to N6 shipped (2026-09-19)
+- Decisions to D-2026-09-19-33; golden re-recorded for D-2026-09-19-31 (every run moved, STATUS N4b), unchanged by N5 and N6.
+- Open: assumptions A-1 to A-7, A-9 to A-16; paper-odca-des N11 restates the numbers.
+**RESUME:** N7, viewers into `odca.viewer`.
 
 ## NEXT STEPS (pick up here)
 Ranked; proof for each: `uv run pytest` (goldens may be re-recorded during the refactor; say what moved).
 
-1. **N6. `odca.experiment` kit** and `odca.analysis.mean_ci95` (paper-odca-des D-2026-09-19-9).
-2. **N7. Viewers into `odca.viewer`** (from paper-odca-des `visualize.py`, `animate.py`).
-3. **N8. Opus code review findings** (paper-odca-des session 2026-09-19, report copied to `docs/code-review-2026-09-19.md`), triaged with Kerem; correctness findings jump ahead.
+1. **N7. Viewers into `odca.viewer`** (from paper-odca-des `visualize.py`, `animate.py`).
+2. **N8. Opus code review findings** (paper-odca-des session 2026-09-19, report copied to `docs/code-review-2026-09-19.md`), triaged with Kerem; correctness findings jump ahead.
 
 ## Infra
 - Repo: `kdemirtas/odca-des` (kdemirtas, private until publication with paper-odca-des); push with `GH_TOKEN=$(gh auth token --user kdemirtas)`.

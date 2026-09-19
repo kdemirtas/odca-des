@@ -20,13 +20,13 @@ Modules, what each owns, and what it may import. A module not listed here does n
 | `odca/infrastructure/` | `Cell` and its endpoint subclasses `OriginCell`, `DestinationCell`; `Lane`; `Freeway` with its named `Origin`s and `Destination`s; `Incident` (D-2026-09-19-26 to -28) | simpy, params | entity, simulation |
 | `odca/entity/` | `Vehicle` (physical: cell label, lock, movement, trajectory), `Driver`, `HumanDriver`, `AutonomousDriver`, `DriverStreams`, `DriverTraits` and `TraitSampler` (`driver.py`), `AutonomousController` (`controller.py`), `TrajectoryRecord` (D-2026-09-19-24, -30) | infrastructure, models, params | simulation, analysis, experiment |
 | `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver), `SimulationResult` and `RunCounters` (`result.py`, D-2026-09-19-32), RNG stream order | entity, infrastructure, rng, params | analysis, experiment, viewer |
-| `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`, `mean_ci95` (the only interval code) | entity (read-only), params | simulation, experiment |
+| `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`; `mean_ci95` in `intervals.py`, the only interval code (D-2026-09-19-33) | entity (read-only), params | simulation, experiment |
 | `odca/baselines/` | NaSch | numpy | the rest of `odca` |
-| `odca/experiment/` | run a scenario over a seed list, per-seed JSON writer, aggregation into the CSV schema below | simulation, analysis, params | viewer, any paper |
+| `odca/experiment/` | `RunRecord`, `run_once` (simulate, time, measure), per-seed JSON writer and strict reader (`records.py`), aggregation into the CSV schema below (`tables.py`) (D-2026-09-19-33) | simulation, analysis, params | viewer, any paper |
 | `odca/viewer/` | pygame playback, matplotlib animation; extra `[viewer]` | simulation, entity, params | experiment |
 | `tests/` | unit tests; `tests/golden/<paper>/` scenario definitions and `fingerprint.json` per paper | everything in `odca` | a paper repo (fixtures are copied in, not imported) |
 
-Papers keep: parameter values (`config.py`), scenario definitions, figure scripts, diagnostics. They import `odca`; nothing in `odca` imports a paper. drift: `odca/experiment/`, `odca/viewer/` do not exist yet (N6, N7).
+Papers keep: parameter values (`config.py`), scenario definitions, figure scripts, diagnostics. They import `odca`; nothing in `odca` imports a paper. drift: `odca/viewer/` does not exist yet (N7).
 
 ## Layout
 
@@ -41,8 +41,8 @@ readers, and where the contract is asserted. "Nowhere" is a legal entry and a ba
 
 | Artifact | Grain (key) | Written by | Read by | Asserted in |
 |---|---|---|---|---|
-| per-seed JSON | (scenario, seed, hdv_action_interval) | `odca.experiment` | `odca.experiment` aggregation | a schema test (planned) |
-| aggregate CSV | (scenario, av_penetration, hdv_action_interval, metric): n, mean, std, ci95_lo, ci95_hi | `odca.experiment` | paper figure scripts, manuscript tables | a schema test (planned) |
+| per-seed JSON | (scenario, AV share, hdv_action_interval, seed); keys label, av_penetration, seed, hdv_action_interval, av_action_interval, stats, counters, plus the paper's extra keys | `odca.experiment.write_run` | `odca.experiment.read_runs` (duplicates refused) | `tests/test_experiment.py` |
+| aggregate CSV | (scenario, av_penetration, hdv_action_interval, metric): n, mean, std, ci95_lo, ci95_hi, six decimals | `odca.experiment.write_aggregate_csv` | paper figure scripts, manuscript tables | `tests/test_experiment.py` |
 | `tests/golden/<paper>/fingerprint.json` | (scenario, seed) in quick mode: stats and counters | `golden --write`, only under a decision | the golden test | the golden test, exact match |
 
 ## Core types

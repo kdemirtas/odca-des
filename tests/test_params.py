@@ -3,7 +3,7 @@
 import pytest
 from omegaconf.errors import ConfigKeyError, MissingMandatoryValue, ValidationError
 
-from odca.entity.av_controller import AVController
+from odca.entity.controller import AutonomousController
 from odca.params import (
     BaseLaneChangeConfig,
     ControllerConfig,
@@ -45,7 +45,7 @@ def test_bad_config_is_refused(bad, error):
 def test_yaml_file_and_save_round_trip(tmp_path):
     path = tmp_path / "controller.yaml"
     path.write_text("dt: 0.2\n")
-    controller = AVController.from_config(path, env=None)
+    controller = AutonomousController.from_config(path, env=None)
     assert controller.cfg == ControllerConfig(dt=0.2)
     saved = tmp_path / "saved.yaml"
     saved.write_text(controller.save_config())

@@ -104,9 +104,9 @@ def delay(vehicle: Vehicle) -> Optional[float]:
     T_arr are the arrival times in the trajectory, l is one cell and v_f the vehicle's
     maximum speed; only cells crossed slower than free flow add delay (D-2026-09-19-15).
     """
-    if vehicle.time_exited is None or vehicle.v_max <= 0:
+    if vehicle.time_exited is None or vehicle.cfg.v_max <= 0:
         return None
-    free_flow_cell_time = 1.0 / vehicle.v_max
+    free_flow_cell_time = 1.0 / vehicle.cfg.v_max
     traj = vehicle.trajectory
     return sum(max(0.0, traj[j + 1].time - traj[j].time - free_flow_cell_time)
                for j in range(len(traj) - 1))

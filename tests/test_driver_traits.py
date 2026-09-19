@@ -39,10 +39,3 @@ def test_zero_spread_draws_nothing():
     before = sampler.rng_tau.bit_generator.state
     assert sampler.draw(exact) == DriverTraits.exact(exact)
     assert sampler.rng_tau.bit_generator.state == before
-
-
-def test_applied_traits_replace_the_means():
-    traits = DriverTraits(tau=2.0, action_interval=0.7, slowdown_prob=0.1)
-    cfg = traits.applied_to(POPULATION)
-    assert (cfg.tau, cfg.action_interval, cfg.slowdown_prob) == (2.0, 0.7, 0.1)
-    assert cfg.tau_std == POPULATION.tau_std

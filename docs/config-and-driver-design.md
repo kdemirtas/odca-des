@@ -54,18 +54,26 @@ once at creation by the one sampler (N3). So the config is never copied per vehi
 | process | movement process (every vehicle) | `HumanDriver`: its own; `AutonomousDriver`: none, called by `AutonomousController` |
 | config | `VehicleConfig` (v_max, standstill spacing) | `HumanDriverConfig`, `AutonomousDriverConfig` |
 
-The link contract (Kerem agreed, 2026-09-19):
+The link contract (Kerem agreed, 2026-09-19; widened as built, D-2026-09-19-30):
 
 | direction | allowed |
 |---|---|
-| driver to vehicle | read state (cell, speed, position); neighbours through cells (leader here or in the next lane); commands: `set_target_speed`, `request_lane_change` |
-| vehicle to driver | `wake()` after a neighbour moved; read `tau` for the delayed release |
+| driver to vehicle | read state (cell, speed, fractional position, route, last lane-change time, `cfg`); neighbours through cells (leader here or in the next lane); commands: `set_target_speed`, `request_direction` |
+| vehicle to driver | `wake()` after a neighbour moved or freed a cell; `react_now()` after a speed-limit change; `accepts_gap(cell)`, `sees_blockage()`, `evaluate_direction()` when stopped at a blockage; read `tau` (delayed release), `action_interval` (retry wait when blocked), `lc_patience`, `merge_priority()` |
+
+As built (N4): `Vehicle(env, cfg, driver, origin_cell, destination)`; `HumanDriver(cfg, streams,
+traits)`; `AutonomousDriver(cfg, streams, controller)` registers itself; `VehicleFactory.build
+(autonomous, origin_cell, destination)` is the one construction path. Counters: the vehicle
+counts moves (lane changes, patience failures, missed exits), the driver counts decisions
+(slowdowns, car-following and speed evaluations, gap rejections); `lc_failures` in the results
+sums patience failures and gap rejections.
 
 A driver never writes a vehicle field. The reaction-time release stays in `Vehicle`, because it
 is the mechanism the paper describes; it reads tau from the driver.
 
 The type switches disappear: `vehicle.vtype == HDV` becomes the driver's class, `dlc_enabled` stays
-a driver config field (a parameter, not a type switch), `HDV` and `AV` classes go.
+a driver config field (a parameter, not a type switch), `HDV` and `AV` classes go; reporting
+code reads `vehicle.kind`.
 
 ## Not now
 

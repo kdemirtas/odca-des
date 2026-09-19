@@ -4,18 +4,15 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 import simpy
 
-from odca.entity.hdv import HDV
-from odca.entity.av import AV
-from odca.entity.av_controller import AVController
-from odca.entity.driver import TraitSampler
-from odca.entity.vehicle import Vehicle, VehicleType
+from odca.entity.vehicle import Vehicle
 from odca.infrastructure.freeway import Freeway
-from odca.params import AutonomousDriverConfig, HumanDriverConfig, SimConfig, VehicleConfig
+from odca.params import SimConfig
+from odca.simulation.factory import VehicleFactory
 
 logger = logging.getLogger(__name__)
 
@@ -32,97 +29,43 @@ class ODPair:
 class VehicleGenerator:
     """Generates the vehicles of one OD pair, Poisson arrivals at its rate (D-2026-09-19-26)."""
 
-    def __init__(
-        self,
-        env: simpy.Environment,
-        freeway: Freeway,
-        od: ODPair,
-        sim: SimConfig,
-        rng_gen: np.random.Generator,
-        av_controller: AVController,
-        # Per-source behavioral RNGs (shared across all vehicles)
-        rng_slowdown: Optional[np.random.Generator] = None,
-        rng_mlc: Optional[np.random.Generator] = None,
-        rng_dlc: Optional[np.random.Generator] = None,
-        traits: Optional[TraitSampler] = None,
-    ):
+    def __init__(self, env: simpy.Environment, freeway: Freeway, od: ODPair, sim: SimConfig,
+                 rng_gen: np.random.Generator, factory: VehicleFactory):
+        """A generator for one OD pair.
+
+        Args:
+            env: the SimPy environment.
+            freeway: the road, to find the origin and destination by name.
+            od: the pair and its rate.
+            sim: the run config (AV share, duration).
+            rng_gen: this pair's stream: arrival gaps and the AV draw.
+            factory: builds each vehicle with its driver.
+        """
         self.env = env
-        self.freeway = freeway
         self.od = od
-        self.hdv_vehicle: VehicleConfig = sim.hdv_vehicle
-        self.hdv_driver: HumanDriverConfig = sim.hdv_driver
-        self.av_vehicle: VehicleConfig = sim.av_vehicle
-        self.av_driver: AutonomousDriverConfig = sim.av_driver
         self.av_penetration = sim.av_penetration
         self.sim_duration = sim.sim_duration
-        self.rng_gen = rng_gen  # RNG for inter-arrival times and type selection
-        self.av_controller = av_controller
+        self.rng_gen = rng_gen
+        self.factory = factory
         self.origin_cell = freeway.origin(od.origin).cell
-        exit_to = freeway.destination(od.destination)
-        self.destination_cell, self.destination_lane = exit_to.cell_idx, exit_to.lane
-
-        # Per-source behavioral RNGs (shared across all vehicles)
-        self.rng_slowdown = rng_slowdown
-        self.rng_mlc = rng_mlc
-        self.rng_dlc = rng_dlc
-
-        self.traits = traits  # draws each human driver's own values (None: the means)
-
-        # Derived
+        self.destination = freeway.destination(od.destination)
         self.mean_interval = 3600.0 / od.flow_rate  # seconds between vehicles
 
-        # Tracking
         self.vehicles: List[Vehicle] = []
         self.num_generated = 0
 
-    def _create_vehicle(self) -> Vehicle:
-        """Create a single vehicle (AV or HDV)."""
-        origin = self.origin_cell
-        dest_cell, dest_lane = self.destination_cell, self.destination_lane
-
-        if self.rng_gen.random() < self.av_penetration:
-            veh = AV(
-                env=self.env,
-                rng_slowdown=self.rng_slowdown,
-                rng_mlc=self.rng_mlc,
-                rng_dlc=self.rng_dlc,
-                vehicle=self.av_vehicle, driver=self.av_driver,
-                origin_cell=origin,
-                destination_cell_idx=dest_cell,
-                destination_lane=dest_lane,
-            )
-        else:
-            # Sample per-driver parameters for HDVs
-            driver_params = (self.traits.driver_config(self.hdv_driver) if self.traits
-                             else self.hdv_driver)
-            veh = HDV(
-                env=self.env,
-                rng_slowdown=self.rng_slowdown,
-                rng_mlc=self.rng_mlc,
-                rng_dlc=self.rng_dlc,
-                vehicle=self.hdv_vehicle, driver=driver_params,
-                origin_cell=origin,
-                destination_cell_idx=dest_cell,
-                destination_lane=dest_lane,
-            )
-        return veh
-
     def run(self):
-        """SimPy process: generate vehicles at mean_interval spacing."""
+        """SimPy process: generate vehicles at exponential gaps until the run ends."""
         logger.debug("Generator started: %s -> %s, rate=%.0f veh/h",
                      self.od.origin, self.od.destination, self.od.flow_rate)
         while self.env.now < self.sim_duration:
-            # Exponential inter-arrival using numpy RNG
             interval = self.rng_gen.exponential(self.mean_interval)
             yield self.env.timeout(interval)
 
-            veh = self._create_vehicle()
+            autonomous = self.rng_gen.random() < self.av_penetration
+            veh = self.factory.build(autonomous, self.origin_cell, self.destination)
             self.vehicles.append(veh)
             self.num_generated += 1
-
-            # Register AVs with central controller
-            if veh.vtype == VehicleType.AV:
-                self.av_controller.register(veh)
 
             logger.debug(
                 "t=%.2f  Generated %s (#%d for %s→cell %d, lane %s)",

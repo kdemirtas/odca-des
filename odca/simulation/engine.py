@@ -10,12 +10,11 @@ import simpy
 
 from odca.infrastructure.freeway import Freeway
 from odca.infrastructure.incident import Incident
+from odca.simulation.factory import VehicleFactory
 from odca.simulation.generator import ODPair, VehicleGenerator
-from odca.entity.av import AV
-from odca.entity.hdv import HDV
-from odca.entity.vehicle import Vehicle, VehicleType
-from odca.entity.av_controller import AVController
-from odca.entity.driver import TraitSampler
+from odca.entity.vehicle import Vehicle
+from odca.entity.controller import AutonomousController
+from odca.entity.driver import DriverStreams, TraitSampler
 from odca.params import ConfigMixin, SimConfig
 from odca.rng import RNGRegistry
 
@@ -65,21 +64,13 @@ class Simulation(ConfigMixin):
         net = config.network
         self.freeway = Freeway(self.env, net)
 
-        # Central AV controller
-        self.av_controller = AVController(config.controller, self.env)
+        self.controller = AutonomousController(config.controller, self.env)
 
-        # RNG streams: one per source of randomness (shared across all vehicles)
-        # Runtime behavioral RNGs
-        rng_slowdown = self.rng_registry.spawn("slowdown")
-        rng_mlc = self.rng_registry.spawn("mlc")
-        rng_dlc = self.rng_registry.spawn("dlc")
-        # Per-driver heterogeneity RNGs (used at vehicle creation time)
+        # RNG streams, one per source of randomness, spawned in this fixed order: the
+        # decision streams, the trait streams, one per OD pair, then initial_vehicle_type
+        streams = DriverStreams.spawn(self.rng_registry)
         self.traits = TraitSampler.spawn(self.rng_registry)
-
-        # Store RNGs for seeding initial vehicles
-        self._rng_slowdown = rng_slowdown
-        self._rng_mlc = rng_mlc
-        self._rng_dlc = rng_dlc
+        self.factory = VehicleFactory(self.env, config, streams, self.traits, self.controller)
 
         # Vehicles placed at t=0 (initial condition)
         self._seeded_vehicles: List[Vehicle] = []
@@ -88,19 +79,8 @@ class Simulation(ConfigMixin):
         self.generators: List[VehicleGenerator] = []
         for i, od in enumerate(self._od_pairs(config)):
             rng_gen = self.rng_registry.spawn(f"generator_{od.origin}_{od.destination}_{i}")
-            gen = VehicleGenerator(
-                env=self.env,
-                freeway=self.freeway,
-                od=od,
-                sim=config,
-                rng_gen=rng_gen,
-                av_controller=self.av_controller,
-                rng_slowdown=rng_slowdown,
-                rng_mlc=rng_mlc,
-                rng_dlc=rng_dlc,
-                traits=self.traits,
-            )
-            self.generators.append(gen)
+            self.generators.append(
+                VehicleGenerator(self.env, self.freeway, od, config, rng_gen, self.factory))
 
     def _od_pairs(self, config: SimConfig) -> List[ODPair]:
         """The demand table as OD pairs, in table order, checked against the freeway.
@@ -129,7 +109,6 @@ class Simulation(ConfigMixin):
             destination: destination name for every placed vehicle, e.g. `end`.
         """
         exit_to = self.freeway.destination(destination)
-        destination_cell, destination_lane = exit_to.cell_idx, exit_to.lane
         num_lanes = self.cfg.network.num_lanes
         num_cells = self.cfg.network.num_cells
         # initial vehicles follow the AV share (D-2026-09-19-19); spawned last, after the
@@ -142,23 +121,8 @@ class Simulation(ConfigMixin):
                 cell = lane.cells[cell_idx]
                 if cell._blocked:
                     continue  # skip blocked cells (e.g. lane closure)
-                is_av = rng_vehicle_type.random() < self.cfg.av_penetration
-                vehicle_class = AV if is_av else HDV
-                vehicle_cfg = self.cfg.av_vehicle if is_av else self.cfg.hdv_vehicle
-                driver_cfg = (self.cfg.av_driver if is_av
-                              else self.traits.driver_config(self.cfg.hdv_driver))
-                veh = vehicle_class(
-                    env=self.env,
-                    rng_slowdown=self._rng_slowdown,
-                    rng_mlc=self._rng_mlc,
-                    rng_dlc=self._rng_dlc,
-                    vehicle=vehicle_cfg, driver=driver_cfg,
-                    origin_cell=cell,
-                    destination_cell_idx=destination_cell,
-                    destination_lane=destination_lane,
-                )
-                if is_av:
-                    self.av_controller.register(veh)
+                autonomous = rng_vehicle_type.random() < self.cfg.av_penetration
+                veh = self.factory.build(autonomous, cell, exit_to)
                 self._seeded_vehicles.append(veh)
                 self.env.process(veh.start())
 
@@ -169,8 +133,7 @@ class Simulation(ConfigMixin):
 
     def run(self) -> Dict:
         """Run the simulation and return results."""
-        # Start AV controller
-        self.env.process(self.av_controller.run())
+        self.env.process(self.controller.run())
 
         # Start all generators
         for gen in self.generators:
@@ -202,12 +165,13 @@ class Simulation(ConfigMixin):
         # Aggregate event counters across all vehicles
         counters = {
             "lane_changes": sum(v.count_lane_changes for v in all_vehicles),
-            "lc_failures": sum(v.count_lc_failures for v in all_vehicles),
-            "slowdowns": sum(v.count_slowdowns for v in all_vehicles),
-            "cf_evaluations": sum(v.count_cf_evaluations for v in all_vehicles),
-            "speed_evaluations": sum(v.count_speed_evaluations for v in all_vehicles),
+            "lc_failures": sum(v.count_lc_failures + v.driver.count_gap_rejections
+                               for v in all_vehicles),
+            "slowdowns": sum(v.driver.count_slowdowns for v in all_vehicles),
+            "cf_evaluations": sum(v.driver.count_cf_evaluations for v in all_vehicles),
+            "speed_evaluations": sum(v.driver.count_speed_evaluations for v in all_vehicles),
             "missed_exits": sum(v.count_missed_exits for v in all_vehicles),
-            "av_controller_updates": self.av_controller.num_updates,
+            "av_controller_updates": self.controller.num_updates,
             "simpy_events": self.env.events_processed,
         }
 

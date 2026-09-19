@@ -23,10 +23,10 @@ Modules, what each owns, and what it may import. A module not listed here does n
 | `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`; `mean_ci95` in `intervals.py`, the only interval code (D-2026-09-19-33) | entity (read-only), params | simulation, experiment |
 | `odca/baselines/` | NaSch | numpy | the rest of `odca` |
 | `odca/experiment/` | `RunRecord`, `run_once` (simulate, time, measure), per-seed JSON writer and strict reader (`records.py`), aggregation into the CSV schema below (`tables.py`) (D-2026-09-19-33) | simulation, analysis, params | viewer, any paper |
-| `odca/viewer/` | pygame playback, matplotlib animation; extra `[viewer]` | simulation, entity, params | experiment |
+| `odca/viewer/` | `snapshots.py` (trajectories indexed by time), `animation.py` (matplotlib animation, time-space diagram), `playback.py` (pygame); each takes a `SimulationResult`; extra `[viewer]` (D-2026-09-19-34) | simulation, entity, params | experiment |
 | `tests/` | unit tests; `tests/golden/<paper>/` scenario definitions and `fingerprint.json` per paper | everything in `odca` | a paper repo (fixtures are copied in, not imported) |
 
-Papers keep: parameter values (`config.py`), scenario definitions, figure scripts, diagnostics. They import `odca`; nothing in `odca` imports a paper. drift: `odca/viewer/` does not exist yet (N7).
+Papers keep: parameter values (`config.py`), scenario definitions, figure scripts, diagnostics. They import `odca`; nothing in `odca` imports a paper.
 
 ## Layout
 

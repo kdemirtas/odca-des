@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-19-34 | 2026-09-19 | Viewers live in `odca.viewer` and take a run result; the paper keeps two thin command-line scripts | ASSUMPTIONS A-2026-09-19-17, made unattended (orchestrate loop); implements paper-odca-des D-2026-09-19-9 | none |
 | D-2026-09-19-33 | 2026-09-19 | Experiment kit `odca.experiment` (run records, strict per-seed JSON, aggregation) and the one interval `odca.analysis.mean_ci95`; papers keep only what they measure | ASSUMPTIONS A-2026-09-19-16, made unattended (orchestrate loop); implements paper-odca-des D-2026-09-19-9 | none |
 | D-2026-09-19-32 | 2026-09-19 | `Simulation.run()` returns a `SimulationResult` (config, vehicles, generated count, `RunCounters`) instead of a dict | ASSUMPTIONS A-2026-09-19-15, made unattended (orchestrate loop) | none |
 | D-2026-09-19-31 | 2026-09-19 | A lane-change request is used up by the lane change it makes: one decision, one lane change | Kerem (fix every bug; manuscript tex:335 "initiating a mandatory lane change") | none |
@@ -34,6 +35,12 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-19-34: viewers in the package
+**What.** `odca.viewer.snapshots` (the one `VehicleSnapshot`, which both paper viewers had copied, and `reconstruct_grid`), `odca.viewer.animation` (`animate_result`, `plot_trajectories`) and `odca.viewer.playback` (`TrafficVisualizer.from_result`), behind the `[viewer]` extra. Each takes a `SimulationResult`, so the 7 to 11 parameter lists go. The paper's `visualize.py` and `animate.py` keep only their command-line options and the S1 run.
+**Evidence.** HANDOVER N7, paper-odca-des D-2026-09-19-9. Headless smoke run: a pygame frame, an animation GIF and a time-space diagram rendered from an S1 run; `tests/test_viewer.py` (grid, diagram, time window on both ends of a segment, a headless pygame frame). The `cell_range` option of the old diagram is not carried over (no caller). The window height used the removed `num_lanes` argument; fixed in the move. Signatures chosen unattended: ASSUMPTIONS A-2026-09-19-17.
+**Replaces.** nothing.
+**Cited by.** `odca/viewer/`.
 
 ## D-2026-09-19-33: the experiment kit
 **What.** `odca.experiment`: `RunRecord` (one run: label, AV share, seed, the two action intervals, stats, counters, and the paper's extra keys, written as today's per-seed JSON), `run_once(label, config, measure, prepare)` (build, prepare, run, measure; `wall_time_s` times the run alone, where `run_experiments.py` used to include building the simulation), `write_run` and `read_runs` (strict JSON through `numpy_default`; the same run twice raises), `aggregate`, `write_aggregate_csv` and `write_per_seed_csv` (today's schema and six-decimal format). `odca.analysis.intervals.mean_ci95` is the one 95% interval: Student t table to 30 degrees of freedom, 1.96 above, as the paper's copies did. The paper's runners write only per-seed JSONs; `aggregate_multiseed.py` is their only aggregator (paper-odca-des D-2026-09-19-3).

@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-19-33 | 2026-09-19 | Experiment kit `odca.experiment` (run records, strict per-seed JSON, aggregation) and the one interval `odca.analysis.mean_ci95`; papers keep only what they measure | ASSUMPTIONS A-2026-09-19-16, made unattended (orchestrate loop); implements paper-odca-des D-2026-09-19-9 | none |
 | D-2026-09-19-32 | 2026-09-19 | `Simulation.run()` returns a `SimulationResult` (config, vehicles, generated count, `RunCounters`) instead of a dict | ASSUMPTIONS A-2026-09-19-15, made unattended (orchestrate loop) | none |
 | D-2026-09-19-31 | 2026-09-19 | A lane-change request is used up by the lane change it makes: one decision, one lane change | Kerem (fix every bug; manuscript tex:335 "initiating a mandatory lane change") | none |
 | D-2026-09-19-30 | 2026-09-19 | Driver split as built: `Vehicle(env, cfg, driver, origin_cell, destination)`, `HumanDriver`, `AutonomousDriver` registering with `AutonomousController`, one `VehicleFactory`; the seven `Vehicle` constants become `VehicleConfig`/`DriverConfig` fields with the same defaults; the link contract widened to the calls the vehicle already made | ASSUMPTIONS A-2026-09-19-12 to -14, made unattended (orchestrate loop) | none |
@@ -33,6 +34,12 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-19-33: the experiment kit
+**What.** `odca.experiment`: `RunRecord` (one run: label, AV share, seed, the two action intervals, stats, counters, and the paper's extra keys, written as today's per-seed JSON), `run_once(label, config, measure, prepare)` (build, prepare, run, time the run, measure), `write_run` and `read_runs` (strict JSON through `numpy_default`; the same run twice raises), `aggregate`, `write_aggregate_csv` and `write_per_seed_csv` (today's schema and six-decimal format). `odca.analysis.intervals.mean_ci95` is the one 95% interval: Student t table to 30 degrees of freedom, 1.96 above, as the paper's copies did. The paper's runners write only per-seed JSONs; `aggregate_multiseed.py` is their only aggregator (paper-odca-des D-2026-09-19-3).
+**Evidence.** HANDOVER N6, paper-odca-des D-2026-09-19-9. The five CSVs rebuilt from the paper's 69 existing per-seed JSONs are byte-identical old against new; the rewired runners reproduce the golden stats and counters (S1, S4 and the four bottleneck runs, seed 1). Shape chosen unattended: ASSUMPTIONS A-2026-09-19-16.
+**Replaces.** nothing.
+**Cited by.** `odca/experiment/`, `odca/analysis/intervals.py`.
 
 ## D-2026-09-19-32: a typed run result
 **What.** `Simulation.run()` returns `SimulationResult(config, vehicles, num_generated, counters)` from `odca/simulation/result.py`; `completed_vehicles`, `num_completed` and `num_active_at_end` are derived properties, `config_yaml()` writes the validated config so a run can be repeated from its result. `RunCounters` is a frozen dataclass with the eight counters under their old key names, so `asdict(result.counters)` writes the same JSON as before. The result dict is gone; the golden scenarios and every paper runner read attributes.

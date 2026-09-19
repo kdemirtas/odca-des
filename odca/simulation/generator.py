@@ -86,11 +86,9 @@ class VehicleGenerator:
         else:
             dest_cell = self.od_flow.destination_cell
 
-        # Destination lane: 1 (rightmost) for off-ramps, entry lane for end
-        if dest_cell in self.freeway.offramp_cells:
-            dest_lane = 1
-        else:
-            dest_lane = self.entry_lane
+        # Off-ramp exits are reached from lane 1 (rightmost); the segment end is left
+        # from whichever lane the vehicle is in (D-2026-09-19-11)
+        dest_lane = 1 if dest_cell in self.freeway.offramp_cells else None
         return int(dest_cell), dest_lane
 
     def _sample_driver_params(self, params: VehicleParams) -> VehicleParams:
@@ -180,7 +178,7 @@ class VehicleGenerator:
                 self.av_controller.register(veh)
 
             logger.debug(
-                "t=%.2f  Generated %s (#%d for %s→cell %d, lane %d)",
+                "t=%.2f  Generated %s (#%d for %s→cell %d, lane %s)",
                 self.env.now, veh, self.num_generated,
                 self.od_flow.origin_id, veh.destination_cell_idx,
                 veh.destination_lane,

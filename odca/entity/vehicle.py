@@ -21,8 +21,9 @@ import simpy
 
 from odca.infrastructure.cell import Cell
 from odca.models.car_following import newell
-from odca.models.lane_changing.mandatory import mlc_probability
+from odca.models.lane_changing.mandatory import MLC_REFERENCE_CELLS, mlc_probability
 from odca.models.lane_changing.discretionary import dlc_probability
+from odca.models.lane_changing.rate import probability_over
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ class Vehicle:
         dlc_enabled: bool = True,
         origin_cell: Optional[Cell] = None,
         destination_cell_idx: Optional[int] = None,
-        destination_lane: int = 1,  # rightmost lane for off-ramp exits
+        destination_lane: Optional[int] = 1,  # None: exit from any lane (D-2026-09-19-11)
     ):
         self.id = Vehicle._id_counter
         Vehicle._id_counter += 1
@@ -114,6 +115,7 @@ class Vehicle:
         self.destination_cell_idx = destination_cell_idx
         self.destination_lane = destination_lane
         self.initial_distance: Optional[float] = None
+        self._route_start_idx: int = origin_cell.idx if origin_cell is not None else 0
 
         # State
         self.cell: Optional[Cell] = None
@@ -126,6 +128,9 @@ class Vehicle:
         self._driver_proc: Optional[simpy.Process] = None
         self._wake_event: Optional[simpy.Event] = None
         self._last_eval_time: float = -999.0
+        # exposure since the last direction evaluation: time for DLC, distance for MLC
+        self._last_direction_eval_time: Optional[float] = None
+        self._last_direction_eval_position: Optional[float] = None
 
         # Trajectory log: the T(x, n) output
         self.trajectory: List[TrajectoryRecord] = []
@@ -144,6 +149,8 @@ class Vehicle:
         self.count_lc_failures: int = 0
         self.count_slowdowns: int = 0
         self.count_cf_evaluations: int = 0
+        self.count_speed_evaluations: int = 0
+        self.count_missed_exits: int = 0
 
     # ------------------------------------------------------------------
     # Resource protocol
@@ -162,13 +169,35 @@ class Vehicle:
         raise RuntimeError(f"Vehicle {self.id} does not hold {cell}")
 
     def _delayed_release(self, cell: Cell):
-        """Release a cell after tau seconds (headway enforcement)."""
+        """Release a cell's resource tau seconds after the next cell is taken (headway).
+
+        Releases the lock only; the cell's position label changes in _on_cell_change.
+        """
         def _release_process():
             yield self.env.timeout(self.tau)
             self._release(cell)
-            cell.vehicle = None
             self._notify_neighbors_on_release(cell)
         self.env.process(_release_process())
+
+    def _on_cell_change(self, new_cell: Optional[Cell]):
+        """The one place a vehicle's position changes (D-2026-09-19-12).
+
+        `self.cell` and `cell.vehicle` are both position: they change together, at arrival in
+        a cell, or at leaving the network (new_cell None). The resource lock is separate
+        (`cell.is_occupied`) and follows delayed release.
+
+        Args:
+            new_cell: the cell just arrived in, or None when the vehicle leaves the network.
+        """
+        old_cell = self.cell
+        if old_cell is not None and old_cell.vehicle is self:
+            old_cell.vehicle = None
+        self.cell = new_cell
+        if new_cell is None:
+            return
+        new_cell.vehicle = self
+        self._cell_entry_time = self.env.now
+        self._record_trajectory()
 
     # ------------------------------------------------------------------
     # Movement process
@@ -180,12 +209,10 @@ class Vehicle:
         req = self._request(self.origin_cell)
         yield req
         req._vehicle = self
-        self.cell = self.origin_cell
-        self._cell_entry_time = self.env.now
-        self.cell.vehicle = self
         self.speed = self.v_max
         self.active = True
         self.time_entered = self.env.now
+        self._on_cell_change(self.origin_cell)
 
         if self.destination_cell_idx is not None and self.origin_cell is not None:
             self.initial_distance = float(
@@ -196,8 +223,6 @@ class Vehicle:
             "t=%.2f  %s entered at %s, dest_cell=%s",
             self.env.now, self, self.origin_cell, self.destination_cell_idx,
         )
-
-        self._record_trajectory()
 
         # Start concurrent driver process (AVs are driven externally by controller)
         if self.vtype == VehicleType.HDV:
@@ -212,20 +237,45 @@ class Vehicle:
             if self._at_destination():
                 yield self.env.process(self._exit())
                 return
+            if self._passed_exit():
+                self._retarget_missed_exit()
 
             target = self._resolve_next_target()
             if target is None:
+                if self.cell.next is None:  # end of the road: the only other way out
+                    yield self.env.process(self._exit())
+                    return
                 yield self.env.timeout(self.action_interval)
                 continue
 
             yield self.env.process(self._advance_to(target))
+
+    def _passed_exit(self) -> bool:
+        """Whether the vehicle drove past its off-ramp without reaching the exit lane."""
+        return (
+            self.destination_lane is not None
+            and self.destination_cell_idx is not None
+            and self.cell.idx > self.destination_cell_idx
+        )
+
+    def _retarget_missed_exit(self):
+        """Take the next off-ramp downstream, or the segment end from any lane (D-2026-09-19-17)."""
+        freeway = self.cell.lane.freeway
+        later_ramps = [c for c in freeway.offramp_cells if c > self.cell.idx]
+        if later_ramps:
+            self.destination_cell_idx = min(later_ramps)
+        else:
+            self.destination_cell_idx = freeway.num_cells
+            self.destination_lane = None
+        self._route_start_idx = self.cell.idx
+        self.count_missed_exits += 1
 
     def _at_destination(self) -> bool:
         """Check if vehicle has reached its destination cell and lane."""
         return (
             self.destination_cell_idx is not None
             and self.cell.idx >= self.destination_cell_idx - 1
-            and self.cell.lane.idx == self.destination_lane
+            and (self.destination_lane is None or self.cell.lane.idx == self.destination_lane)
         )
 
     def _resolve_next_target(self) -> Optional[Cell]:
@@ -239,15 +289,7 @@ class Vehicle:
 
         target = self._get_target_cell()
         if target is None:
-            # End of lane — exit if near destination
-            if (
-                self.destination_cell_idx is None
-                or self.cell.idx >= self.destination_cell_idx - 2
-            ):
-                # Signal caller to exit (handled via _at_destination on next iter)
-                self.env.process(self._exit())
-                return None
-            return None
+            return None  # end of the road: the movement loop exits
 
         if target.blocked:
             logger.debug(
@@ -276,7 +318,7 @@ class Vehicle:
                     "t=%.2f  %s stopped but attempting lateral move → %s",
                     self.env.now, self, lateral,
                 )
-                self.speed = max(0.5, self.d)
+                self.speed = self._ESCAPE_SPEED
                 return lateral
         return None
 
@@ -286,6 +328,7 @@ class Vehicle:
     _PROGRESSIVE_SPEED_THRESHOLD = 1.0  # ~27 km/h at 7.5m cells
     _TRAVERSAL_DT = 0.25               # sub-step duration (s)
     _LC_PATIENCE = 3.0                 # max seconds to wait for a lateral cell (s)
+    _ESCAPE_SPEED = 1.0                # cells/s for a stopped vehicle moving sideways
     _MIN_REEVAL_RATIO = 0.5  # fraction of tau used as min re-eval interval
 
     def _advance_to(self, target: Cell):
@@ -312,9 +355,11 @@ class Vehicle:
             # Patience timeout: cancel LC if gap doesn't open
             result = yield req | self.env.timeout(self._LC_PATIENCE)
             if req not in result:
-                # Timed out — remove pending request from queue
-                if req in target.resource.queue:
-                    target.resource.queue.remove(req)
+                if req.triggered:
+                    # granted in the same instant the patience ran out: give the cell back
+                    target.resource.release(req)
+                else:
+                    req.cancel()
                 self.count_lc_failures += 1
                 self.desired_direction = Direction.FORWARD
                 logger.debug(
@@ -326,6 +371,10 @@ class Vehicle:
             yield req  # Forward moves wait unconditionally
 
         req._vehicle = self
+        if is_lateral:
+            # a lane change counts, and its cooldown starts, once it happens (D-2026-09-19-18)
+            self.last_lc_time = self.env.now
+            self.count_lane_changes += 1
 
         old_cell = self.cell
         self._delayed_release(old_cell)
@@ -349,10 +398,7 @@ class Vehicle:
         old_limit = old_cell.speed_limit if old_cell else float("inf")
         new_limit = target.speed_limit
 
-        self.cell = target
-        self._cell_entry_time = self.env.now
-        target.vehicle = self
-        self._record_trajectory()
+        self._on_cell_change(target)
 
         # Notify nearby vehicles of this movement
         self._notify_neighbors(old_cell, is_lateral)
@@ -440,8 +486,6 @@ class Vehicle:
         elif self.desired_direction == Direction.LEFT:
             target = self.cell.left_next
             if target and not target.blocked and self._check_lc_safety(target):
-                self.last_lc_time = self.env.now
-                self.count_lane_changes += 1
                 logger.debug(
                     "t=%.2f  %s lane change LEFT → %s", self.env.now, self, target,
                 )
@@ -450,8 +494,6 @@ class Vehicle:
         elif self.desired_direction == Direction.RIGHT:
             target = self.cell.right_next
             if target and not target.blocked and self._check_lc_safety(target):
-                self.last_lc_time = self.env.now
-                self.count_lane_changes += 1
                 logger.debug(
                     "t=%.2f  %s lane change RIGHT → %s", self.env.now, self, target,
                 )
@@ -482,6 +524,12 @@ class Vehicle:
         Near a blockage, front gap is reduced to standstill spacing
         (urgent merge).
         """
+        if target.vehicle is not None or target.is_occupied:
+            # find_leader and find_follower start one cell away, so the target's own
+            # occupant (position) and lock holder are checked here (D-2026-09-19-13)
+            self.count_lc_failures += 1
+            return False
+
         leader = target.find_leader(self.look_ahead)
         follower = target.find_follower(self.look_ahead)
 
@@ -530,8 +578,7 @@ class Vehicle:
         # Hold cell for tau seconds — enforces outflow capacity at boundary
         yield self.env.timeout(self.tau)
         self._release(self.cell)
-        self.cell.vehicle = None
-        self.cell = None
+        self._on_cell_change(None)
 
     # ------------------------------------------------------------------
     # Driver process (concurrent, decoupled from movement)
@@ -588,6 +635,7 @@ class Vehicle:
         """
         if self.cell is None:
             return
+        self.count_speed_evaluations += 1
 
         v_max = self._effective_v_max()
 
@@ -679,10 +727,28 @@ class Vehicle:
             )
         self.speed = base_speed
 
+    def _direction_exposure(self):
+        """Seconds and cells since the previous direction evaluation (0, 0 on the first).
+
+        The lane-change curves give a probability per 5.2 cells driven (MLC) or per second
+        (DLC), so each evaluation converts them over the exposure since the last one; how
+        often a vehicle evaluates no longer changes how often it changes lanes (D-2026-09-19-22).
+        """
+        now, position = self.env.now, self.fractional_position
+        if self._last_direction_eval_time is None:
+            elapsed, driven = 0.0, 0.0
+        else:
+            elapsed = now - self._last_direction_eval_time
+            driven = max(0.0, position - self._last_direction_eval_position)
+        self._last_direction_eval_time, self._last_direction_eval_position = now, position
+        return elapsed, driven
+
     def _evaluate_direction(self):
         """Determine desired direction: MLC, DLC, or forward."""
         if self.cell is None:
             return
+        elapsed, driven = self._direction_exposure()
+        mlc_exposure = driven / MLC_REFERENCE_CELLS
 
         # Blockage ahead — forced MLC (bypass cooldown)
         # Use extended scan range (advance warning visibility)
@@ -693,37 +759,37 @@ class Vehicle:
             # +2 lane changes on top of any destination-driven need.
             num_lc = self._lane_changes_to_destination() + 2
             r = blockage_dist / scan  # 1.0 = far, 0.0 = imminent
-            p = mlc_probability(r, num_lc, self.mlc_k, self.mlc_r0)
+            p = probability_over(mlc_probability(r, num_lc, self.mlc_k, self.mlc_r0), mlc_exposure)
             if self.rng_mlc.random() < p:
                 self.desired_direction = self._direction_away_from_blockage()
                 return
-
-        # Cooldown check
-        if self.env.now - self.last_lc_time < self.dlc_cooldown:
-            self.desired_direction = Direction.FORWARD
-            return
 
         # MLC: do we need to reach the exit lane?
         num_lc_needed = self._lane_changes_to_destination()
         if num_lc_needed > 0:
             r = self._remaining_distance_ratio()
-            p = mlc_probability(r, num_lc_needed, self.mlc_k, self.mlc_r0)
+            p = probability_over(mlc_probability(r, num_lc_needed, self.mlc_k, self.mlc_r0),
+                                 mlc_exposure)
             if self.rng_mlc.random() < p:
                 self.desired_direction = self._direction_toward_destination()
                 return
 
-        # DLC: speed incentive (skip for centrally controlled vehicles)
-        if self.dlc_enabled:
-            self._evaluate_dlc()
+        # DLC: speed incentive (skip for centrally controlled vehicles); the cooldown
+        # applies to discretionary changes only (manuscript tex:352, D-2026-09-19-18)
+        if self.dlc_enabled and self.env.now - self.last_lc_time >= self.dlc_cooldown:
+            self._evaluate_dlc(elapsed)
         else:
             self.desired_direction = Direction.FORWARD
 
-    def _evaluate_dlc(self):
+    def _evaluate_dlc(self, elapsed: float):
         """Check if a discretionary lane change is beneficial.
 
         Suppresses DLC toward a lane that has a downstream blockage to
         prevent unrealistic congestion spillover: vehicles should not
         voluntarily move into a lane that feeds into an incident.
+
+        Args:
+            elapsed: seconds since the previous direction evaluation (DLC exposure).
         """
         current_speed = self.speed
         scan = self.look_ahead * self._BLOCKAGE_SCAN_MULT
@@ -734,7 +800,8 @@ class Vehicle:
             if self.cell.left.find_blockage(scan) is None:
                 left_leader = self.cell.left.find_leader(self.look_ahead)
                 left_speed = left_leader.speed if left_leader else self.v_max
-                p_left = dlc_probability(left_speed, current_speed, self.dlc_k, self.dlc_v0)
+                p_left = probability_over(
+                    dlc_probability(left_speed, current_speed, self.dlc_k, self.dlc_v0), elapsed)
                 if self.rng_dlc.random() < p_left:
                     self.desired_direction = Direction.LEFT
                     return
@@ -744,7 +811,8 @@ class Vehicle:
             if self.cell.right.find_blockage(scan) is None:
                 right_leader = self.cell.right.find_leader(self.look_ahead)
                 right_speed = right_leader.speed if right_leader else self.v_max
-                p_right = dlc_probability(right_speed, current_speed, self.dlc_k, self.dlc_v0)
+                p_right = probability_over(
+                    dlc_probability(right_speed, current_speed, self.dlc_k, self.dlc_v0), elapsed)
                 if self.rng_dlc.random() < p_right:
                     self.desired_direction = Direction.RIGHT
                     return
@@ -753,7 +821,7 @@ class Vehicle:
 
     def _lane_changes_to_destination(self) -> int:
         """Number of lane changes needed to reach destination lane."""
-        if self.cell is None or self.destination_cell_idx is None:
+        if self.cell is None or self.destination_cell_idx is None or self.destination_lane is None:
             return 0
         return abs(self.cell.lane.idx - self.destination_lane)
 
@@ -766,12 +834,15 @@ class Vehicle:
             or self.initial_distance <= 0
         ):
             return 1.0
+        leg_length = self.destination_cell_idx - self._route_start_idx
+        if leg_length <= 0:
+            return 1.0
         remaining = max(0, self.destination_cell_idx - self.cell.idx)
-        return min(1.0, remaining / self.initial_distance)
+        return min(1.0, remaining / leg_length)
 
     def _direction_toward_destination(self) -> Direction:
         """Which direction to go to approach destination lane."""
-        if self.cell is None:
+        if self.cell is None or self.destination_lane is None:
             return Direction.FORWARD
         current_lane = self.cell.lane.idx
         if self.destination_lane < current_lane:

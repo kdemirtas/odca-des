@@ -33,7 +33,12 @@ class AVController:
         self.num_updates = 0
 
     def register(self, vehicle: Vehicle):
-        """Register an AV to be managed by this controller."""
+        """Register an AV to be managed by this controller.
+
+        An AV decides at the controller's rate, so a blocked AV also retries its move every
+        controller_dt, not at the 0.5 s action interval of its parameters (D-2026-09-19-19).
+        """
+        vehicle.action_interval = self.controller_dt
         self._vehicles.append(vehicle)
 
     @property

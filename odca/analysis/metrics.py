@@ -98,20 +98,18 @@ def travel_time(vehicle: Vehicle) -> Optional[float]:
     return None
 
 
-def free_flow_travel_time(vehicle: Vehicle) -> Optional[float]:
-    """Theoretical free-flow travel time."""
-    if vehicle.initial_distance is not None and vehicle.v_max > 0:
-        return vehicle.initial_distance / vehicle.v_max
-    return None
-
-
 def delay(vehicle: Vehicle) -> Optional[float]:
-    """Delay = actual travel time - free flow travel time."""
-    tt = travel_time(vehicle)
-    fftt = free_flow_travel_time(vehicle)
-    if tt is not None and fftt is not None:
-        return max(0.0, tt - fftt)
-    return None
+    """Per-cell delay: sum over cells of max(0, T_arr(c+1) - T_arr(c) - l / v_f).
+
+    T_arr are the arrival times in the trajectory, l is one cell and v_f the vehicle's
+    maximum speed; only cells crossed slower than free flow add delay (D-2026-09-19-15).
+    """
+    if vehicle.time_exited is None or vehicle.v_max <= 0:
+        return None
+    free_flow_cell_time = 1.0 / vehicle.v_max
+    traj = vehicle.trajectory
+    return sum(max(0.0, traj[j + 1].time - traj[j].time - free_flow_cell_time)
+               for j in range(len(traj) - 1))
 
 
 def cell_speeds(vehicle: Vehicle) -> List[float]:
@@ -150,7 +148,7 @@ def passage_time_flow(
 
     Uses passage-time data to compute:
       q = N_pass / dt
-      v_bar = mean(cell_speed for each passing vehicle)
+      v_bar = harmonic mean of the passing vehicles' cell speeds (space-mean speed)
       k = q / v_bar
 
     Returns:
@@ -182,7 +180,9 @@ def passage_time_flow(
         n = len(interval_passages)
         q = n / time_interval
         if n > 0:
-            v_bar = sum(s for _, s in interval_passages) / n
+            # space-mean speed (harmonic mean of spot speeds), so k = q / v holds
+            inverse_speeds = [1.0 / s for _, s in interval_passages if s > 0]
+            v_bar = len(inverse_speeds) / sum(inverse_speeds) if inverse_speeds else 0.0
             k = q / v_bar if v_bar > 0 else 0.0
         else:
             v_bar = 0.0
@@ -198,11 +198,15 @@ def summary_statistics(
     warmup: float = 300.0,
     sim_duration: float = 3600.0,
 ) -> Dict:
-    """Compute aggregate metrics for completed vehicles after warmup."""
+    """Aggregate metrics over the vehicles that exit during the measurement period.
+
+    The measurement period is [warmup, sim_duration]; a vehicle counts when it exits in it,
+    whenever it entered (D-2026-09-19-14).
+    """
     completed = [
         v for v in vehicles
         if v.time_exited is not None and v.time_entered is not None
-        and v.time_entered >= warmup
+        and warmup <= v.time_exited <= sim_duration
     ]
 
     if not completed:
@@ -220,9 +224,9 @@ def summary_statistics(
 
     lc_per_km = []
     for v, lc in zip(completed, lc_counts):
-        if v.initial_distance and v.initial_distance > 0:
-            dist_km = v.initial_distance * CELL_LENGTH_M / 1000.0
-            lc_per_km.append(lc / dist_km)
+        cells_driven = v.trajectory[-1].cell_idx - v.trajectory[0].cell_idx
+        if cells_driven > 0:  # distance actually driven, missed exits included (D-2026-09-19-20)
+            lc_per_km.append(lc / (cells_driven * CELL_LENGTH_M / 1000.0))
 
     delayed_20 = sum(1 for d in delays if d > 20.0)
     observation_period = sim_duration - warmup

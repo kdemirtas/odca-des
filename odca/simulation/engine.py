@@ -12,12 +12,30 @@ import numpy as np
 from config import SimConfig, VehicleParams
 from odca.infrastructure.freeway import Freeway
 from odca.simulation.generator import VehicleGenerator
+from odca.entity.av import AV
 from odca.entity.hdv import HDV
 from odca.entity.vehicle import Vehicle, VehicleType
 from odca.entity.av_controller import AVController
 from odca.rng import RNGRegistry
 
 logger = logging.getLogger(__name__)
+
+
+class CountingEnvironment(simpy.Environment):
+    """A SimPy environment that counts the events it processes.
+
+    `events_processed` is the paper's event count (D-2026-09-19-20).
+    """
+
+    def __init__(self):
+        """Start with no processed events."""
+        super().__init__()
+        self.events_processed = 0
+
+    def step(self):
+        """Process the next event and count it."""
+        self.events_processed += 1
+        super().step()
 
 
 class Simulation:
@@ -31,7 +49,7 @@ class Simulation:
         Vehicle._id_counter = 0
 
         # Create SimPy environment
-        self.env = simpy.Environment()
+        self.env = CountingEnvironment()
 
         # Build freeway
         net = config.network
@@ -147,6 +165,9 @@ class Simulation:
         """
         num_lanes = self.config.network.num_lanes
         num_cells = self.config.network.num_cells
+        # initial vehicles follow the AV share (D-2026-09-19-19); spawned last, after the
+        # generator streams, so the earlier streams keep their seeds
+        rng_vehicle_type = self.rng_registry.spawn("initial_vehicle_type")
 
         for lane_idx in range(1, num_lanes + 1):
             lane = self.freeway.lane(lane_idx)
@@ -154,17 +175,22 @@ class Simulation:
                 cell = lane.cells[cell_idx]
                 if cell._blocked:
                     continue  # skip blocked cells (e.g. lane closure)
-                driver_params = self._sample_driver_params(self.config.hdv_params)
-                veh = HDV(
+                is_av = rng_vehicle_type.random() < self.config.av_penetration
+                vehicle_class = AV if is_av else HDV
+                params = (self.config.av_params if is_av
+                          else self._sample_driver_params(self.config.hdv_params))
+                veh = vehicle_class(
                     env=self.env,
                     rng_slowdown=self._rng_slowdown,
                     rng_mlc=self._rng_mlc,
                     rng_dlc=self._rng_dlc,
-                    params=driver_params,
+                    params=params,
                     origin_cell=cell,
                     destination_cell_idx=destination_cell_idx,
-                    destination_lane=lane_idx,
+                    destination_lane=None,  # segment end: any lane (D-2026-09-19-11)
                 )
+                if is_av:
+                    self.av_controller.register(veh)
                 self._seeded_vehicles.append(veh)
                 self.env.process(veh.start())
 
@@ -209,7 +235,10 @@ class Simulation:
             "lc_failures": sum(v.count_lc_failures for v in all_vehicles),
             "slowdowns": sum(v.count_slowdowns for v in all_vehicles),
             "cf_evaluations": sum(v.count_cf_evaluations for v in all_vehicles),
+            "speed_evaluations": sum(v.count_speed_evaluations for v in all_vehicles),
+            "missed_exits": sum(v.count_missed_exits for v in all_vehicles),
             "av_controller_updates": self.av_controller.num_updates,
+            "simpy_events": self.env.events_processed,
         }
 
         results = {

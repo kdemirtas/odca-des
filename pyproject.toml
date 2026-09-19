@@ -1,0 +1,29 @@
+[project]
+name = "odca-des"
+version = "0.1.0"
+description = "ODCA-DES: discrete-event traffic simulation on object-driven cellular automata"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Kerem Demirtas" }]
+requires-python = ">=3.10"
+dependencies = [
+    "simpy>=4.1",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+viewer = ["matplotlib>=3.8", "pygame>=2.5"]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-xdist>=3.6"]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["odca"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,22 @@
+# S1-S4 freeway: 800 cells x 7.5 m = 6 km, 4 lanes (lane 1 the rightmost), two on-ramps and
+# three off-ramps, all on lane 1 (D-2026-09-19-26).
+num_lanes: 4
+num_cells: 800
+speed_limit: 5.2        # cells/s
+
+origins:                # where vehicles enter: lane and cell
+  mainline_lane_1: {lane: 1, cell: 0}
+  mainline_lane_2: {lane: 2, cell: 0}
+  mainline_lane_3: {lane: 3, cell: 0}
+  mainline_lane_4: {lane: 4, cell: 0}
+  onramp_1: {lane: 1, cell: 100}
+  onramp_2: {lane: 1, cell: 400}
+
+destinations:           # where vehicles leave: past cell `cell - 1` of `lane`
+  offramp_1: {cell: 300, lane: 1}
+  offramp_2: {cell: 550, lane: 1}
+  offramp_3: {cell: 750, lane: 1}
+  end_lane_1: {cell: 800, lane: 1}
+  end_lane_2: {cell: 800, lane: 2}
+  end_lane_3: {cell: 800, lane: 3}
+  end_lane_4: {cell: 800, lane: 4}

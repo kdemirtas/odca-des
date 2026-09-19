@@ -14,10 +14,10 @@ Modules, what each owns, and what it may import. A module not listed here does n
 
 | Module | Owns | May import | Never imports |
 |---|---|---|---|
-| `odca/params.py` | `ConfigMixin`; every config schema (`VehicleConfig`, `HumanDriverConfig`, `AutonomousDriverConfig`, `ControllerConfig`, `NetworkConfig`, `ODFlow`, `SimConfig`); `CELL_LENGTH_M` (D-2026-09-19-23) | stdlib, omegaconf | any other `odca` module, any paper |
+| `odca/params.py`, `odca/configs/*.yaml` | `ConfigMixin`, `validate` (YAML with file references, `odca://` defaults, `_base_` overrides, `model` picks a family member); every config schema; `CELL_LENGTH_M`; the published vehicle, driver and controller defaults as YAML (D-2026-09-19-23) | stdlib, omegaconf | any other `odca` module, any paper |
 | `odca/rng.py` | `RNGRegistry`: one `SeedSequence` stream per source | numpy | any other `odca` module |
 | `odca/models/` | Newell, MLC and DLC probabilities; pure functions | stdlib | simpy, any `odca` module |
-| `odca/infrastructure/` | `Cell`, `Lane`, `Freeway` | simpy | entity, simulation |
+| `odca/infrastructure/` | `Cell` and its endpoint subclasses `OriginCell`, `DestinationCell`; `Lane`; `Freeway` with its named `Origin`s and `Destination`s; `Incident` (D-2026-09-19-26 to -28) | simpy, params | entity, simulation |
 | `odca/entity/` | `Vehicle` (physical: cell label, lock, movement, trajectory), `Driver`, `HumanDriver`, `AutonomousDriver`, `AutonomousController`, `DriverTraits` and their sampler, `TrajectoryRecord` (D-2026-09-19-24) | infrastructure, models, params | simulation, analysis, experiment |
 | `odca/simulation/` | `Simulation`, `VehicleGenerator`, `SimulationResult`, RNG stream order | entity, infrastructure, rng, params | analysis, experiment, viewer |
 | `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`, `mean_ci95` (the only interval code) | entity (read-only), params | simulation, experiment |
@@ -26,7 +26,7 @@ Modules, what each owns, and what it may import. A module not listed here does n
 | `odca/viewer/` | pygame playback, matplotlib animation; extra `[viewer]` | simulation, entity, params | experiment |
 | `tests/` | unit tests; `tests/golden/<paper>/` scenario definitions and `fingerprint.json` per paper | everything in `odca` | a paper repo (fixtures are copied in, not imported) |
 
-Papers keep: parameter values (`config.py`), scenario definitions, figure scripts, diagnostics. They import `odca`; nothing in `odca` imports a paper. drift: `odca/params.py`, `odca/experiment/`, `odca/viewer/` do not exist yet, and the core still imports the paper's `config` (N2, N6, N7); `Driver` is still inside `Vehicle`, with `HDV`/`AV` subclasses and the `vtype`/`dlc_enabled` switches (N4).
+Papers keep: parameter values (`config.py`), scenario definitions, figure scripts, diagnostics. They import `odca`; nothing in `odca` imports a paper. drift: `odca/experiment/`, `odca/viewer/` do not exist yet (N6, N7); `Driver` is still inside `Vehicle`, with `HDV`/`AV` subclasses and the `vtype`/`dlc_enabled` switches (N4).
 
 ## Layout
 
@@ -51,10 +51,12 @@ fields.
 
 | Type | Meaning | Defined in |
 |---|---|---|
-| `VehicleConfig`, `HumanDriverConfig`, `AutonomousDriverConfig`, `ControllerConfig` | one class's parameters each, population values (means and spreads for humans); validated by omegaconf once per run, frozen dataclasses after | `odca/params.py`. drift: today one `VehicleParams` in the paper's `config.py`, unpacked into a 24-parameter `Vehicle.__init__` |
+| `VehicleConfig`, `HumanDriverConfig`, `AutonomousDriverConfig`, `ControllerConfig` | one class's parameters each, population values (means and spreads for humans); validated by omegaconf once per run, frozen dataclasses after | `odca/params.py`. Lane-change models are a family: `BaseLaneChangeConfig` (gaps, cooldown), `LogisticLaneChangeConfig`. drift: `HDV`/`AV` still unpack them into a 24-parameter `Vehicle.__init__` (N4) |
 | `DriverTraits` | one driver's sampled values (tau, action interval, slowdown probability), drawn once at creation | `odca/entity/driver.py` (planned, N3) |
-| `SimConfig`, `NetworkConfig`, `ODFlow` | one run: geometry, demand, AV penetration, seed, duration, warm-up, numerics (traversal sub-step) | `odca/params.py` (today `config.py`) |
+| `SimConfig`, `NetworkConfig`, `ODFlow`, `Destination` | one run: geometry, demand, the two vehicle types, AV penetration, seed, duration, warm-up; values come from the paper's YAML | `odca/params.py`. drift: the traversal sub-step is still a `Vehicle` constant (N4) |
 | `Cell`, `Lane`, `Freeway` | the spatial resources | `odca/infrastructure/` |
+| `Origin`, `Destination` (with `OriginCell`, `DestinationCell`) | named places where trips start and end, declared in the network config; an endpoint cell is transparent unless given a speed limit, which meters inflow or throttles outflow | `odca/infrastructure/` (D-2026-09-19-26, -27) |
+| demand table, `IncidentConfig` | veh/h per (origin, destination) name pair, one generator per pair; incidents block or slow cells for a time, then restore them | `odca/params.py`, `odca/infrastructure/incident.py` (D-2026-09-19-26, -28) |
 | `Vehicle` | one vehicle's physical side: position label, cell lock with delayed release (reads tau from its driver), movement, exit, trajectory | `odca/entity/vehicle.py` |
 | `Driver` (`HumanDriver`, `AutonomousDriver`) | the decisions: target speed, direction, lane-change curves, gap acceptance, exposure since the last decision. `HumanDriver` runs its own SimPy process; `AutonomousDriver` is called by an `AutonomousController` | `odca/entity/driver.py` (planned, N4) |
 | `TrajectoryRecord` | one T(x, n) passage record | `odca/entity/vehicle.py` |

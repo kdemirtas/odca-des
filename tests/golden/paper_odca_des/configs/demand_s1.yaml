@@ -1,0 +1,49 @@
+# S1-S4 demand, veh/h per (origin, destination) pair (D-2026-09-19-26).
+# Mainline 6000 veh/h (1500 per lane), two on-ramps at 500 veh/h. Off-ramps at cells 300, 550, 750
+# (left from lane 1); the end-of-segment traffic of each origin is spread evenly over the four
+# lane ends, so vehicles cross lanes to reach them (lane 1 is the rightmost).
+mainline_lane_1:
+  offramp_1: 300.0
+  offramp_2: 375.0
+  offramp_3: 225.0
+  end_lane_1: 150.0
+  end_lane_2: 150.0
+  end_lane_3: 150.0
+  end_lane_4: 150.0
+mainline_lane_2:
+  offramp_1: 150.0
+  offramp_2: 225.0
+  offramp_3: 150.0
+  end_lane_1: 243.75
+  end_lane_2: 243.75
+  end_lane_3: 243.75
+  end_lane_4: 243.75
+mainline_lane_3:
+  offramp_1: 75.0
+  offramp_2: 150.0
+  offramp_3: 75.0
+  end_lane_1: 300.0
+  end_lane_2: 300.0
+  end_lane_3: 300.0
+  end_lane_4: 300.0
+mainline_lane_4:
+  offramp_1: 30.0
+  offramp_2: 75.0
+  offramp_3: 45.0
+  end_lane_1: 337.5
+  end_lane_2: 337.5
+  end_lane_3: 337.5
+  end_lane_4: 337.5
+onramp_1:
+  offramp_2: 250.0
+  offramp_3: 100.0
+  end_lane_1: 37.5
+  end_lane_2: 37.5
+  end_lane_3: 37.5
+  end_lane_4: 37.5
+onramp_2:
+  offramp_3: 150.0
+  end_lane_1: 87.5
+  end_lane_2: 87.5
+  end_lane_3: 87.5
+  end_lane_4: 87.5

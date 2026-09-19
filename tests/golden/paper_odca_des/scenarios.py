@@ -5,7 +5,8 @@ Copied from paper-odca-des `run_experiments.run_single` and `run_bottleneck.run_
 `fingerprint.json` proves the package reproduces that paper's runs (D-2026-09-19-8).
 """
 
-from config import HDV_PARAMS, NetworkConfig, ODFlow, SimConfig
+from config import HDV_VEHICLE, sim_config
+from odca.params import NetworkConfig
 from odca.analysis.metrics import summary_statistics
 from odca.simulation.engine import Simulation
 
@@ -38,33 +39,27 @@ def _stats(results, config, av_penetration, seed):
                                sim_duration=config.sim_duration)
     stats["av_penetration"] = av_penetration
     stats["seed"] = seed
-    stats["hdv_action_interval"] = config.hdv_params.action_interval
+    stats["hdv_action_interval"] = config.hdv_driver.action_interval
     return stats, results.get("counters", {})
 
 
 def run_mixed(av_penetration, seed):
-    config = SimConfig(av_penetration=av_penetration, seed=seed)
-    config.sim_duration = 300.0
-    config.warmup = 30.0
+    config = sim_config(av_penetration=av_penetration, seed=seed, sim_duration=300.0, warmup=30.0)
     return _stats(Simulation(config).run(), config, av_penetration, seed)
 
 
 def run_bottleneck(av_penetration, seed):
-    config = SimConfig(
-        network=NetworkConfig(num_lanes=BOTTLENECK_LANES, num_cells=BOTTLENECK_CELLS,
-                              speed_limit=HDV_PARAMS.v_max, onramp_cells=[], offramp_cells=[]),
+    per_lane_flow = BOTTLENECK_MAINLINE_FLOW / BOTTLENECK_LANES
+    config = sim_config(
+        network=NetworkConfig.corridor(BOTTLENECK_LANES, BOTTLENECK_CELLS, HDV_VEHICLE.v_max),
+        demand={f"mainline_lane_{lane}": {"end": per_lane_flow}
+                for lane in range(1, BOTTLENECK_LANES + 1)},
         av_penetration=av_penetration, sim_duration=600.0, warmup=60.0, seed=seed,
     )
-    per_lane_flow = BOTTLENECK_MAINLINE_FLOW / BOTTLENECK_LANES
-    config.od_flows = [
-        ODFlow(f"mainline_lane_{lane}", flow_rate=per_lane_flow,
-               destinations=[(BOTTLENECK_CELLS, 1.0)])
-        for lane in range(1, BOTTLENECK_LANES + 1)
-    ]
     sim = Simulation(config)
     sim.freeway.block_cells(lane_idx=BOTTLENECK_CLOSED_LANE, start_cell=BOTTLENECK_CLOSURE_START,
                             end_cell=BOTTLENECK_CLOSURE_END)
-    sim.seed_vehicles(spacing=BOTTLENECK_INITIAL_SPACING, destination_cell_idx=BOTTLENECK_CELLS)
+    sim.seed_vehicles(spacing=BOTTLENECK_INITIAL_SPACING, destination="end")
     return _stats(sim.run(), config, av_penetration, seed)
 
 

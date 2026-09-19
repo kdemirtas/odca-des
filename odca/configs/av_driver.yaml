@@ -1,0 +1,17 @@
+# Autonomous driver: exact values; decides at the controller rate (controller.yaml).
+tau: 0.5
+action_interval: 0.5
+slowdown_prob: 0.0
+slowdown_delta: 0.0
+look_ahead: 12
+look_behind: 12
+lane_change:
+  model: logistic
+  safety_gap_front: 1.0
+  safety_gap_rear: 1.0
+  dlc_cooldown: 3.0
+  dlc_enabled: false
+  mlc_k: 8.0
+  mlc_r0: 0.3
+  dlc_k: 5.0
+  dlc_v0: 0.4

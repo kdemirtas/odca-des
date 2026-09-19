@@ -1,42 +1,24 @@
-"""Autonomous Vehicle: concrete vehicle with AV parameters."""
+"""Autonomous vehicle."""
 
 import numpy as np
 
-from odca.entity.vehicle import Vehicle, VehicleType
-from config import VehicleParams
+from odca.entity.vehicle import Vehicle, VehicleType, config_kwargs
+from odca.params import DriverConfig, VehicleConfig
 
 
 class AV(Vehicle):
+    """A vehicle of type AV, built from its vehicle and driver configs."""
+
     def __init__(self, env,
                  rng_slowdown: np.random.Generator,
                  rng_mlc: np.random.Generator,
                  rng_dlc: np.random.Generator,
-                 params: VehicleParams,
+                 vehicle: VehicleConfig, driver: DriverConfig,
                  origin_cell=None, destination_cell_idx=None,
                  destination_lane=1):
         super().__init__(
-            env=env,
-            rng_slowdown=rng_slowdown,
-            rng_mlc=rng_mlc,
-            rng_dlc=rng_dlc,
-            vtype=VehicleType.AV,
-            tau=params.tau,
-            standstill_spacing=params.standstill_spacing,
-            v_max=params.v_max,
-            slowdown_prob=params.slowdown_prob,
-            slowdown_delta=params.slowdown_delta,
-            action_interval=params.action_interval,
-            mlc_k=params.mlc_k,
-            mlc_r0=params.mlc_r0,
-            dlc_k=params.dlc_k,
-            dlc_v0=params.dlc_v0,
-            dlc_cooldown=params.dlc_cooldown,
-            dlc_enabled=params.dlc_enabled,
-            safety_gap_front=params.safety_gap_front,
-            safety_gap_rear=params.safety_gap_rear,
-            look_ahead=params.look_ahead,
-            look_behind=params.look_behind,
-            origin_cell=origin_cell,
-            destination_cell_idx=destination_cell_idx,
+            env=env, rng_slowdown=rng_slowdown, rng_mlc=rng_mlc, rng_dlc=rng_dlc,
+            vtype=VehicleType.AV, **config_kwargs(vehicle, driver),
+            origin_cell=origin_cell, destination_cell_idx=destination_cell_idx,
             destination_lane=destination_lane,
         )

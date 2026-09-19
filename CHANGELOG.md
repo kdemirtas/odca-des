@@ -4,5 +4,6 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #2: Configs with ConfigMixin and YAML, named origins and destinations, endpoint cells, incidents (2026-09-19, closes N2)
 - PR #1: Package odca-des, fix simulator bugs, add lane-change rate rule, settle refactor design (2026-09-19)
 - 2026-09-19: project initialised (`/init-project`, type `generic`).

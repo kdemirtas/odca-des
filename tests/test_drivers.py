@@ -35,10 +35,10 @@ def test_factory_links_both_kinds():
 def test_counters_split_between_vehicle_and_driver_sum_in_results():
     sim = Simulation(sim_config(sim_duration=400.0, seed=2))
     results = sim.run()
-    vehicles = results["vehicles"]
-    assert results["counters"]["lc_failures"] == sum(
+    vehicles = results.vehicles
+    assert results.counters.lc_failures == sum(
         v.count_lc_failures + v.driver.count_gap_rejections for v in vehicles)
-    assert results["counters"]["speed_evaluations"] == sum(
+    assert results.counters.speed_evaluations == sum(
         v.driver.count_speed_evaluations for v in vehicles)
 
 
@@ -82,3 +82,14 @@ def test_one_request_makes_one_lane_change():
     env.run(until=60)
     assert vehicle.count_lane_changes == 1
     assert vehicle.trajectory[-1].lane_idx == 2
+
+
+def test_result_carries_the_config_it_ran_with(tmp_path):
+    from odca.params import SimConfig, validate
+    config = sim_config(sim_duration=120.0, seed=4)
+    result = Simulation(config).run()
+    assert result.config == config
+    path = tmp_path / "run.yaml"
+    path.write_text(result.config_yaml())
+    assert validate(SimConfig, path) == config
+    assert result.num_completed + result.num_active_at_end <= len(result.vehicles)

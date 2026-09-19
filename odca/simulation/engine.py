@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List
+from typing import List
 
 import simpy
 
@@ -12,6 +12,7 @@ from odca.infrastructure.freeway import Freeway
 from odca.infrastructure.incident import Incident
 from odca.simulation.factory import VehicleFactory
 from odca.simulation.generator import ODPair, VehicleGenerator
+from odca.simulation.result import RunCounters, SimulationResult
 from odca.entity.vehicle import Vehicle
 from odca.entity.controller import AutonomousController
 from odca.entity.driver import DriverStreams, TraitSampler
@@ -131,11 +132,9 @@ class Simulation(ConfigMixin):
             f"(spacing={spacing} cells, {num_lanes} lanes)"
         )
 
-    def run(self) -> Dict:
-        """Run the simulation and return results."""
+    def run(self) -> SimulationResult:
+        """Run the simulation and return its result."""
         self.env.process(self.controller.run())
-
-        # Start all generators
         for gen in self.generators:
             self.env.process(gen.run())
         for incident in self.incidents:
@@ -148,52 +147,22 @@ class Simulation(ConfigMixin):
             f"RNG streams spawned: {self.rng_registry.num_streams}"
         )
 
-        return self._collect_results()
-
-    def _collect_results(self) -> Dict:
-        """Gather all vehicle trajectories and statistics."""
-        all_vehicles: List[Vehicle] = []
-        all_vehicles.extend(self._seeded_vehicles)
+        vehicles: List[Vehicle] = list(self._seeded_vehicles)
         for gen in self.generators:
-            all_vehicles.extend(gen.vehicles)
-
-        completed = [v for v in all_vehicles if v.time_exited is not None]
-        active = [v for v in all_vehicles if v.active]
-
-        total_generated = sum(g.num_generated for g in self.generators)
-
-        # Aggregate event counters across all vehicles
-        counters = {
-            "lane_changes": sum(v.count_lane_changes for v in all_vehicles),
-            "lc_failures": sum(v.count_lc_failures + v.driver.count_gap_rejections
-                               for v in all_vehicles),
-            "slowdowns": sum(v.driver.count_slowdowns for v in all_vehicles),
-            "cf_evaluations": sum(v.driver.count_cf_evaluations for v in all_vehicles),
-            "speed_evaluations": sum(v.driver.count_speed_evaluations for v in all_vehicles),
-            "missed_exits": sum(v.count_missed_exits for v in all_vehicles),
-            "av_controller_updates": self.controller.num_updates,
-            "simpy_events": self.env.events_processed,
-        }
-
-        results = {
-            "total_generated": total_generated,
-            "total_completed": len(completed),
-            "total_active_at_end": len(active),
-            "vehicles": all_vehicles,
-            "completed_vehicles": completed,
-            "counters": counters,
-            "config": self.cfg,
-        }
-
+            vehicles.extend(gen.vehicles)
+        counters = RunCounters.of(vehicles, self.controller.num_updates,
+                                  self.env.events_processed)
+        result = SimulationResult(self.cfg, vehicles,
+                                  sum(g.num_generated for g in self.generators), counters)
         logger.info(
-            f"Results: {total_generated} generated, "
-            f"{len(completed)} completed, {len(active)} still active"
+            f"Results: {result.num_generated} generated, "
+            f"{result.num_completed} completed, {result.num_active_at_end} still active"
         )
         logger.info(
-            f"Events: {counters['lane_changes']} lane changes, "
-            f"{counters['lc_failures']} LC failures, "
-            f"{counters['slowdowns']} slowdowns, "
-            f"{counters['cf_evaluations']} car-following evals, "
-            f"{counters['av_controller_updates']} AV controller updates"
+            f"Events: {counters.lane_changes} lane changes, "
+            f"{counters.lc_failures} LC failures, "
+            f"{counters.slowdowns} slowdowns, "
+            f"{counters.cf_evaluations} car-following evals, "
+            f"{counters.av_controller_updates} AV controller updates"
         )
-        return results
+        return result

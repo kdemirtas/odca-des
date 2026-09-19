@@ -5,6 +5,7 @@ Copied from paper-odca-des `run_experiments.run_single` and `run_bottleneck.run_
 `fingerprint.json` proves the package reproduces that paper's runs (D-2026-09-19-8).
 """
 
+from dataclasses import asdict
 from config import HDV_VEHICLE, sim_config
 from odca.params import NetworkConfig
 from odca.analysis.metrics import summary_statistics
@@ -35,12 +36,12 @@ BOTTLENECK_INITIAL_SPACING = 25
 
 
 def _stats(results, config, av_penetration, seed):
-    stats = summary_statistics(results["completed_vehicles"], warmup=config.warmup,
+    stats = summary_statistics(results.completed_vehicles, warmup=config.warmup,
                                sim_duration=config.sim_duration)
     stats["av_penetration"] = av_penetration
     stats["seed"] = seed
     stats["hdv_action_interval"] = config.hdv_driver.action_interval
-    return stats, results.get("counters", {})
+    return stats, asdict(results.counters)
 
 
 def run_mixed(av_penetration, seed):

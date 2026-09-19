@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #6: Return a SimulationResult from Simulation.run (N5) (2026-09-19, closes N5)
 - PR #5: One lane-change request makes one lane change (N4b) (2026-09-19)
 - PR #4: Split the driver from the vehicle (N4) (2026-09-19, closes N4)
 - PR #3: One trait sampler for human drivers (N3) (2026-09-19, closes N3)

@@ -9,553 +9,553 @@
   "S1_baseline_seed1": {
    "stats": {
     "av_penetration": 0.0,
-    "avg_delay": 30.61588006602929,
-    "avg_lc_per_km": 4.975272252702173,
-    "avg_travel_time": 152.04839431104006,
+    "avg_delay": 22.749875607141938,
+    "avg_lc_per_km": 1.8141602877597105,
+    "avg_travel_time": 144.2333920906549,
     "hdv_action_interval": 1.0,
-    "num_completed": 216,
-    "pct_delayed_20s": 66.66666666666666,
+    "num_completed": 231,
+    "pct_delayed_20s": 53.246753246753244,
     "seed": 1,
-    "throughput_per_hour": 2880.0
+    "throughput_per_hour": 3080.0
    },
    "counters": {
     "av_controller_updates": 0,
-    "cf_evaluations": 51010,
-    "lane_changes": 7387,
-    "lc_failures": 30603,
-    "missed_exits": 57,
-    "simpy_events": 2197250,
-    "slowdowns": 4190,
-    "speed_evaluations": 78518
+    "cf_evaluations": 47848,
+    "lane_changes": 3698,
+    "lc_failures": 27514,
+    "missed_exits": 38,
+    "simpy_events": 2249915,
+    "slowdowns": 4289,
+    "speed_evaluations": 75982
    }
   },
   "S1_baseline_seed2": {
    "stats": {
     "av_penetration": 0.0,
-    "avg_delay": 26.843489423915763,
-    "avg_lc_per_km": 4.767012692704784,
-    "avg_travel_time": 143.92041250083545,
+    "avg_delay": 24.207609029371696,
+    "avg_lc_per_km": 1.8876352289455784,
+    "avg_travel_time": 141.9952344474283,
     "hdv_action_interval": 1.0,
-    "num_completed": 215,
-    "pct_delayed_20s": 64.65116279069767,
+    "num_completed": 230,
+    "pct_delayed_20s": 54.78260869565217,
     "seed": 2,
-    "throughput_per_hour": 2866.6666666666665
+    "throughput_per_hour": 3066.6666666666665
    },
    "counters": {
     "av_controller_updates": 0,
-    "cf_evaluations": 51346,
-    "lane_changes": 7071,
-    "lc_failures": 30320,
-    "missed_exits": 45,
-    "simpy_events": 2210456,
-    "slowdowns": 4166,
-    "speed_evaluations": 79297
+    "cf_evaluations": 49189,
+    "lane_changes": 3646,
+    "lc_failures": 26655,
+    "missed_exits": 30,
+    "simpy_events": 2240947,
+    "slowdowns": 4264,
+    "speed_evaluations": 77599
    }
   },
   "S1_baseline_seed3": {
    "stats": {
     "av_penetration": 0.0,
-    "avg_delay": 35.41026912808414,
-    "avg_lc_per_km": 5.534324878655385,
-    "avg_travel_time": 155.5101571041824,
+    "avg_delay": 31.31556798668853,
+    "avg_lc_per_km": 2.001501053687005,
+    "avg_travel_time": 151.62720947020148,
     "hdv_action_interval": 1.0,
-    "num_completed": 206,
-    "pct_delayed_20s": 74.75728155339806,
+    "num_completed": 224,
+    "pct_delayed_20s": 66.96428571428571,
     "seed": 3,
-    "throughput_per_hour": 2746.6666666666665
+    "throughput_per_hour": 2986.6666666666665
    },
    "counters": {
     "av_controller_updates": 0,
-    "cf_evaluations": 58766,
-    "lane_changes": 7622,
-    "lc_failures": 31276,
-    "missed_exits": 52,
-    "simpy_events": 2230405,
-    "slowdowns": 4006,
-    "speed_evaluations": 84274
+    "cf_evaluations": 55830,
+    "lane_changes": 3787,
+    "lc_failures": 27203,
+    "missed_exits": 26,
+    "simpy_events": 2230983,
+    "slowdowns": 4075,
+    "speed_evaluations": 82038
    }
   },
   "S2_low_av_seed1": {
    "stats": {
     "av_penetration": 0.3,
-    "avg_delay": 26.442195648224416,
-    "avg_lc_per_km": 4.103695864478163,
-    "avg_travel_time": 147.62782146308408,
+    "avg_delay": 18.144506470340914,
+    "avg_lc_per_km": 1.3991917350013876,
+    "avg_travel_time": 140.34544529529168,
     "hdv_action_interval": 1.0,
-    "num_completed": 236,
-    "pct_delayed_20s": 64.83050847457628,
+    "num_completed": 254,
+    "pct_delayed_20s": 44.48818897637795,
     "seed": 1,
-    "throughput_per_hour": 3146.6666666666665
+    "throughput_per_hour": 3386.6666666666665
    },
    "counters": {
     "av_controller_updates": 2978,
-    "cf_evaluations": 196459,
-    "lane_changes": 6601,
-    "lc_failures": 20615,
-    "missed_exits": 36,
-    "simpy_events": 2261904,
-    "slowdowns": 3018,
-    "speed_evaluations": 255783
+    "cf_evaluations": 185917,
+    "lane_changes": 3059,
+    "lc_failures": 17050,
+    "missed_exits": 25,
+    "simpy_events": 2307229,
+    "slowdowns": 3162,
+    "speed_evaluations": 247542
    }
   },
   "S2_low_av_seed2": {
    "stats": {
     "av_penetration": 0.3,
-    "avg_delay": 28.43313801020031,
-    "avg_lc_per_km": 4.402798731323647,
-    "avg_travel_time": 146.94842185299163,
-    "hdv_action_interval": 1.0,
-    "num_completed": 229,
-    "pct_delayed_20s": 63.75545851528385,
-    "seed": 2,
-    "throughput_per_hour": 3053.3333333333335
-   },
-   "counters": {
-    "av_controller_updates": 2993,
-    "cf_evaluations": 198734,
-    "lane_changes": 6674,
-    "lc_failures": 20959,
-    "missed_exits": 35,
-    "simpy_events": 2299599,
-    "slowdowns": 3305,
-    "speed_evaluations": 253239
-   }
-  },
-  "S2_low_av_seed3": {
-   "stats": {
-    "av_penetration": 0.3,
-    "avg_delay": 30.458342587355748,
-    "avg_lc_per_km": 4.65647190092359,
-    "avg_travel_time": 150.26603489504467,
-    "hdv_action_interval": 1.0,
-    "num_completed": 221,
-    "pct_delayed_20s": 69.23076923076923,
-    "seed": 3,
-    "throughput_per_hour": 2946.6666666666665
-   },
-   "counters": {
-    "av_controller_updates": 2964,
-    "cf_evaluations": 205170,
-    "lane_changes": 7159,
-    "lc_failures": 19888,
-    "missed_exits": 36,
-    "simpy_events": 2284871,
-    "slowdowns": 3336,
-    "speed_evaluations": 260528
-   }
-  },
-  "S3_med_av_seed1": {
-   "stats": {
-    "av_penetration": 0.5,
-    "avg_delay": 19.285845602824203,
-    "avg_lc_per_km": 3.183513075155978,
-    "avg_travel_time": 140.23003299437633,
-    "hdv_action_interval": 1.0,
-    "num_completed": 266,
-    "pct_delayed_20s": 46.99248120300752,
-    "seed": 1,
-    "throughput_per_hour": 3546.6666666666665
-   },
-   "counters": {
-    "av_controller_updates": 2991,
-    "cf_evaluations": 275075,
-    "lane_changes": 5616,
-    "lc_failures": 14350,
-    "missed_exits": 35,
-    "simpy_events": 2388637,
-    "slowdowns": 2570,
-    "speed_evaluations": 361545
-   }
-  },
-  "S3_med_av_seed2": {
-   "stats": {
-    "av_penetration": 0.5,
-    "avg_delay": 19.40795480525206,
-    "avg_lc_per_km": 3.777137824405377,
-    "avg_travel_time": 138.8251597377204,
+    "avg_delay": 19.44043395920221,
+    "avg_lc_per_km": 1.5555929427815203,
+    "avg_travel_time": 139.07490254404857,
     "hdv_action_interval": 1.0,
     "num_completed": 262,
-    "pct_delayed_20s": 46.18320610687023,
+    "pct_delayed_20s": 49.23664122137404,
     "seed": 2,
     "throughput_per_hour": 3493.3333333333335
    },
    "counters": {
     "av_controller_updates": 2993,
-    "cf_evaluations": 274595,
-    "lane_changes": 6151,
-    "lc_failures": 15076,
-    "missed_exits": 36,
-    "simpy_events": 2432972,
-    "slowdowns": 2772,
-    "speed_evaluations": 356254
+    "cf_evaluations": 183330,
+    "lane_changes": 3190,
+    "lc_failures": 16868,
+    "missed_exits": 19,
+    "simpy_events": 2337595,
+    "slowdowns": 3380,
+    "speed_evaluations": 240721
+   }
+  },
+  "S2_low_av_seed3": {
+   "stats": {
+    "av_penetration": 0.3,
+    "avg_delay": 26.980422053077888,
+    "avg_lc_per_km": 1.5769855134806938,
+    "avg_travel_time": 147.560632440977,
+    "hdv_action_interval": 1.0,
+    "num_completed": 234,
+    "pct_delayed_20s": 59.82905982905983,
+    "seed": 3,
+    "throughput_per_hour": 3120.0
+   },
+   "counters": {
+    "av_controller_updates": 2964,
+    "cf_evaluations": 202534,
+    "lane_changes": 3351,
+    "lc_failures": 18037,
+    "missed_exits": 15,
+    "simpy_events": 2332607,
+    "slowdowns": 3288,
+    "speed_evaluations": 257436
+   }
+  },
+  "S3_med_av_seed1": {
+   "stats": {
+    "av_penetration": 0.5,
+    "avg_delay": 11.923591236116293,
+    "avg_lc_per_km": 1.0939597405778179,
+    "avg_travel_time": 133.343870956392,
+    "hdv_action_interval": 1.0,
+    "num_completed": 275,
+    "pct_delayed_20s": 19.636363636363637,
+    "seed": 1,
+    "throughput_per_hour": 3666.6666666666665
+   },
+   "counters": {
+    "av_controller_updates": 2991,
+    "cf_evaluations": 255941,
+    "lane_changes": 2254,
+    "lc_failures": 12025,
+    "missed_exits": 14,
+    "simpy_events": 2410991,
+    "slowdowns": 2542,
+    "speed_evaluations": 349780
+   }
+  },
+  "S3_med_av_seed2": {
+   "stats": {
+    "av_penetration": 0.5,
+    "avg_delay": 13.671939009647781,
+    "avg_lc_per_km": 1.1883681235467245,
+    "avg_travel_time": 134.8526813442322,
+    "hdv_action_interval": 1.0,
+    "num_completed": 286,
+    "pct_delayed_20s": 22.727272727272727,
+    "seed": 2,
+    "throughput_per_hour": 3813.3333333333335
+   },
+   "counters": {
+    "av_controller_updates": 2993,
+    "cf_evaluations": 266628,
+    "lane_changes": 2500,
+    "lc_failures": 12625,
+    "missed_exits": 20,
+    "simpy_events": 2461583,
+    "slowdowns": 2759,
+    "speed_evaluations": 347188
    }
   },
   "S3_med_av_seed3": {
    "stats": {
     "av_penetration": 0.5,
-    "avg_delay": 23.57913221533363,
-    "avg_lc_per_km": 2.980954028008638,
-    "avg_travel_time": 146.94379386946528,
+    "avg_delay": 16.888253584808574,
+    "avg_lc_per_km": 1.1054550388935447,
+    "avg_travel_time": 140.11227517724726,
     "hdv_action_interval": 1.0,
-    "num_completed": 266,
-    "pct_delayed_20s": 59.77443609022557,
+    "num_completed": 285,
+    "pct_delayed_20s": 39.29824561403509,
     "seed": 3,
-    "throughput_per_hour": 3546.6666666666665
+    "throughput_per_hour": 3800.0
    },
    "counters": {
     "av_controller_updates": 2974,
-    "cf_evaluations": 297549,
-    "lane_changes": 5430,
-    "lc_failures": 16208,
-    "missed_exits": 37,
-    "simpy_events": 2433810,
-    "slowdowns": 2858,
-    "speed_evaluations": 372074
+    "cf_evaluations": 281208,
+    "lane_changes": 2417,
+    "lc_failures": 14022,
+    "missed_exits": 19,
+    "simpy_events": 2460309,
+    "slowdowns": 2730,
+    "speed_evaluations": 358544
    }
   },
   "S4_high_av_seed1": {
    "stats": {
     "av_penetration": 0.7,
-    "avg_delay": 9.418397789278881,
-    "avg_lc_per_km": 2.0933306152933264,
-    "avg_travel_time": 131.58727644582945,
+    "avg_delay": 6.267345799356149,
+    "avg_lc_per_km": 0.6543470550894106,
+    "avg_travel_time": 129.51556281412488,
     "hdv_action_interval": 1.0,
-    "num_completed": 284,
-    "pct_delayed_20s": 9.859154929577464,
+    "num_completed": 302,
+    "pct_delayed_20s": 2.6490066225165565,
     "seed": 1,
-    "throughput_per_hour": 3786.6666666666665
+    "throughput_per_hour": 4026.6666666666665
    },
    "counters": {
     "av_controller_updates": 3000,
-    "cf_evaluations": 335515,
-    "lane_changes": 3742,
-    "lc_failures": 7067,
-    "missed_exits": 27,
-    "simpy_events": 2437786,
-    "slowdowns": 1627,
-    "speed_evaluations": 469889
+    "cf_evaluations": 326215,
+    "lane_changes": 1448,
+    "lc_failures": 7305,
+    "missed_exits": 13,
+    "simpy_events": 2448528,
+    "slowdowns": 1663,
+    "speed_evaluations": 461878
    }
   },
   "S4_high_av_seed2": {
    "stats": {
     "av_penetration": 0.7,
-    "avg_delay": 10.685333698579601,
-    "avg_lc_per_km": 2.554522180508933,
-    "avg_travel_time": 132.45890896052256,
+    "avg_delay": 8.590839292553397,
+    "avg_lc_per_km": 0.7928497348773736,
+    "avg_travel_time": 130.82330714015868,
     "hdv_action_interval": 1.0,
-    "num_completed": 301,
-    "pct_delayed_20s": 9.30232558139535,
+    "num_completed": 317,
+    "pct_delayed_20s": 6.309148264984227,
     "seed": 2,
-    "throughput_per_hour": 4013.3333333333335
+    "throughput_per_hour": 4226.666666666667
    },
    "counters": {
     "av_controller_updates": 2993,
-    "cf_evaluations": 338445,
-    "lane_changes": 4981,
-    "lc_failures": 10298,
-    "missed_exits": 35,
-    "simpy_events": 2520387,
-    "slowdowns": 1898,
-    "speed_evaluations": 453829
+    "cf_evaluations": 333327,
+    "lane_changes": 1772,
+    "lc_failures": 8498,
+    "missed_exits": 16,
+    "simpy_events": 2535233,
+    "slowdowns": 1911,
+    "speed_evaluations": 448625
    }
   },
   "S4_high_av_seed3": {
    "stats": {
     "av_penetration": 0.7,
-    "avg_delay": 15.141317741594913,
-    "avg_lc_per_km": 2.2205255827671913,
-    "avg_travel_time": 138.7482277807042,
+    "avg_delay": 10.312443966526525,
+    "avg_lc_per_km": 0.7427319118392345,
+    "avg_travel_time": 134.77600671955852,
     "hdv_action_interval": 1.0,
-    "num_completed": 295,
-    "pct_delayed_20s": 31.864406779661014,
+    "num_completed": 304,
+    "pct_delayed_20s": 6.907894736842106,
     "seed": 3,
-    "throughput_per_hour": 3933.3333333333335
+    "throughput_per_hour": 4053.3333333333335
    },
    "counters": {
     "av_controller_updates": 2989,
-    "cf_evaluations": 345372,
-    "lane_changes": 4560,
-    "lc_failures": 10773,
-    "missed_exits": 27,
-    "simpy_events": 2483579,
-    "slowdowns": 2012,
-    "speed_evaluations": 447805
+    "cf_evaluations": 333919,
+    "lane_changes": 1785,
+    "lc_failures": 8233,
+    "missed_exits": 14,
+    "simpy_events": 2489790,
+    "slowdowns": 2069,
+    "speed_evaluations": 438344
    }
   },
   "BN_0av_seed1": {
    "stats": {
     "av_penetration": 0.0,
-    "avg_delay": 80.67911027455862,
-    "avg_lc_per_km": 1.0741752867664542,
-    "avg_travel_time": 193.1353329137042,
+    "avg_delay": 84.36945492734303,
+    "avg_lc_per_km": 0.9363927786740213,
+    "avg_travel_time": 196.91016630509796,
     "hdv_action_interval": 1.0,
-    "num_completed": 369,
-    "pct_delayed_20s": 83.46883468834689,
+    "num_completed": 359,
+    "pct_delayed_20s": 84.958217270195,
     "seed": 1,
-    "throughput_per_hour": 2460.0
+    "throughput_per_hour": 2393.3333333333335
    },
    "counters": {
     "av_controller_updates": 0,
-    "cf_evaluations": 93483,
-    "lane_changes": 2509,
-    "lc_failures": 16710,
+    "cf_evaluations": 95531,
+    "lane_changes": 2211,
+    "lc_failures": 16896,
     "missed_exits": 0,
-    "simpy_events": 2883815,
-    "slowdowns": 5076,
-    "speed_evaluations": 127474
+    "simpy_events": 2903243,
+    "slowdowns": 4992,
+    "speed_evaluations": 129172
    }
   },
   "BN_0av_seed2": {
    "stats": {
     "av_penetration": 0.0,
-    "avg_delay": 69.08901255454565,
-    "avg_lc_per_km": 1.1402134348193358,
-    "avg_travel_time": 181.55998497834426,
+    "avg_delay": 66.7325797614929,
+    "avg_lc_per_km": 1.0275309202800367,
+    "avg_travel_time": 179.2035521852915,
     "hdv_action_interval": 1.0,
     "num_completed": 371,
-    "pct_delayed_20s": 79.78436657681941,
+    "pct_delayed_20s": 78.4366576819407,
     "seed": 2,
     "throughput_per_hour": 2473.3333333333335
    },
    "counters": {
     "av_controller_updates": 0,
-    "cf_evaluations": 85830,
-    "lane_changes": 2670,
-    "lc_failures": 16360,
+    "cf_evaluations": 83925,
+    "lane_changes": 2395,
+    "lc_failures": 14902,
     "missed_exits": 0,
-    "simpy_events": 2865140,
-    "slowdowns": 5248,
-    "speed_evaluations": 120621
+    "simpy_events": 2855285,
+    "slowdowns": 5454,
+    "speed_evaluations": 119933
    }
   },
   "BN_0av_seed3": {
    "stats": {
     "av_penetration": 0.0,
-    "avg_delay": 67.47026422595815,
-    "avg_lc_per_km": 1.1207624643911225,
-    "avg_travel_time": 179.98454702538277,
+    "avg_delay": 69.92501804063716,
+    "avg_lc_per_km": 1.0047330845864773,
+    "avg_travel_time": 182.37380566605114,
     "hdv_action_interval": 1.0,
-    "num_completed": 377,
-    "pct_delayed_20s": 85.41114058355438,
+    "num_completed": 368,
+    "pct_delayed_20s": 84.23913043478261,
     "seed": 3,
-    "throughput_per_hour": 2513.3333333333335
+    "throughput_per_hour": 2453.3333333333335
    },
    "counters": {
     "av_controller_updates": 0,
-    "cf_evaluations": 87399,
-    "lane_changes": 2632,
-    "lc_failures": 17486,
+    "cf_evaluations": 88495,
+    "lane_changes": 2305,
+    "lc_failures": 15285,
     "missed_exits": 0,
-    "simpy_events": 2906611,
-    "slowdowns": 5335,
-    "speed_evaluations": 121650
+    "simpy_events": 2865817,
+    "slowdowns": 5553,
+    "speed_evaluations": 124122
    }
   },
   "BN_30av_seed1": {
    "stats": {
     "av_penetration": 0.3,
-    "avg_delay": 52.16272058932286,
-    "avg_lc_per_km": 0.9875854381136545,
-    "avg_travel_time": 165.22067160691094,
+    "avg_delay": 51.88166786744796,
+    "avg_lc_per_km": 0.8456989168555807,
+    "avg_travel_time": 164.93961888503605,
     "hdv_action_interval": 1.0,
     "num_completed": 446,
-    "pct_delayed_20s": 82.0627802690583,
+    "pct_delayed_20s": 84.08071748878923,
     "seed": 1,
     "throughput_per_hour": 2973.3333333333335
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 273471,
-    "lane_changes": 2485,
-    "lc_failures": 13381,
+    "cf_evaluations": 277704,
+    "lane_changes": 2146,
+    "lc_failures": 11848,
     "missed_exits": 0,
-    "simpy_events": 2925573,
-    "slowdowns": 3836,
-    "speed_evaluations": 346364
+    "simpy_events": 2914714,
+    "slowdowns": 3816,
+    "speed_evaluations": 349230
    }
   },
   "BN_30av_seed2": {
    "stats": {
     "av_penetration": 0.3,
-    "avg_delay": 36.24361796364583,
-    "avg_lc_per_km": 0.9294862198387623,
-    "avg_travel_time": 149.22670161959152,
+    "avg_delay": 36.17044926640559,
+    "avg_lc_per_km": 0.7923330644571609,
+    "avg_travel_time": 149.13402542534155,
     "hdv_action_interval": 1.0,
-    "num_completed": 457,
-    "pct_delayed_20s": 71.33479212253829,
+    "num_completed": 453,
+    "pct_delayed_20s": 72.40618101545255,
     "seed": 2,
-    "throughput_per_hour": 3046.6666666666665
+    "throughput_per_hour": 3020.0
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 260318,
-    "lane_changes": 2301,
-    "lc_failures": 11139,
+    "cf_evaluations": 257113,
+    "lane_changes": 1969,
+    "lc_failures": 9973,
     "missed_exits": 0,
-    "simpy_events": 2862479,
-    "slowdowns": 3985,
-    "speed_evaluations": 335173
+    "simpy_events": 2844247,
+    "slowdowns": 3940,
+    "speed_evaluations": 337260
    }
   },
   "BN_30av_seed3": {
    "stats": {
     "av_penetration": 0.3,
-    "avg_delay": 34.36099973410043,
-    "avg_lc_per_km": 0.9122207918343332,
-    "avg_travel_time": 147.4839094330927,
+    "avg_delay": 31.07193533318447,
+    "avg_lc_per_km": 0.8335046134051087,
+    "avg_travel_time": 144.18126036263632,
     "hdv_action_interval": 1.0,
-    "num_completed": 460,
-    "pct_delayed_20s": 78.91304347826087,
+    "num_completed": 457,
+    "pct_delayed_20s": 79.43107221006565,
     "seed": 3,
-    "throughput_per_hour": 3066.6666666666665
+    "throughput_per_hour": 3046.6666666666665
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 257359,
-    "lane_changes": 2323,
-    "lc_failures": 11715,
+    "cf_evaluations": 252106,
+    "lane_changes": 2108,
+    "lc_failures": 11171,
     "missed_exits": 0,
-    "simpy_events": 2910417,
-    "slowdowns": 4075,
-    "speed_evaluations": 333320
+    "simpy_events": 2902962,
+    "slowdowns": 4113,
+    "speed_evaluations": 330039
    }
   },
   "BN_50av_seed1": {
    "stats": {
     "av_penetration": 0.5,
-    "avg_delay": 14.018532712219285,
-    "avg_lc_per_km": 0.6502535108867586,
-    "avg_travel_time": 127.40110071455449,
+    "avg_delay": 12.520856434904172,
+    "avg_lc_per_km": 0.5289963065274786,
+    "avg_travel_time": 125.89651703384249,
     "hdv_action_interval": 1.0,
-    "num_completed": 526,
-    "pct_delayed_20s": 22.623574144486692,
+    "num_completed": 524,
+    "pct_delayed_20s": 12.022900763358779,
     "seed": 1,
-    "throughput_per_hour": 3506.6666666666665
+    "throughput_per_hour": 3493.3333333333335
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 305335,
-    "lane_changes": 1723,
-    "lc_failures": 7075,
+    "cf_evaluations": 305216,
+    "lane_changes": 1367,
+    "lc_failures": 6463,
     "missed_exits": 0,
-    "simpy_events": 2901467,
-    "slowdowns": 3147,
-    "speed_evaluations": 423243
+    "simpy_events": 2898873,
+    "slowdowns": 3138,
+    "speed_evaluations": 420516
    }
   },
   "BN_50av_seed2": {
    "stats": {
     "av_penetration": 0.5,
-    "avg_delay": 12.450909859422639,
-    "avg_lc_per_km": 0.656292911750925,
-    "avg_travel_time": 125.6903831520826,
+    "avg_delay": 11.428795883577404,
+    "avg_lc_per_km": 0.5465277193202451,
+    "avg_travel_time": 124.67579454964643,
     "hdv_action_interval": 1.0,
-    "num_completed": 517,
-    "pct_delayed_20s": 16.634429400386846,
+    "num_completed": 519,
+    "pct_delayed_20s": 9.05587668593449,
     "seed": 2,
-    "throughput_per_hour": 3446.6666666666665
+    "throughput_per_hour": 3460.0
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 299306,
-    "lane_changes": 1683,
-    "lc_failures": 6315,
+    "cf_evaluations": 297553,
+    "lane_changes": 1382,
+    "lc_failures": 6368,
     "missed_exits": 0,
-    "simpy_events": 2851800,
-    "slowdowns": 3144,
-    "speed_evaluations": 413421
+    "simpy_events": 2852834,
+    "slowdowns": 3165,
+    "speed_evaluations": 410100
    }
   },
   "BN_50av_seed3": {
    "stats": {
     "av_penetration": 0.5,
-    "avg_delay": 14.41431128266092,
-    "avg_lc_per_km": 0.6588564784682779,
-    "avg_travel_time": 127.74739421534849,
+    "avg_delay": 16.101175105016964,
+    "avg_lc_per_km": 0.5727400874054258,
+    "avg_travel_time": 129.41592248780697,
     "hdv_action_interval": 1.0,
-    "num_completed": 512,
-    "pct_delayed_20s": 27.5390625,
+    "num_completed": 507,
+    "pct_delayed_20s": 32.544378698224854,
     "seed": 3,
-    "throughput_per_hour": 3413.3333333333335
+    "throughput_per_hour": 3380.0
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 313200,
-    "lane_changes": 1746,
-    "lc_failures": 7335,
+    "cf_evaluations": 314613,
+    "lane_changes": 1489,
+    "lc_failures": 7354,
     "missed_exits": 0,
-    "simpy_events": 2927591,
-    "slowdowns": 3398,
-    "speed_evaluations": 419119
+    "simpy_events": 2913001,
+    "slowdowns": 3428,
+    "speed_evaluations": 423122
    }
   },
   "BN_70av_seed1": {
    "stats": {
     "av_penetration": 0.7,
-    "avg_delay": 4.817597858478504,
-    "avg_lc_per_km": 0.41840285871857646,
-    "avg_travel_time": 118.11213227142899,
+    "avg_delay": 6.082670634692384,
+    "avg_lc_per_km": 0.33982347842849286,
+    "avg_travel_time": 119.482279500398,
     "hdv_action_interval": 1.0,
-    "num_completed": 532,
-    "pct_delayed_20s": 0.37593984962406013,
+    "num_completed": 531,
+    "pct_delayed_20s": 3.0131826741996233,
     "seed": 1,
-    "throughput_per_hour": 3546.6666666666665
+    "throughput_per_hour": 3540.0
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 354969,
-    "lane_changes": 1093,
-    "lc_failures": 3179,
+    "cf_evaluations": 359700,
+    "lane_changes": 886,
+    "lc_failures": 3612,
     "missed_exits": 0,
-    "simpy_events": 2862514,
-    "slowdowns": 2074,
-    "speed_evaluations": 512749
+    "simpy_events": 2863871,
+    "slowdowns": 2062,
+    "speed_evaluations": 517546
    }
   },
   "BN_70av_seed2": {
    "stats": {
     "av_penetration": 0.7,
-    "avg_delay": 4.182037010415175,
-    "avg_lc_per_km": 0.41159959408843133,
-    "avg_travel_time": 117.54372340094248,
+    "avg_delay": 4.8013911985683135,
+    "avg_lc_per_km": 0.3461520301295375,
+    "avg_travel_time": 118.05585746166653,
     "hdv_action_interval": 1.0,
-    "num_completed": 520,
-    "pct_delayed_20s": 0.0,
+    "num_completed": 521,
+    "pct_delayed_20s": 0.3838771593090211,
     "seed": 2,
-    "throughput_per_hour": 3466.6666666666665
+    "throughput_per_hour": 3473.3333333333335
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 341246,
-    "lane_changes": 1079,
-    "lc_failures": 2664,
+    "cf_evaluations": 342594,
+    "lane_changes": 885,
+    "lc_failures": 2805,
     "missed_exits": 0,
-    "simpy_events": 2807377,
-    "slowdowns": 1987,
-    "speed_evaluations": 510398
+    "simpy_events": 2809338,
+    "slowdowns": 1872,
+    "speed_evaluations": 511401
    }
   },
   "BN_70av_seed3": {
    "stats": {
     "av_penetration": 0.7,
-    "avg_delay": 5.075418342691598,
-    "avg_lc_per_km": 0.3989079747956863,
-    "avg_travel_time": 118.4648414196096,
+    "avg_delay": 5.135162065453187,
+    "avg_lc_per_km": 0.33549688381572834,
+    "avg_travel_time": 118.51082266439106,
     "hdv_action_interval": 1.0,
-    "num_completed": 528,
-    "pct_delayed_20s": 1.3257575757575757,
+    "num_completed": 524,
+    "pct_delayed_20s": 0.7633587786259541,
     "seed": 3,
-    "throughput_per_hour": 3520.0
+    "throughput_per_hour": 3493.3333333333335
    },
    "counters": {
     "av_controller_updates": 5999,
-    "cf_evaluations": 364889,
-    "lane_changes": 1087,
-    "lc_failures": 3356,
+    "cf_evaluations": 371462,
+    "lane_changes": 892,
+    "lc_failures": 3623,
     "missed_exits": 0,
-    "simpy_events": 2884466,
-    "slowdowns": 2162,
-    "speed_evaluations": 515768
+    "simpy_events": 2882726,
+    "slowdowns": 2210,
+    "speed_evaluations": 516461
    }
   }
  }

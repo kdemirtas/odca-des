@@ -53,3 +53,17 @@ recalibrates it.
 
 All 24 quick runs moved. Seed 1, old -> new: S1 lane changes 231 -> 235, mean delay 30.8 -> 29.1;
 S4 (high AV) delay 9.08 -> 10.4; bottleneck 0% AV delay 69 -> 74.5, 70% AV 5.17 -> 5.06.
+
+## Audit after the one-request fix (2026-09-19, D-2026-09-19-31)
+Lane changes per vehicle-km, counted from trajectories ("away" = a change that moves a vehicle
+away from the lane its destination needs):
+
+| run | before the fix | after | after, and no DLC away from a needed lane | after, and DLC only toward a faster lane | both |
+|---|---|---|---|---|---|
+| demo corridor (3 lanes, every lane to every lane end) | 4.36 | 1.58 | 1.39 | 1.06 | 0.94 |
+| S1, 900 s, seed 1 | 3.89 | 2.27 | 1.49 | 1.94 | 1.23 |
+
+After the fix, S1 still makes about 2.3 lane changes per vehicle-km, and about 45% of them move away
+from the needed lane: mostly the zero-advantage DLC rate above (0.047/s at dv = 0), with the MLC
+then bringing the vehicle back. The two columns on the right are candidate rules, not adopted:
+both change the model the paper describes, so they are Kerem's call (paper-odca-des AGENDA).

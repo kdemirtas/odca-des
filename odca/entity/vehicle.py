@@ -335,9 +335,11 @@ class Vehicle:
 
         req._vehicle = self
         if is_lateral:
-            # a lane change counts, and its cooldown starts, once it happens (D-2026-09-19-18)
+            # a lane change counts, and its cooldown starts, once it happens (D-2026-09-19-18);
+            # the request is used up: one decision, one lane change (D-2026-09-19-31)
             self.last_lc_time = self.env.now
             self.count_lane_changes += 1
+            self.desired_direction = Direction.FORWARD
 
         old_cell = self.cell
         self._delayed_release(old_cell)

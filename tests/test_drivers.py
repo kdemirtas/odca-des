@@ -5,7 +5,7 @@ import sys
 import simpy
 
 from odca.entity.driver import DriverStreams, DriverTraits, HumanDriver
-from odca.entity.vehicle import Vehicle
+from odca.entity.vehicle import Direction, Vehicle
 from odca.infrastructure.freeway import Freeway
 from odca.params import NetworkConfig
 from odca.rng import RNGRegistry
@@ -61,3 +61,24 @@ def test_a_driver_subclass_drives_a_vehicle():
     speeds = {r.speed for r in vehicle.trajectory[1:]}
     assert speeds == {2.0}
     assert vehicle.time_exited is not None and 18.0 <= vehicle.time_exited <= 20.0
+
+
+class OneLeftDriver(SteadyDriver):
+    """Asks for one lane change to the left, once."""
+
+    def decide(self):
+        super().decide()
+        if self.vehicle.count_lane_changes == 0:
+            self.vehicle.request_direction(Direction.LEFT)
+
+
+def test_one_request_makes_one_lane_change():
+    env = simpy.Environment()
+    freeway = Freeway(env, NetworkConfig.corridor(3, 40, 5.2))
+    streams = DriverStreams.spawn(RNGRegistry(master_seed=1))
+    driver = OneLeftDriver(HDV_DRIVER, streams, DriverTraits.exact(HDV_DRIVER))
+    vehicle = Vehicle(env, HDV_VEHICLE, driver, freeway.cell(1, 0), freeway.destination("end"))
+    env.process(vehicle.start())
+    env.run(until=60)
+    assert vehicle.count_lane_changes == 1
+    assert vehicle.trajectory[-1].lane_idx == 2

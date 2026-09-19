@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import List, Optional
 
 import numpy as np
@@ -12,6 +12,7 @@ import simpy
 from odca.entity.hdv import HDV
 from odca.entity.av import AV
 from odca.entity.av_controller import AVController
+from odca.entity.driver import TraitSampler
 from odca.entity.vehicle import Vehicle, VehicleType
 from odca.infrastructure.freeway import Freeway
 from odca.params import AutonomousDriverConfig, HumanDriverConfig, SimConfig, VehicleConfig
@@ -43,10 +44,7 @@ class VehicleGenerator:
         rng_slowdown: Optional[np.random.Generator] = None,
         rng_mlc: Optional[np.random.Generator] = None,
         rng_dlc: Optional[np.random.Generator] = None,
-        # Per-driver heterogeneity RNGs (used at vehicle creation time)
-        rng_tau: Optional[np.random.Generator] = None,
-        rng_action_interval: Optional[np.random.Generator] = None,
-        rng_slowdown_param: Optional[np.random.Generator] = None,
+        traits: Optional[TraitSampler] = None,
     ):
         self.env = env
         self.freeway = freeway
@@ -68,10 +66,7 @@ class VehicleGenerator:
         self.rng_mlc = rng_mlc
         self.rng_dlc = rng_dlc
 
-        # Per-driver heterogeneity RNGs (creation-time sampling)
-        self.rng_tau = rng_tau
-        self.rng_action_interval = rng_action_interval
-        self.rng_slowdown_param = rng_slowdown_param
+        self.traits = traits  # draws each human driver's own values (None: the means)
 
         # Derived
         self.mean_interval = 3600.0 / od.flow_rate  # seconds between vehicles
@@ -79,42 +74,6 @@ class VehicleGenerator:
         # Tracking
         self.vehicles: List[Vehicle] = []
         self.num_generated = 0
-
-    def _sample_driver_params(self, params: HumanDriverConfig) -> HumanDriverConfig:
-        """Sample per-driver behavioral parameters for HDVs.
-
-        Uses log-normal for tau and action_interval (always positive,
-        right-skewed for occasional inattentive drivers). Uses truncated
-        normal for slowdown_prob (bounded to [0, 1]).
-
-        Args:
-            params: the human driver population config (means and spreads).
-        """
-        overrides = {}
-
-        if self.rng_tau is not None and params.tau_std > 0:
-            # Log-normal: compute mu_ln, sigma_ln from desired mean and std
-            mean, std = params.tau, params.tau_std
-            sigma_ln2 = np.log(1 + (std / mean) ** 2)
-            mu_ln = np.log(mean) - sigma_ln2 / 2
-            val = self.rng_tau.lognormal(mu_ln, np.sqrt(sigma_ln2))
-            overrides["tau"] = float(np.clip(val, 0.5, 3.0))
-
-        if self.rng_action_interval is not None and params.action_interval_std > 0:
-            mean, std = params.action_interval, params.action_interval_std
-            sigma_ln2 = np.log(1 + (std / mean) ** 2)
-            mu_ln = np.log(mean) - sigma_ln2 / 2
-            val = self.rng_action_interval.lognormal(mu_ln, np.sqrt(sigma_ln2))
-            overrides["action_interval"] = float(np.clip(val, 0.3, 3.0))
-
-        if self.rng_slowdown_param is not None and params.slowdown_prob_std > 0:
-            val = self.rng_slowdown_param.normal(params.slowdown_prob,
-                                                  params.slowdown_prob_std)
-            overrides["slowdown_prob"] = float(np.clip(val, 0.0, 1.0))
-
-        if overrides:
-            return replace(params, **overrides)
-        return params
 
     def _create_vehicle(self) -> Vehicle:
         """Create a single vehicle (AV or HDV)."""
@@ -134,7 +93,8 @@ class VehicleGenerator:
             )
         else:
             # Sample per-driver parameters for HDVs
-            driver_params = self._sample_driver_params(self.hdv_driver)
+            driver_params = (self.traits.driver_config(self.hdv_driver) if self.traits
+                             else self.hdv_driver)
             veh = HDV(
                 env=self.env,
                 rng_slowdown=self.rng_slowdown,

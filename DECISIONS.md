@@ -29,6 +29,7 @@
 | D-2026-09-19-8 | 2026-09-19 | Papers use this package as an editable path dependency; each paper's golden fingerprint is a test here | inherited: paper-odca-des D-2026-09-19-8 | none |
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
+| D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
 
 ## D-2026-09-19-29: scenario data belongs to the papers
 **What.** The network and demand of a scenario live in the paper's YAML; `SimConfig` requires them
@@ -230,3 +231,11 @@ lives in `tests/golden/<paper>/` and `tests/test_golden.py` must pass before a c
 **Evidence.** Kerem's decisions in paper-odca-des `DECISIONS.md`, D-2026-09-19-6 (one central package), -7 (this repo), -8 (editable dependency, goldens as tests), -9 (scope), -10 (MIT). Proof of the move: paper-odca-des golden 24/24 exact from both sides, 2026-09-19.
 **Replaces.** Nothing.
 **Cited by.** `HANDOVER.md` (the Type stamp).
+
+## D-2026-03-14-1: one RNG stream per source (inherited)
+**What.** Every source of randomness (slowdowns, MLC, DLC, the three driver traits, each
+generator) has one `SeedSequence` stream shared by all vehicles; a new stream is spawned last.
+**Evidence.** paper-odca-des D-2026-03-14-1 (Kerem, STATUS 2026-03-14).
+**Replaces.** nothing.
+**Cited by.** `odca/rng.py`, `odca/entity/driver.py` (`TraitSampler`).
+

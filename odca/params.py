@@ -113,6 +113,10 @@ class HumanDriverConfig(DriverConfig):
     tau_std: float = 0.0
     action_interval_std: float = 0.0
     slowdown_prob_std: float = 0.0
+    tau_min: float = 0.5               # drawn values are clipped to [min, max]
+    tau_max: float = 3.0
+    action_interval_min: float = 0.3
+    action_interval_max: float = 3.0
 
 
 @dataclass(**_FROZEN_FAMILY)

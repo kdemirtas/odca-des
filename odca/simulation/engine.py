@@ -7,7 +7,6 @@ from typing import Dict, List
 
 import simpy
 
-import numpy as np
 
 from odca.infrastructure.freeway import Freeway
 from odca.infrastructure.incident import Incident
@@ -16,7 +15,8 @@ from odca.entity.av import AV
 from odca.entity.hdv import HDV
 from odca.entity.vehicle import Vehicle, VehicleType
 from odca.entity.av_controller import AVController
-from odca.params import ConfigMixin, HumanDriverConfig, SimConfig
+from odca.entity.driver import TraitSampler
+from odca.params import ConfigMixin, SimConfig
 from odca.rng import RNGRegistry
 
 logger = logging.getLogger(__name__)
@@ -74,17 +74,12 @@ class Simulation(ConfigMixin):
         rng_mlc = self.rng_registry.spawn("mlc")
         rng_dlc = self.rng_registry.spawn("dlc")
         # Per-driver heterogeneity RNGs (used at vehicle creation time)
-        rng_tau = self.rng_registry.spawn("driver_tau")
-        rng_action_interval = self.rng_registry.spawn("driver_action_interval")
-        rng_slowdown_param = self.rng_registry.spawn("driver_slowdown_param")
+        self.traits = TraitSampler.spawn(self.rng_registry)
 
         # Store RNGs for seeding initial vehicles
         self._rng_slowdown = rng_slowdown
         self._rng_mlc = rng_mlc
         self._rng_dlc = rng_dlc
-        self._rng_tau = rng_tau
-        self._rng_action_interval = rng_action_interval
-        self._rng_slowdown_param = rng_slowdown_param
 
         # Vehicles placed at t=0 (initial condition)
         self._seeded_vehicles: List[Vehicle] = []
@@ -103,9 +98,7 @@ class Simulation(ConfigMixin):
                 rng_slowdown=rng_slowdown,
                 rng_mlc=rng_mlc,
                 rng_dlc=rng_dlc,
-                rng_tau=rng_tau,
-                rng_action_interval=rng_action_interval,
-                rng_slowdown_param=rng_slowdown_param,
+                traits=self.traits,
             )
             self.generators.append(gen)
 
@@ -127,34 +120,6 @@ class Simulation(ConfigMixin):
                     raise ValueError(f"demand {origin} -> {destination} is {rate} veh/h")
                 pairs.append(ODPair(origin, destination, rate))
         return pairs
-
-    def _sample_driver_params(self, params: HumanDriverConfig) -> HumanDriverConfig:
-        """Sample per-driver heterogeneous parameters (same logic as generator).
-
-        Args:
-            params: the human driver population config (means and spreads).
-        """
-        from dataclasses import replace
-        overrides = {}
-        if self._rng_tau is not None and params.tau_std > 0:
-            mean, std = params.tau, params.tau_std
-            sigma_ln2 = np.log(1 + (std / mean) ** 2)
-            mu_ln = np.log(mean) - sigma_ln2 / 2
-            val = self._rng_tau.lognormal(mu_ln, np.sqrt(sigma_ln2))
-            overrides["tau"] = float(np.clip(val, 0.5, 3.0))
-        if self._rng_action_interval is not None and params.action_interval_std > 0:
-            mean, std = params.action_interval, params.action_interval_std
-            sigma_ln2 = np.log(1 + (std / mean) ** 2)
-            mu_ln = np.log(mean) - sigma_ln2 / 2
-            val = self._rng_action_interval.lognormal(mu_ln, np.sqrt(sigma_ln2))
-            overrides["action_interval"] = float(np.clip(val, 0.3, 3.0))
-        if self._rng_slowdown_param is not None and params.slowdown_prob_std > 0:
-            val = self._rng_slowdown_param.normal(params.slowdown_prob,
-                                                   params.slowdown_prob_std)
-            overrides["slowdown_prob"] = float(np.clip(val, 0.0, 1.0))
-        if overrides:
-            return replace(params, **overrides)
-        return params
 
     def seed_vehicles(self, spacing: int, destination: str):
         """Place vehicles uniformly on all lanes at t=0.
@@ -181,7 +146,7 @@ class Simulation(ConfigMixin):
                 vehicle_class = AV if is_av else HDV
                 vehicle_cfg = self.cfg.av_vehicle if is_av else self.cfg.hdv_vehicle
                 driver_cfg = (self.cfg.av_driver if is_av
-                              else self._sample_driver_params(self.cfg.hdv_driver))
+                              else self.traits.driver_config(self.cfg.hdv_driver))
                 veh = vehicle_class(
                     env=self.env,
                     rng_slowdown=self._rng_slowdown,

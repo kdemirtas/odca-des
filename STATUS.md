@@ -11,6 +11,12 @@ rule in, refactor design settled; next is the refactor N2 to N8 (ranked list in 
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
 after the named-places demand (D-2026-09-19-26); `uv run pytest` 59/59 passed.
 
+## 2026-09-19 (night): N3 one trait sampler
+- `odca/entity/driver.py`: `DriverTraits` and `TraitSampler`, the only copy of the driver
+  heterogeneity rule (was in generator, engine and two paper scripts); clip ranges are now
+  `HumanDriverConfig` fields. Proof: golden exact, 63/63; the paper's old copy and the sampler give
+  2000 identical draws on the same seeds.
+
 ## 2026-09-19 (later): N2 configs, YAML, named places, OD demand, endpoint cells, incidents
 - **N2 done** (D-2026-09-19-23): `odca/params.py` holds every config schema (frozen, slotted
   dataclasses) and `ConfigMixin`; `validate` checks types, unknown keys and missing values and

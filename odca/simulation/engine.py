@@ -120,7 +120,7 @@ class Simulation(ConfigMixin):
             lane = self.freeway.lane(lane_idx)
             for cell_idx in range(0, num_cells, spacing):
                 cell = lane.cells[cell_idx]
-                if cell._blocked:
+                if cell.blocked:
                     continue  # skip blocked cells (e.g. lane closure)
                 autonomous = rng_vehicle_type.random() < self.cfg.av_penetration
                 veh = self.factory.build(autonomous, cell, exit_to)

@@ -112,22 +112,6 @@ def delay(vehicle: Vehicle) -> Optional[float]:
                for j in range(len(traj) - 1))
 
 
-def cell_speeds(vehicle: Vehicle) -> List[float]:
-    """Compute travel speed at each cell from trajectory records.
-
-    Speed at cell c = cell_length / (T(c+1) - T(c)), including wait time.
-    """
-    traj = vehicle.trajectory
-    speeds = []
-    for i in range(len(traj) - 1):
-        dt = traj[i + 1].time - traj[i].time
-        if dt > 0:
-            speeds.append(1.0 / dt)  # cells/s (1 cell per transition)
-        else:
-            speeds.append(float("inf"))
-    return speeds
-
-
 def count_lane_changes(vehicle: Vehicle) -> int:
     """Count number of lane changes from trajectory."""
     traj = vehicle.trajectory

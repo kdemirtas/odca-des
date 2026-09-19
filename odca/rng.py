@@ -13,8 +13,6 @@ Usage:
     slowdown_rng = rng_registry.spawn("slowdown")
 """
 
-from typing import Dict
-
 import numpy as np
 
 
@@ -24,7 +22,6 @@ class RNGRegistry:
     def __init__(self, master_seed: int = 42):
         self.master_seed = master_seed
         self._seed_seq = np.random.SeedSequence(master_seed)
-        self._streams: Dict[str, np.random.Generator] = {}
         self._spawn_count = 0
 
     def spawn(self, name: str) -> np.random.Generator:
@@ -38,14 +35,10 @@ class RNGRegistry:
         """
         child_seed = self._seed_seq.spawn(1)[0]
         rng = np.random.default_rng(child_seed)
-        self._streams[name] = rng
         self._spawn_count += 1
         return rng
 
-    def get(self, name: str) -> np.random.Generator:
-        """Retrieve a previously created stream by name."""
-        return self._streams[name]
-
     @property
     def num_streams(self) -> int:
+        """How many streams have been spawned."""
         return self._spawn_count

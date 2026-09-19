@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-19-35 | 2026-09-19 | Neutral speed-ups from the code review: cell neighbour links set once when the road is built, a per-lane count of closed cells, exited AVs dropped from the controller, dead code removed | ASSUMPTIONS A-2026-09-19-19, made unattended (orchestrate loop) | none |
 | D-2026-09-19-34 | 2026-09-19 | Viewers live in `odca.viewer` and take a run result; the paper keeps two thin command-line scripts | ASSUMPTIONS A-2026-09-19-17, made unattended (orchestrate loop); implements paper-odca-des D-2026-09-19-9 | none |
 | D-2026-09-19-33 | 2026-09-19 | Experiment kit `odca.experiment` (run records, strict per-seed JSON, aggregation) and the one interval `odca.analysis.mean_ci95`; papers keep only what they measure | ASSUMPTIONS A-2026-09-19-16, made unattended (orchestrate loop); implements paper-odca-des D-2026-09-19-9 | none |
 | D-2026-09-19-32 | 2026-09-19 | `Simulation.run()` returns a `SimulationResult` (config, vehicles, generated count, `RunCounters`) instead of a dict | ASSUMPTIONS A-2026-09-19-15, made unattended (orchestrate loop) | none |
@@ -35,6 +36,12 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-19-35: neutral speed-ups from the code review
+**What.** `Cell` keeps its eight neighbour links (`next`, `previous`, `left`, `right`, four diagonals) and its occupant as plain slots, set when the lanes are built (`Lane`, `Freeway.link_neighbours`); a road whose shape changes after that relinks (`Lane.make_periodic` for a ring road). `Lane.blocked_count` is kept by the `Cell.blocked` setter, so `find_blockage` answers at once on a lane with no closed cell (S1 to S4 have none). `AutonomousController.active_drivers()` drops drivers whose vehicle has left, in registration order. `metrics.cell_speeds` and `RNGRegistry.get` (unused) are gone.
+**Evidence.** Code review 2026-09-19 (`docs/code-review-2026-09-19.md`): top-10 item 9, B1, B4, B5, A24 (A27, typing `Cell` against `Vehicle`, is left out: `infrastructure` never imports `entity`). Golden 24/24 exact; ring-road FD points from the paper's `diagnose_fd_capacity.py` byte-identical against main; `tests/test_infrastructure.py`. Wall time, 300 s quick run, best of 3, same machine: S1 7.40 to 7.17 s, S3 (50% AV) 10.34 to 8.90 s. Made unattended; the review's non-neutral items (B6, B7, B8, B13, C1) are BACKLOG B7 to B9.
+**Replaces.** nothing.
+**Cited by.** `odca/infrastructure/cell.py`, `lane.py`, `freeway.py`, `odca/entity/controller.py`.
 
 ## D-2026-09-19-34: viewers in the package
 **What.** `odca.viewer.snapshots` (the one `VehicleSnapshot`, which both paper viewers had copied, and `reconstruct_grid`), `odca.viewer.animation` (`animate_result`, `plot_trajectories`) and `odca.viewer.playback` (`TrafficVisualizer.from_result`), behind the `[viewer]` extra. Each takes a `SimulationResult`, so the 7 to 11 parameter lists go. The paper's `visualize.py` and `animate.py` keep only their command-line options and the S1 run.

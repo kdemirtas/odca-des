@@ -38,7 +38,7 @@
 
 ## D-2026-09-19-34: viewers in the package
 **What.** `odca.viewer.snapshots` (the one `VehicleSnapshot`, which both paper viewers had copied, and `reconstruct_grid`), `odca.viewer.animation` (`animate_result`, `plot_trajectories`) and `odca.viewer.playback` (`TrafficVisualizer.from_result`), behind the `[viewer]` extra. Each takes a `SimulationResult`, so the 7 to 11 parameter lists go. The paper's `visualize.py` and `animate.py` keep only their command-line options and the S1 run.
-**Evidence.** HANDOVER N7, paper-odca-des D-2026-09-19-9. Headless smoke run: a pygame frame, an animation GIF and a time-space diagram rendered from an S1 run; `tests/test_viewer.py`. The window height used the removed `num_lanes` argument; fixed in the move. Signatures chosen unattended: ASSUMPTIONS A-2026-09-19-17.
+**Evidence.** HANDOVER N7, paper-odca-des D-2026-09-19-9. Headless smoke run: a pygame frame, an animation GIF and a time-space diagram rendered from an S1 run; `tests/test_viewer.py` (grid, diagram, time window on both ends of a segment, a headless pygame frame). The `cell_range` option of the old diagram is not carried over (no caller). The window height used the removed `num_lanes` argument; fixed in the move. Signatures chosen unattended: ASSUMPTIONS A-2026-09-19-17.
 **Replaces.** nothing.
 **Cited by.** `odca/viewer/`.
 

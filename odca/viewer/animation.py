@@ -197,7 +197,7 @@ def plot_trajectories(result: SimulationResult, lane_filter: Optional[int] = Non
         segments, speeds = [], []
         for vehicle in result.vehicles:
             for a, b in zip(vehicle.trajectory, vehicle.trajectory[1:]):
-                in_time = t_range is None or t_range[0] <= a.time <= t_range[1]
+                in_time = t_range is None or t_range[0] <= a.time and b.time <= t_range[1]
                 if a.lane_idx == lane_idx == b.lane_idx and in_time:
                     segments.append([(a.time, a.cell_idx * km), (b.time, b.cell_idx * km)])
                     speeds.append(a.speed)

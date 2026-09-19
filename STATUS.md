@@ -9,12 +9,12 @@ rule in, refactor design settled; next is the refactor N2 to N8 (ranked list in 
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N7; `uv run pytest` 78/78 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N7; `uv run pytest` 80/80 passed.
 
 
 ## 2026-09-19 (N7): viewers in the package
 - `odca.viewer` (snapshots, matplotlib animation and time-space diagram, pygame playback), each from a `SimulationResult` (D-2026-09-19-34, assumption A-17). The paper's `visualize.py` and `animate.py` are thin CLIs.
-- Proof: headless render of all three from an S1 run; `tests/test_viewer.py`; 78 tests.
+- Proof: headless render of all three from an S1 run; `tests/test_viewer.py`; 80 tests. Review: conformance 0; correctness 2 (time window checked one end only, no pygame test), fixed.
 
 ## 2026-09-19 (N6): experiment kit
 - `odca.experiment` (run records, strict per-seed JSON, aggregation) and `odca.analysis.mean_ci95` (D-2026-09-19-33, assumption A-16). The paper's two runners and `aggregate_multiseed.py` use it; their three t-table copies are gone.

@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-19-31 | 2026-09-19 | A lane-change request is used up by the lane change it makes: one decision, one lane change | Kerem (fix every bug; manuscript tex:335 "initiating a mandatory lane change") | none |
 | D-2026-09-19-30 | 2026-09-19 | Driver split as built: `Vehicle(env, cfg, driver, origin_cell, destination)`, `HumanDriver`, `AutonomousDriver` registering with `AutonomousController`, one `VehicleFactory`; the seven `Vehicle` constants become `VehicleConfig`/`DriverConfig` fields with the same defaults; the link contract widened to the calls the vehicle already made | ASSUMPTIONS A-2026-09-19-12 to -14, made unattended (orchestrate loop) | none |
 | D-2026-09-19-29 | 2026-09-19 | Scenario data (network, demand) belongs to the papers; `SimConfig` requires it and keeps only generic defaults | ASSUMPTIONS A-2026-09-19-8, accepted by Kerem | none |
 | D-2026-09-19-28 | 2026-09-19 | `Incident`: cells blocked or slowed for a set time, then restored; listed in `SimConfig.incidents` | Kerem | none |
@@ -31,6 +32,12 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-19-31: one lane-change request, one lane change
+**What.** After a lateral move, `Vehicle._advance_to` sets the requested direction back to forward. Before, the request stayed until the driver decided again (1 s for a human, about 5 cells at free flow), so one MLC or DLC decision could make several lane changes in a row, each skipping the cooldown and gap re-evaluation by the driver.
+**Evidence.** Found while plotting the demo corridor (paper-odca-des `code/demo_trajectories.py`): 4.4 lane changes per vehicle-km there and 3.9 in S1, half of them away from the lane the vehicle needed. `tests/test_drivers.py::test_one_request_makes_one_lane_change` made 2 changes from one request before the fix. Golden re-recorded: S1 seed 1 lane changes per km 4.98 to 1.81, delay 30.6 to 22.8 s, throughput 2880 to 3080 veh/h, missed exits 57 to 38; S4 seed 1 lane changes per km 2.09 to 0.65; bottleneck runs move less (BN 0% AV seed 1 lane changes per km 1.07 to 0.94). Full table in STATUS 2026-09-19 (N4b).
+**Replaces.** nothing.
+**Cited by.** `odca/entity/vehicle.py` (`_advance_to`).
 
 ## D-2026-09-19-30: driver split as built
 **What.** `Vehicle` keeps the physical side (position, lock, movement, exit, trajectory, move counters) and takes `(env, cfg, driver, origin_cell, destination)`. `Driver` in `odca/entity/driver.py` holds every decision and its state; `HumanDriver` decides in its own process, `AutonomousDriver` registers with `AutonomousController` (`odca/entity/controller.py`, renamed from `AVController`) and acts at its `dt`. `VehicleFactory` (`odca/simulation/factory.py`) builds each vehicle with its driver for the generators and for the vehicles placed at t=0. `HDV`, `AV`, `VehicleType` and `config_kwargs` are gone; reporting reads `vehicle.kind`. The seven class constants become config fields with today's values as defaults: `progressive_speed_threshold`, `traversal_dt`, `escape_speed` in `VehicleConfig`; `lc_patience`, `min_reeval_ratio`, `blockage_scan_mult`, `min_creep_speed`, `slowdown_min_speed` in `DriverConfig`. The vehicle-to-driver calls are the ones it already made: wake, react now (speed-limit change), gap and blockage judgement, and reads of tau, action interval, patience and merge priority.

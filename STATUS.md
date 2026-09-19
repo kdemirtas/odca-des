@@ -9,8 +9,24 @@ rule in, refactor design settled; next is the refactor N2 to N8 (ranked list in 
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after the named-places demand (D-2026-09-19-26); unchanged by N3 and N4; `uv run pytest` 66/66 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); `uv run pytest` 67/67 passed.
 
+
+## 2026-09-19 (N4b): one lane-change request, one lane change
+- `Vehicle._advance_to` uses up the request after a lateral move (D-2026-09-19-31); test `test_one_request_makes_one_lane_change` (2 changes from one request before).
+- Golden re-recorded, every run moved. Lane changes per km, delay (s), throughput (veh/h), missed exits, before to after:
+
+| run | lc/km | delay | throughput | missed |
+|---|---|---|---|---|
+| S1 seed 1 | 4.98 to 1.81 | 30.6 to 22.8 | 2880 to 3080 | 57 to 38 |
+| S1 seed 2 | 4.77 to 1.89 | 26.8 to 24.2 | 2867 to 3067 | 45 to 30 |
+| S2 seed 1 | 4.10 to 1.40 | 26.4 to 18.1 | 3147 to 3387 | 36 to 25 |
+| S3 seed 1 | 3.18 to 1.09 | 19.3 to 11.9 | 3547 to 3667 | 35 to 14 |
+| S4 seed 1 | 2.09 to 0.65 | 9.4 to 6.3 | 3787 to 4027 | 27 to 13 |
+| BN 0% AV seed 1 | 1.07 to 0.94 | 80.7 to 84.4 | 2460 to 2393 | 0 to 0 |
+| BN 70% AV seed 1 | 0.42 to 0.34 | 4.8 to 6.1 | 3547 to 3540 | 0 to 0 |
+
+- ⏳ S1 still makes about 2.3 lane changes per vehicle-km, 45% away from the needed lane, from the zero-advantage DLC rate; two candidate rules measured in `docs/lane-change-rate.md`, Kerem decides.
 
 ## 2026-09-19 (N4): driver split from the vehicle
 - `Vehicle(env, cfg, driver, origin_cell, destination)` keeps the physical side; `Driver`, `HumanDriver` (own process), `AutonomousDriver` (registers with `AutonomousController`, renamed from `AVController`) hold the decisions; `VehicleFactory` builds every vehicle; `HDV`, `AV`, `VehicleType`, `config_kwargs` gone; the seven class constants are config fields with the same defaults (D-2026-09-19-30, assumptions A-12 to A-14 made unattended).

@@ -9,8 +9,11 @@ rule in, refactor design settled; next is the refactor N2 to N8 (ranked list in 
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); `uv run pytest` 67/67 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5; `uv run pytest` 68/68 passed.
 
+
+## 2026-09-19 (N5): typed run result
+- `Simulation.run()` returns `SimulationResult` (config, vehicles, generated count, `RunCounters`), `odca/simulation/result.py` (D-2026-09-19-32, assumption A-15). Golden exact; 68 tests; paper runners moved to attributes in the same pass.
 
 ## 2026-09-19 (N4b): one lane-change request, one lane change
 - `Vehicle._advance_to` uses up the request after a lateral move (D-2026-09-19-31); test `test_one_request_makes_one_lane_change` (2 changes from one request before).

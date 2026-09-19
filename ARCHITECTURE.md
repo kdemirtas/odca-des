@@ -19,7 +19,7 @@ Modules, what each owns, and what it may import. A module not listed here does n
 | `odca/models/` | Newell, MLC and DLC probabilities; pure functions | stdlib | simpy, any `odca` module |
 | `odca/infrastructure/` | `Cell` and its endpoint subclasses `OriginCell`, `DestinationCell`; `Lane`; `Freeway` with its named `Origin`s and `Destination`s; `Incident` (D-2026-09-19-26 to -28) | simpy, params | entity, simulation |
 | `odca/entity/` | `Vehicle` (physical: cell label, lock, movement, trajectory), `Driver`, `HumanDriver`, `AutonomousDriver`, `DriverStreams`, `DriverTraits` and `TraitSampler` (`driver.py`), `AutonomousController` (`controller.py`), `TrajectoryRecord` (D-2026-09-19-24, -30) | infrastructure, models, params | simulation, analysis, experiment |
-| `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver), `SimulationResult`, RNG stream order | entity, infrastructure, rng, params | analysis, experiment, viewer |
+| `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver), `SimulationResult` and `RunCounters` (`result.py`, D-2026-09-19-32), RNG stream order | entity, infrastructure, rng, params | analysis, experiment, viewer |
 | `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`, `mean_ci95` (the only interval code) | entity (read-only), params | simulation, experiment |
 | `odca/baselines/` | NaSch | numpy | the rest of `odca` |
 | `odca/experiment/` | run a scenario over a seed list, per-seed JSON writer, aggregation into the CSV schema below | simulation, analysis, params | viewer, any paper |
@@ -60,7 +60,7 @@ fields.
 | `Vehicle` | one vehicle's physical side: position label, cell lock with delayed release (reads tau from its driver), movement, exit, trajectory, move counters; `kind` names its driver's kind | `odca/entity/vehicle.py` |
 | `Driver` (`HumanDriver`, `AutonomousDriver`) | the decisions: target speed, direction, lane-change curves, gap acceptance, exposure since the last decision, decision counters. `HumanDriver` runs its own SimPy process; `AutonomousDriver` registers with an `AutonomousController`, which decides for it every `dt`. A new behaviour is a subclass overriding `decide`, `evaluate_speed` or `evaluate_direction` | `odca/entity/driver.py` |
 | `TrajectoryRecord` | one T(x, n) passage record | `odca/entity/vehicle.py` |
-| `SimulationResult` (planned) | vehicles, completed vehicles, counters and config of one run | `odca/simulation/engine.py`. drift: a plain dict today |
+| `SimulationResult`, `RunCounters` | one run: the validated config it ran with (`config_yaml()` reruns it), every vehicle, the generated count, the event counters; completed and still-active vehicles are derived | `odca/simulation/result.py` (D-2026-09-19-32) |
 
 ## Invariants
 What must hold after every run, each with the check that proves it.

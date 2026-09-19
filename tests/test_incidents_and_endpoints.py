@@ -34,13 +34,13 @@ def test_throttled_exit_caps_outflow():
                         .set_speed_limit(0.25))
     tau = 1.5
     cap = 600.0 / (tau + 1 / 0.25) * 1.1  # 3600 / (tau + 1/v) veh/h over 600 s, 10% slack
-    assert throttled["total_completed"] <= cap < plain["total_completed"]
+    assert throttled.num_completed <= cap < plain.num_completed
 
 
 def test_metered_origin_caps_inflow():
     _, metered = _run(_corridor(), lambda sim: sim.freeway.origin("mainline_lane_1")
                       .set_speed_limit(0.25))
-    entered = sum(1 for v in metered["vehicles"] if v.time_entered is not None)
+    entered = sum(1 for v in metered.vehicles if v.time_entered is not None)
     assert entered <= 600.0 / (1.5 + 1 / 0.25) * 1.1
 
 
@@ -48,14 +48,14 @@ def test_incident_blocks_then_restores():
     incident = IncidentConfig(start=100.0, duration=200.0, lane=1, first_cell=30, last_cell=35)
     sim, blocked = _run(_corridor(incidents=[incident]))
     _, plain = _run(_corridor())
-    assert blocked["total_completed"] < plain["total_completed"]
+    assert blocked.num_completed < plain.num_completed
     assert not any(cell.blocked for cell in sim.freeway.lane(1).cells)  # restored
 
 
 def test_incident_can_throttle_a_destination():
     incident = IncidentConfig(start=0.0, duration=600.0, place="end_lane_1", speed_limit=0.25)
     _, throttled = _run(_corridor(incidents=[incident]))
-    assert throttled["total_completed"] <= 600.0 / (1.5 + 1 / 0.25) * 1.1
+    assert throttled.num_completed <= 600.0 / (1.5 + 1 / 0.25) * 1.1
 
 
 def test_a_place_cannot_be_blocked():

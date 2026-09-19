@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-19-32 | 2026-09-19 | `Simulation.run()` returns a `SimulationResult` (config, vehicles, generated count, `RunCounters`) instead of a dict | ASSUMPTIONS A-2026-09-19-15, made unattended (orchestrate loop) | none |
 | D-2026-09-19-31 | 2026-09-19 | A lane-change request is used up by the lane change it makes: one decision, one lane change | Kerem (fix every bug; manuscript tex:335 "initiating a mandatory lane change") | none |
 | D-2026-09-19-30 | 2026-09-19 | Driver split as built: `Vehicle(env, cfg, driver, origin_cell, destination)`, `HumanDriver`, `AutonomousDriver` registering with `AutonomousController`, one `VehicleFactory`; the seven `Vehicle` constants become `VehicleConfig`/`DriverConfig` fields with the same defaults; the link contract widened to the calls the vehicle already made | ASSUMPTIONS A-2026-09-19-12 to -14, made unattended (orchestrate loop) | none |
 | D-2026-09-19-29 | 2026-09-19 | Scenario data (network, demand) belongs to the papers; `SimConfig` requires it and keeps only generic defaults | ASSUMPTIONS A-2026-09-19-8, accepted by Kerem | none |
@@ -32,6 +33,12 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-19-32: a typed run result
+**What.** `Simulation.run()` returns `SimulationResult(config, vehicles, num_generated, counters)` from `odca/simulation/result.py`; `completed_vehicles`, `num_completed` and `num_active_at_end` are derived properties, `config_yaml()` writes the validated config so a run can be repeated from its result. `RunCounters` is a frozen dataclass with the eight counters under their old key names, so `asdict(result.counters)` writes the same JSON as before. The result dict is gone; the golden scenarios and every paper runner read attributes.
+**Evidence.** HANDOVER N5. Golden 24/24 exact; `test_result_carries_the_config_it_ran_with` round-trips the config through `config_yaml()`; the paper's S1 quick run reproduces the golden values (1.81 lane changes per km, 22.75 s delay, 3080 veh/h). Field names made unattended: ASSUMPTIONS A-2026-09-19-15.
+**Replaces.** nothing.
+**Cited by.** `odca/simulation/result.py`, `odca/simulation/engine.py` (`Simulation.run`).
 
 ## D-2026-09-19-31: one lane-change request, one lane change
 **What.** After a lateral move, `Vehicle._advance_to` sets the requested direction back to forward. Before, the request stayed until the driver decided again (1 s for a human, about 5 cells at free flow), so one MLC or DLC decision could make several lane changes in a row, each skipping the cooldown and gap re-evaluation by the driver.

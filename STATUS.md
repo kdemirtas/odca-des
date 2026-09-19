@@ -9,11 +9,7 @@ rule in, refactor design settled; next is the refactor N2 to N8 (ranked list in 
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-<<<<<<< HEAD
 after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N7; `uv run pytest` 78/78 passed.
-=======
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 and N6; `uv run pytest` 76/76 passed.
->>>>>>> main
 
 
 ## 2026-09-19 (N7): viewers in the package

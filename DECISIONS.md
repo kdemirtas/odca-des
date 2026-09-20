@@ -7,6 +7,13 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-12 | 2026-09-20 | The vehicle-to-driver link is the calls the vehicle already made (`evaluate_speed`, `evaluate_direction`, `sees_blockage`, `accepts_gap`, `merge_priority`, plus tau, action interval and patience), the vehicle counts moves and the driver counts decisions, and `lc_failures` becomes two stored counters, `lc_patience_failures` and `gap_rejections` | Kerem, accepted A-2026-09-19-13 with the counter split he asked for | none |
+| D-2026-09-20-11 | 2026-09-20 | The eight old `Vehicle` class constants are config fields with their old values as defaults: the movement ones in `VehicleConfig`, the decision ones in `DriverConfig`, not one run-wide value in `SimConfig` | Kerem, accepted A-2026-09-19-12 | none |
+| D-2026-09-20-10 | 2026-09-20 | Exposure starts at the first direction evaluation, which therefore carries none and can only fire a forced change, and it resets at every evaluation, including those inside the discretionary cooldown, which stays refractory rather than banking time | Kerem, accepted A-2026-09-19-7 | none |
+| D-2026-09-20-9 | 2026-09-20 | The lane-change exposure references are one free-flow driver-second: `MLC_REFERENCE_CELLS` 5.2 cells (one second at v_max) for the mandatory curve, one second for the discretionary one, which is what the published curve parameters mean | Kerem, accepted A-2026-09-19-6 | none |
+| D-2026-09-20-8 | 2026-09-20 | A vehicle that reaches the last cell outside its end lane leaves the network there and counts as a missed exit, the same counter a missed off-ramp increments; it is never held on the road or rerouted | Kerem, accepted A-2026-09-19-11 | none |
+| D-2026-09-20-7 | 2026-09-20 | The any-lane destination `end` stays beside the per-lane ends; the lane-drop bottleneck, the incident and the scalability benchmark send all their demand and their placed vehicles to it, S1-S4 use the per-lane ends | Kerem, accepted A-2026-09-19-10 | none |
+| D-2026-09-20-6 | 2026-09-20 | Origins and destinations keep readable names (`mainline_lane_<n>`, `onramp_<k>`, `offramp_<k>`, `end_lane_<n>`, `end`); the dissertation's letters stay in the dissertation and in the manuscript prose | Kerem, accepted A-2026-09-19-9 | none |
 | D-2026-09-20-5 | 2026-09-20 | Occupancy is reported beside density: every trajectory record carries T_acq as well as T_arr, and the run reports the mean cells a vehicle holds, the wait at its origin and how many never got on | Kerem, corrected A-2026-09-19-4; closes BACKLOG B10 | none |
 | D-2026-09-20-4 | 2026-09-20 | A speed limit takes effect on the cell that posts it: arriving in a cell whose limit differs, the driver picks the speed again before that cell is crossed; `react_now` and the driver interrupt are gone | Kerem, 2026-09-20 | none |
 | D-2026-09-20-3 | 2026-09-20 | Free-flow speed is per vehicle and per cell, v_f(n, c) = min(v_max(n), v_lim(c)); delay is the per-cell excess over it, so a cell driven at a posted limit adds no delay | Kerem, corrected A-2026-09-19-3 | none |
@@ -41,6 +48,134 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-12: the link as the vehicle uses it, and lane-change failures counted apart
+**What.** Two halves, one decision. The link: a vehicle may ask its driver to `evaluate_speed()`
+and `evaluate_direction()`, whether it `sees_blockage()`, whether it `accepts_gap(cell)`, and its
+`merge_priority()` for the resource request, and it reads `tau`, `action_interval` and
+`lc_patience`; the driver changes the vehicle only through `set_target_speed` and
+`request_direction` (invariant 6). The counters: the vehicle counts moves (lane changes, patience
+failures, missed exits), the driver counts decisions (slowdowns, car-following and speed
+evaluations, gaps refused). `RunCounters.lc_failures` is no longer a stored field; it is two,
+`lc_patience_failures` (from `Vehicle.count_lc_patience_failures`, renamed from
+`count_lc_failures`) and `gap_rejections` (from the driver), with `lc_failures` kept as a derived
+property for logging. Per-seed JSON therefore carries the two keys instead of the one.
+**Evidence.** Kerem, 2026-09-20: "accept all three, and split lc_failures into two keys". Golden
+re-recorded under this decision: 24 runs, every stat and every other counter identical, and
+`lc_patience_failures + gap_rejections` equal to the old `lc_failures` in all 24, so the split
+moved nothing. 86 tests pass. The split's first result: patience failures are 0 in all 24 golden
+runs and all 306,335 failures are refused gaps, because `accepts_gap` refuses an occupied or locked
+cell before the request is made, leaving the patience timeout reachable only in a same-instant race
+(BACKLOG B12).
+**Replaces.** nothing.
+**Cited by.** `odca/simulation/result.py` (`RunCounters`), `odca/entity/vehicle.py`
+(`count_lc_patience_failures`), `odca/entity/driver.py` (`count_gap_rejections`),
+`odca/simulation/engine.py` (the run log).
+
+## D-2026-09-20-11: the vehicle constants are config fields, split by who owns them
+**What.** What used to be class constants on `Vehicle` are fields with the same values as defaults.
+How a vehicle moves goes in `VehicleConfig`: `progressive_speed_threshold` 1.0 cell/s,
+`traversal_dt` 0.25 s, `escape_speed` 1.0 cell/s. How a driver decides goes in `DriverConfig`:
+`lc_patience` 3.0 s, `min_reeval_ratio` 0.5, `blockage_scan_mult` 3, `min_creep_speed`
+0.1 cell/s, `slowdown_min_speed` 0.5 cell/s. The sub-step `traversal_dt` sits with the vehicle, not
+as one run-wide value in `SimConfig` as the old HANDOVER had it, because it is how a vehicle crosses
+a cell rather than a property of the run.
+**Evidence.** Kerem, 2026-09-20: "accept it". Every default is the old constant, so the split moved
+no number: the driver split it belongs to (N4, D-2026-09-19-24 and -30) kept the golden 24/24 exact.
+**Replaces.** nothing.
+**Cited by.** `odca/params.py` (`VehicleConfig`, `DriverConfig`), `odca/entity/vehicle.py`,
+`odca/entity/driver.py`.
+
+## D-2026-09-20-10: exposure starts at the first evaluation and the cooldown does not bank it
+**What.** `HumanDriver._direction_exposure` returns (0, 0) the first time it is called and stores
+the time and position at every call after that. Two consequences, both intended. A vehicle's first
+direction evaluation after entering carries no exposure, so `probability_over` gives 0 for any
+ordinary curve and only a forced change (p = 1, a blockage right ahead) can fire at that moment.
+And an evaluation that happens while the discretionary cooldown is still running still resets the
+clock, so the cooldown is a refractory period and the time inside it is not accumulated for the
+first evaluation after it ends.
+**Evidence.** Kerem, 2026-09-20: "accept both". Nothing has elapsed or been driven before the first
+evaluation, so any exposure there would be invented. The cooldown is 10 s and an HDV evaluates at
+least once a second, so about ten evaluations fall inside each one. With the reset, the first
+evaluation after a cooldown carries roughly 1 s and gives q = 4.7% at zero speed advantage
+(P = 0.047 per second); banked, it would carry 10 s and give q = 38.5%. Banking would therefore
+raise the discretionary rate, which already stands at about 2.3 changes per vehicle-km in S1, 45%
+of them away from the needed lane (`docs/lane-change-rate.md`, paper-odca-des AGENDA open decision).
+Scale of the first-evaluation rule: once per vehicle, 107,694 completions over the 20 S1 seeds.
+**Replaces.** nothing.
+**Cited by.** `odca/entity/driver.py` (`_direction_exposure`, `evaluate_direction`),
+`odca/models/lane_changing/rate.py` (`probability_over`).
+
+## D-2026-09-20-9: the exposure references are one free-flow driver-second
+**What.** `MLC_REFERENCE_CELLS = 5.2` in `odca/models/lane_changing/mandatory.py` is the distance
+unit of the mandatory curve, and the discretionary curve's unit is one second
+(`LogisticLaneChangeConfig`). Both are the exposure a free-flow driver accumulates in one second at
+v_max = 5.2 cells/s, so `mlc_k`, `mlc_r0`, `dlc_k` and `dlc_v0` keep stating the chance that a
+driver acts at one ordinary decision, and `probability_over` converts from there
+(q = 1 - (1 - p)^x, D-2026-09-19-22).
+**Evidence.** Kerem, 2026-09-20: "accept it and refer to this in the paper to justify why we
+selected those parameters." The curves were fitted per decision of a free-flow driver, and a human
+driver's action interval is 1.0 s, so a free-flow HDV evaluating once per second sees q = P and a
+driver woken far more often in congestion gets the same exposure over the same distance rather than
+more attempts. The reference is not a free knob: a reference c times longer leaves behaviour
+unchanged only under 1 - P' = (1 - P)^c. paper-odca-des D-2026-09-20-8 puts this in the manuscript.
+**Replaces.** nothing.
+**Cited by.** `odca/models/lane_changing/mandatory.py` (`MLC_REFERENCE_CELLS`),
+`odca/models/lane_changing/rate.py` (`probability_over`), `odca/entity/driver.py`
+(`mlc_exposure`), `odca/params.py` (`LogisticLaneChangeConfig`).
+
+## D-2026-09-20-8: the wrong end lane is a missed exit, not a second chance
+**What.** At the last cell, a vehicle whose destination names a lane it is not in exits anyway and
+`count_missed_exits` goes up by one (`Vehicle._movement_process`). It is the same counter a missed
+off-ramp increments, where the vehicle is retargeted to the next off-ramp downstream or to the
+segment end (`_retarget_missed_exit`). No vehicle is held on the road, sent around, or dropped from
+the results: it leaves, its trip is measured, and the run reports the failure through the counter.
+**Evidence.** Kerem, 2026-09-20: "accept it". The dissertation reports these as exit failures
+(4.3, "Success Flag"), and the road offers nothing downstream to a vehicle in the last cell. Scale
+in the current S1-S4 results, 20 seeds each: missed exits are 16.4% of completions in S1 (17,668 of
+107,694), 10.0% in S2, 6.7% in S3 and 5.4% in S4 (6,873 of 128,024), falling as AV share rises and
+lane changing gets easier. The counter bundles both kinds, a missed off-ramp and a wrong end lane,
+so those percentages are not this rule alone; the per-seed files store only the total.
+**Replaces.** nothing.
+**Cited by.** `odca/entity/vehicle.py` (`_movement_process`, `_passed_exit`,
+`_retarget_missed_exit`), `odca/simulation/result.py` (`RunCounters.missed_exits`).
+
+## D-2026-09-20-7: the any-lane `end` stays for the lane-drop runs
+**What.** `DestinationConfig.lane` None means any lane, and `NetworkConfig.corridor` publishes it
+as `end` beside `end_lane_<n>`. A vehicle bound for `end` leaves at the downstream edge of the last
+cell from whatever lane it is in, so its route asks for no mandatory lane change. The paper's
+bottleneck (3 lanes, 600 cells, lane 3 closed from cell 300 to the end, 3,600 veh/h at 1,200 per
+lane), incident (4 lanes, 4,500 veh/h at 1,125 per lane, two lanes closed for a while) and
+scalability runs use it for their demand and for the vehicles placed at t=0. S1 to S4 use the four
+per-lane ends instead (D-2026-09-19-26), which is where the mandatory lane changes come from.
+**Evidence.** Kerem, 2026-09-20: "accept it". The bottleneck is why the destination exists: with
+per-lane ends, a third of its demand, 1,200 veh/h, would be bound for the end of a lane that is
+closed from cell 300 onwards, so those vehicles could never exit. The rejected alternative, per-lane
+ends everywhere, would also have moved every bottleneck, incident and scalability number the
+manuscript quotes (bottleneck throughput 2,501 veh/h at 0% AV, 3,602 at 70%), which means a rerun
+and a restatement, not an edit.
+**Replaces.** nothing.
+**Cited by.** `odca/params.py` (`DestinationConfig`, `NetworkConfig.corridor`),
+`odca/infrastructure/freeway.py` (destination cells per lane), `odca/entity/vehicle.py`
+(`destination_lane` None); paper-odca-des `code/run_bottleneck.py`, `run_incident.py`,
+`run_scalability.py`.
+
+## D-2026-09-20-6: origins and destinations keep their readable names
+**What.** A network names its places in words: origins `mainline_lane_<n>` and `onramp_<k>`,
+destinations `offramp_<k>`, `end_lane_<n>` and `end` (`NetworkConfig`, `NetworkConfig.corridor`,
+and every scenario YAML a paper keeps). The dissertation's letters (lanes 1 to 4, O1, off-ramps
+A to D, F1) stay in the dissertation; a paper that wants to print them maps them in its own text,
+and no legend file is added.
+**Evidence.** Kerem, 2026-09-20: "accept it, keep the words". The names are dictionary keys and
+nothing reads meaning from them, so no number moves and no golden is touched. The manuscript
+already names places in words rather than letters: Section 5.1 gives "two on-ramps (lane 1 at
+cells 100 and 400), three off-ramps (lane 1 at cells 300, 550 and 750) and one exit per lane at
+the segment end", and the geometry figure caption is written the same way. The rejected
+alternative, letters in the YAML, would also have meant regenerating the 124 per-seed JSON files
+in paper-odca-des, which carry these keys.
+**Replaces.** nothing.
+**Cited by.** `odca/params.py` (`NetworkConfig`, `NetworkConfig.corridor`); paper-odca-des
+`code/configs/network_s1.yaml`, `demand_s1.yaml`, `demo_corridor.yaml`.
 
 ## D-2026-09-20-5: report what a vehicle takes from the road, not only what the road does to it
 
@@ -232,8 +367,9 @@ each OD flow, a fixed demand rate is specified, denoted as λ vehicles per hour"
 run moved; seed 1 S1 lane changes per km 2.09 -> 4.98, delay 29.1 -> 30.6 s.
 **Replaces.** D-2026-09-19-11 for S1-S4 (their segment end was any lane).
 **Cited by.** `Freeway`, `NetworkConfig`, `Simulation._od_pairs`, `VehicleGenerator`.
-⚠️ Mine, not Kerem's: readable names instead of the dissertation letters (A-2026-09-19-9); `end`
-kept for the lane-drop runs (A-2026-09-19-10); wrong end lane counted as missed (A-2026-09-19-11).
+⚠️ Every call under this decision is now Kerem's: the readable names since D-2026-09-20-6, the
+any-lane `end` since D-2026-09-20-7, the wrong end lane counted as a missed exit since
+D-2026-09-20-8.
 
 ## D-2026-09-19-25: YAML configs, package defaults and paper scenarios
 **What.** `odca/configs/` ships the published vehicle, driver and controller YAML; a paper keeps
@@ -307,7 +443,8 @@ all cases give 0.60 (docs/lane-change-rate.md). Quick golden re-recorded: all 24
 **What.** `AVController.register` sets the AV's `action_interval` to `controller_dt`: an AV decides at the controller rate (tex:398), so a blocked AV retries its move every 0.1 s instead of 0.5 s. `Simulation.seed_vehicles` draws each initial vehicle's type from the AV share, with its own RNG stream spawned last.
 **Evidence.** Opus principal-engineer review 2026-09-19 (`docs/code-review-2026-09-19.md`); Kerem, 2026-09-19: "Fix every bug." (A19, A20). Before: an AV at standstill lagged up to 0.5 s behind a 10 Hz controller; BN_70av started from an all-HDV road.
 **Replaces.** Nothing.
-**Cited by.** `odca/entity/av_controller.py` `register`; `odca/simulation/engine.py` `seed_vehicles`.
+**Cited by.** `odca/entity/controller.py` `register` (the file was `av_controller.py` until
+D-2026-09-19-30); `odca/simulation/engine.py` `seed_vehicles`.
 
 ## D-2026-09-19-18: lane-change counting and cooldown
 **What.** `count_lane_changes` and `last_lc_time` change when a lateral move is granted, not when it is attempted (a patience expiry no longer counts or starts a cooldown). The cooldown gates discretionary lane changes only; mandatory ones (exit lane, blockage) are never delayed by it.

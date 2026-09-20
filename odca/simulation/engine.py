@@ -160,7 +160,8 @@ class Simulation(ConfigMixin):
         )
         logger.info(
             f"Events: {counters.lane_changes} lane changes, "
-            f"{counters.lc_failures} LC failures, "
+            f"{counters.lc_patience_failures} out of patience, "
+            f"{counters.gap_rejections} gaps refused, "
             f"{counters.slowdowns} slowdowns, "
             f"{counters.cf_evaluations} car-following evals, "
             f"{counters.av_controller_updates} AV controller updates"

@@ -36,8 +36,12 @@ def test_counters_split_between_vehicle_and_driver_sum_in_results():
     sim = Simulation(sim_config(sim_duration=400.0, seed=2))
     results = sim.run()
     vehicles = results.vehicles
-    assert results.counters.lc_failures == sum(
-        v.count_lc_failures + v.driver.count_gap_rejections for v in vehicles)
+    assert results.counters.lc_patience_failures == sum(
+        v.count_lc_patience_failures for v in vehicles)
+    assert results.counters.gap_rejections == sum(
+        v.driver.count_gap_rejections for v in vehicles)
+    assert results.counters.lc_failures == (results.counters.lc_patience_failures
+                                            + results.counters.gap_rejections)
     assert results.counters.speed_evaluations == sum(
         v.driver.count_speed_evaluations for v in vehicles)
 

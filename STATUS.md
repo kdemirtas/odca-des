@@ -1,16 +1,42 @@
 # odca-des: status
 > Read `PROJECT.md` first (the spec). This file = where things stand and what to do next. Entries
-> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-09-19**.
+> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-09-20**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
 ## TL;DR
 Shared ODCA simulator, extracted from paper-odca-des 2026-09-19. Bugs fixed, lane-change rate
-rule in, refactor N2 to N8 shipped 2026-09-19; next is whatever paper-odca-des N11 needs, and BACKLOG.
+rule in, refactor N2 to N8 shipped 2026-09-19; paper-odca-des ran its 124-job rerun on 2026-09-20.
+Now the assumption rows are being walked with Kerem: 7 closed on 2026-09-20 (D-2026-09-20-6 to -12),
+6 left. Otherwise BACKLOG.
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded 2026-09-20 for the three new stats keys of D-2026-09-20-5 (no value moved); `uv run pytest` 86/86 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded twice on 2026-09-20, for the three new stats keys of D-2026-09-20-5 and for the counter split of D-2026-09-20-12, no value moved either time; `uv run pytest` 86/86 passed.
 
+
+## 2026-09-20 (assumptions walked with Kerem, lane-change failures counted apart)
+- Seven assumption rows closed with Kerem, all accepted: readable origin and destination names
+  (D-2026-09-20-6), the any-lane `end` kept for the lane-drop, incident and scalability runs (-7),
+  the wrong end lane counted as a missed exit (-8), the exposure references as one free-flow
+  driver-second (-9), exposure starting at the first evaluation with no banking through the DLC
+  cooldown (-10), the old `Vehicle` constants as `VehicleConfig` and `DriverConfig` fields (-11),
+  and the vehicle-driver link with its counter split (-12). Six rows left.
+- Kerem's one correction, on the last row: `lc_failures` is now two stored counters,
+  `lc_patience_failures` (the vehicle's: a lateral request that ran out of patience) and
+  `gap_rejections` (the driver's: a target cell judged unsafe). `Vehicle.count_lc_failures` is
+  renamed `count_lc_patience_failures`; `lc_failures` survives as a derived property for the run
+  log. Per-seed JSON now carries the two keys instead of the one.
+- Golden re-recorded under D-2026-09-20-12: 24 runs, every stat and every other counter identical,
+  and the two new keys sum to the old `lc_failures` in all 24, so nothing moved. 86 tests pass.
+- What the split shows: patience failures are 0 in all 24 golden runs and all 306,335 failures are
+  refused gaps, because `accepts_gap` refuses an occupied or locked cell before the request is made,
+  leaving the patience timeout reachable only in a same-instant race. Parked as BACKLOG B12.
+- Docs: `ARCHITECTURE.md` gains `rng` on the `odca/entity/` row (`DriverStreams.spawn`,
+  `TraitSampler.spawn` always imported it) and names the counter split on the `RunCounters` row.
+  `/fix-drift` repaired the STATUS header date, the TL;DR, the Current numbers line, a bare
+  `D-2026-09-19-6` in HANDOVER and a `Cited by` still naming `av_controller.py`.
+- Numbers in paper-odca-des do not move: its 124 result files keep the old key until its pending
+  rerun regenerates them, and its manuscript quotes no lane-change failure count.
 
 ## 2026-09-20 (later): occupancy reported beside density
 - Every trajectory record now carries T_acq beside T_arr, the protocol's own two stamps, so lock

@@ -9,6 +9,10 @@ Rules (applied in order, synchronously to all vehicles):
   R3. Randomization: if rand() < p: v = max(v - 1, 0)
   R4. Movement:      x = x + v
 
+With `cell_v_max` set, R1 reads the limit posted on the cells the vehicle would cross this step
+instead of the one road-wide `v_max`, so no vehicle crosses a cell faster than that cell allows.
+Unset, which is the default, every cell allows `v_max` and the rules above are unchanged.
+
 Reference: Nagel & Schreckenberg (1992), J. Phys. I France 2, 2221-2229.
 """
 
@@ -31,6 +35,7 @@ class NaSchConfig:
     num_steps: int = 3600    # timesteps (1 step = 1 second)
     warmup_steps: int = 300
     seed: int = 42
+    cell_v_max: Optional[Tuple[int, ...]] = None   # per-cell posted limit, None: v_max everywhere
 
 
 class NaSchSimulation:
@@ -39,6 +44,16 @@ class NaSchSimulation:
     def __init__(self, config: NaSchConfig):
         self.config = config
         self.rng = np.random.default_rng(config.seed)
+
+        if config.cell_v_max is not None and len(config.cell_v_max) != config.num_cells:
+            raise ValueError(
+                f"cell_v_max has {len(config.cell_v_max)} entries for {config.num_cells} cells"
+            )
+        self.cell_v_max = (
+            np.full(config.num_cells, config.v_max, dtype=int)
+            if config.cell_v_max is None
+            else np.asarray(config.cell_v_max, dtype=int)
+        )
 
         # Road: -1 = empty, >= 0 = vehicle speed
         self.road = np.full(config.num_cells, -1, dtype=int)
@@ -60,6 +75,19 @@ class NaSchSimulation:
         ]
         self._veh_positions = positions.tolist()
 
+    def _posted(self, pos: int, v: int) -> int:
+        """The highest speed that crosses no cell faster than that cell allows.
+
+        Args:
+            pos: the vehicle's cell.
+            v: the speed it would hold after R1.
+        """
+        N = self.config.num_cells
+        v = min(v, int(self.cell_v_max[pos]))
+        while v > 0 and min(int(self.cell_v_max[(pos + d) % N]) for d in range(1, v + 1)) < v:
+            v -= 1
+        return v
+
     def _gap(self, pos: int) -> int:
         """Distance to the next vehicle ahead (periodic boundary)."""
         for d in range(1, self.config.num_cells):
@@ -71,7 +99,6 @@ class NaSchSimulation:
     def step(self):
         """One synchronous NaSch update step."""
         N = self.config.num_cells
-        v_max = self.config.v_max
         p = self.config.slowdown_prob
 
         # Collect current state
@@ -88,8 +115,8 @@ class NaSchSimulation:
         for pos, v in zip(positions, speeds):
             gap = self._gap(pos)
 
-            # R1: Acceleration
-            v = min(v + 1, v_max)
+            # R1: Acceleration, up to what the cells ahead allow
+            v = self._posted(pos, v + 1)
             # R2: Deceleration
             v = min(v, gap)
             # R3: Randomization

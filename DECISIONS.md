@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-19 | 2026-09-20 | The NaSch baseline can carry a per-cell posted limit (`NaSchConfig.cell_v_max`, `None` by default): R1 accelerates only to what the cells the vehicle would cross this step allow, which is the rule ODCA's `Cell.speed_limit` already follows | Kerem, 2026-09-20 (the paradigm figure needs both models in one speed-limit zone) | none |
 | D-2026-09-20-18 | 2026-09-20 | A cell's eight neighbour links are set when the road is built; code that reshapes a road afterwards relinks it (`Lane.make_periodic`, `Freeway.link_neighbours`) and no script writes `cell._next` | Kerem, accepted A-2026-09-19-19 | none |
 | D-2026-09-20-17 | 2026-09-20 | A target cell that is occupied or locked is a failed lane-change attempt, counted with the gap failures in `gap_rejections`; it is not a separate kind | Kerem, accepted A-2026-09-19-5 | none |
 | D-2026-09-20-16 | 2026-09-20 | The viewers take a `SimulationResult` (`TrafficVisualizer.from_result`, `animate_result`, `plot_trajectories`) instead of 7 to 11 arguments, and the time-space diagram joins consecutive records by lane rather than splitting on a 2 s time gap | Kerem, accepted A-2026-09-19-17 | none |
@@ -54,6 +55,18 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-19: the NaSch baseline can post a speed limit on a cell
+
+**What.** `NaSchConfig` gains `cell_v_max`, a per-cell integer limit, `None` by default. Unset, every cell allows the road-wide `v_max` and the four classical rules are untouched. Set, R1 reads the limit of the cells the vehicle would cross this step instead of `v_max`: `_posted` caps the speed at the current cell's limit and steps it down while any cell it would cross posts less, so no vehicle crosses a cell faster than that cell allows. That is the rule ODCA already follows through `Cell.speed_limit`, so a scenario with a posted zone now means the same thing in both models.
+
+**Why.** paper-odca-des needs the two models in one scenario for its paradigm figure, and the scenario Kerem asked for is a platoon that accelerates, slows at a zone and accelerates again, with the followers repeating the move (paper-odca-des D-2026-09-20-12). Without a per-cell limit the NaSch panel could not be given the same road, and the comparison would have stopped being about representation.
+
+**Evidence.** Kerem, 2026-09-20, choosing the mechanism from three offered: "A posted speed-limit zone". Checked with the field unset and set: unset, the default run is byte-identical to before; set to 2 over cells 80 to 119 with the slowdown off, the maximum speed inside the zone is 2 and outside it is 5.
+
+**Replaces.** nothing; it is the first capability added to the baseline since it was written.
+
+**Cited by.** `odca/baselines/nasch.py`, `code/plot_paradigm_comparison.py` in paper-odca-des.
 
 ## D-2026-09-20-18: neighbour links are built once, and a reshaped road relinks
 **What.** `Cell` keeps its eight neighbour links (next, previous, left, right and the four

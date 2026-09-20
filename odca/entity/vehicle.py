@@ -98,7 +98,7 @@ class Vehicle:
 
         # Movement counters; the driver counts its decisions
         self.count_lane_changes: int = 0
-        self.count_lc_failures: int = 0  # lateral requests not granted within the patience
+        self.count_lc_patience_failures: int = 0  # lateral requests not granted within the patience
         self.count_missed_exits: int = 0
 
         self.driver = driver
@@ -345,7 +345,7 @@ class Vehicle:
                     target.resource.release(req)
                 else:
                     req.cancel()
-                self.count_lc_failures += 1
+                self.count_lc_patience_failures += 1
                 self.desired_direction = Direction.FORWARD
                 logger.debug(
                     "t=%.2f  %s LC patience expired for %s, reverting to FORWARD",

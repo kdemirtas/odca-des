@@ -19,7 +19,8 @@ class RunCounters:
     """Event counts summed over a run's vehicles and its controller."""
 
     lane_changes: int
-    lc_failures: int         # lateral requests not granted in time plus gaps refused
+    lc_patience_failures: int   # lateral requests not granted within the patience
+    gap_rejections: int         # target cells the driver judged unsafe
     slowdowns: int
     cf_evaluations: int
     speed_evaluations: int
@@ -38,8 +39,8 @@ class RunCounters:
         """
         return cls(
             lane_changes=sum(v.count_lane_changes for v in vehicles),
-            lc_failures=sum(v.count_lc_failures + v.driver.count_gap_rejections
-                            for v in vehicles),
+            lc_patience_failures=sum(v.count_lc_patience_failures for v in vehicles),
+            gap_rejections=sum(v.driver.count_gap_rejections for v in vehicles),
             slowdowns=sum(v.driver.count_slowdowns for v in vehicles),
             cf_evaluations=sum(v.driver.count_cf_evaluations for v in vehicles),
             speed_evaluations=sum(v.driver.count_speed_evaluations for v in vehicles),
@@ -47,6 +48,11 @@ class RunCounters:
             av_controller_updates=controller_updates,
             simpy_events=events,
         )
+
+    @property
+    def lc_failures(self) -> int:
+        """Lane-change attempts that did not happen, either way (D-2026-09-20-12)."""
+        return self.lc_patience_failures + self.gap_rejections
 
 
 @dataclass(frozen=True)

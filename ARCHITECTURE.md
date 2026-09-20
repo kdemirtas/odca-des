@@ -1,5 +1,5 @@
 # ARCHITECTURE: odca-des
-> **Owned by `/architect`. Two pages max. Last updated 2026-09-19.** Code follows this file; when
+> **Owned by `/architect`. Two pages max. Last updated 2026-09-20.** Code follows this file; when
 > they disagree, either the code is wrong or this file is, and a `DECISIONS.md` entry says which.
 
 ## Purpose
@@ -18,7 +18,7 @@ Modules, what each owns, and what it may import. A module not listed here does n
 | `odca/rng.py` | `RNGRegistry`: one `SeedSequence` stream per source | numpy | any other `odca` module |
 | `odca/models/` | Newell, MLC and DLC probabilities; pure functions | stdlib | simpy, any `odca` module |
 | `odca/infrastructure/` | `Cell` and its endpoint subclasses `OriginCell`, `DestinationCell`; `Lane`; `Freeway` with its named `Origin`s and `Destination`s; `Incident` (D-2026-09-19-26 to -28) | simpy, params | entity, simulation |
-| `odca/entity/` | `Vehicle` (physical: cell label, lock, movement, trajectory), `Driver`, `HumanDriver`, `AutonomousDriver`, `DriverStreams`, `DriverTraits` and `TraitSampler` (`driver.py`), `AutonomousController` (`controller.py`), `TrajectoryRecord` (D-2026-09-19-24, -30) | infrastructure, models, params | simulation, analysis, experiment |
+| `odca/entity/` | `Vehicle` (physical: cell label, lock, movement, trajectory), `Driver`, `HumanDriver`, `AutonomousDriver`, `DriverStreams`, `DriverTraits` and `TraitSampler` (`driver.py`), `AutonomousController` (`controller.py`), `TrajectoryRecord` (D-2026-09-19-24, -30) | infrastructure, models, params, rng (`DriverStreams.spawn`, `TraitSampler.spawn`) | simulation, analysis, experiment |
 | `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver), `SimulationResult` and `RunCounters` (`result.py`, D-2026-09-19-32), RNG stream order | entity, infrastructure, rng, params | analysis, experiment, viewer |
 | `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`; `mean_ci95` in `intervals.py`, the only interval code (D-2026-09-19-33) | entity (read-only), params | simulation, experiment |
 | `odca/baselines/` | NaSch | numpy | the rest of `odca` |
@@ -60,7 +60,7 @@ fields.
 | `Vehicle` | one vehicle's physical side: position label, cell lock with delayed release (reads tau from its driver), movement, exit, trajectory, move counters; `kind` names its driver's kind | `odca/entity/vehicle.py` |
 | `Driver` (`HumanDriver`, `AutonomousDriver`) | the decisions: target speed, direction, lane-change curves, gap acceptance, exposure since the last decision, decision counters. `HumanDriver` runs its own SimPy process; `AutonomousDriver` registers with an `AutonomousController`, which decides for it every `dt`. A new behaviour is a subclass overriding `decide`, `evaluate_speed` or `evaluate_direction` | `odca/entity/driver.py` |
 | `TrajectoryRecord` | one T(x, n) passage record: the cell, the lane, the speed, the free-flow speed of that cell, and both of the protocol's stamps, `acquired` (T_acq) and `time` (T_arr), so lock time, queueing time and crossing time are all read off the trajectory rather than kept as state (D-2026-09-20-5) | `odca/entity/vehicle.py` |
-| `SimulationResult`, `RunCounters` | one run: the validated config it ran with (`config_yaml()` reruns it), every vehicle, the generated count, the event counters; completed and still-active vehicles are derived | `odca/simulation/result.py` (D-2026-09-19-32) |
+| `SimulationResult`, `RunCounters` | one run: the validated config it ran with (`config_yaml()` reruns it), every vehicle, the generated count, the event counters; completed and still-active vehicles are derived. The counters keep the split: the vehicle's moves (`lane_changes`, `lc_patience_failures`, `missed_exits`) and the driver's decisions (`gap_rejections`, `slowdowns`, `cf_evaluations`, `speed_evaluations`), plus the controller's and SimPy's. `lc_failures` is a derived property, not a stored key (D-2026-09-20-12) | `odca/simulation/result.py` (D-2026-09-19-32) |
 
 ## Invariants
 What must hold after every run, each with the check that proves it.

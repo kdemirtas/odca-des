@@ -59,7 +59,7 @@ fields.
 | demand table, `IncidentConfig` | veh/h per (origin, destination) name pair, one generator per pair; incidents block or slow cells for a time, then restore them | `odca/params.py`, `odca/infrastructure/incident.py` (D-2026-09-19-26, -28) |
 | `Vehicle` | one vehicle's physical side: position label, cell lock with delayed release (reads tau from its driver), movement, exit, trajectory, move counters; `kind` names its driver's kind | `odca/entity/vehicle.py` |
 | `Driver` (`HumanDriver`, `AutonomousDriver`) | the decisions: target speed, direction, lane-change curves, gap acceptance, exposure since the last decision, decision counters. `HumanDriver` runs its own SimPy process; `AutonomousDriver` registers with an `AutonomousController`, which decides for it every `dt`. A new behaviour is a subclass overriding `decide`, `evaluate_speed` or `evaluate_direction` | `odca/entity/driver.py` |
-| `TrajectoryRecord` | one T(x, n) passage record | `odca/entity/vehicle.py` |
+| `TrajectoryRecord` | one T(x, n) passage record: the cell, the lane, the speed, the free-flow speed of that cell, and both of the protocol's stamps, `acquired` (T_acq) and `time` (T_arr), so lock time, queueing time and crossing time are all read off the trajectory rather than kept as state (D-2026-09-20-5) | `odca/entity/vehicle.py` |
 | `SimulationResult`, `RunCounters` | one run: the validated config it ran with (`config_yaml()` reruns it), every vehicle, the generated count, the event counters; completed and still-active vehicles are derived | `odca/simulation/result.py` (D-2026-09-19-32) |
 
 ## Invariants

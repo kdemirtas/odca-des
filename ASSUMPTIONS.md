@@ -9,7 +9,6 @@ this file. Nothing stays here once it has been discussed.
 
 | Id | Made | What I assumed | Why | What would change it | Status |
 |---|---|---|---|---|---|
-| A-2026-09-19-4 | 2026-09-19 | A vehicle's position (label) moves at arrival T_arr; the lock stays with delayed release | tex:221, 255 record position at T_arr | none expected | open |
 | A-2026-09-19-9 | 2026-09-19 | Origin and destination names are readable (`mainline_lane_<n>`, `onramp_<k>`, `offramp_<k>`, `end_lane_<n>`) instead of the dissertation's letters (1-4, O1, A-D, F1) | YAML is read without a legend; the paper can still print letters | Kerem wants the dissertation letters in the configs | open |
 | A-2026-09-19-10 | 2026-09-19 | An `end` destination (segment end, any lane) stays available beside the per-lane ends; the lane-drop bottleneck, incident and scalability runs use it | in the bottleneck, lane 3 is closed to the last cell, so its vehicles cannot end in lane 3 | Kerem wants every run on per-lane ends | open |
 | A-2026-09-19-11 | 2026-09-19 | A vehicle that reaches the last cell outside its end lane leaves anyway and is counted in `missed_exits`, as a missed off-ramp is (dissertation 4.3 "Success Flag") | it cannot go further; the dissertation reports these as exit failures | Kerem wants it kept on the road or rerouted | open |

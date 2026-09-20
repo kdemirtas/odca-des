@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #20: Write cross-repo decision ids with the colon (2026-09-20)
 - PR #19: Record that the model stays first order (D-2026-09-20-20) (2026-09-20)
 - PR #18: Let the NaSch baseline post a speed limit on a cell (D-2026-09-20-19) (2026-09-20)
 - PR #17: Close the last six assumptions (D-2026-09-20-13 to -18) (2026-09-20)

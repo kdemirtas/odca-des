@@ -3,8 +3,9 @@
 > title and number. A version is a tagged odca-des release (a paper records the tag it ran on at submission). Unreleased work sits under `## Unreleased`
 > until a version is cut.
 
-- PR #11: Measure delay against the free-flow speed of each cell (D-2026-09-20-3) (2026-09-20)
 ## Unreleased
+- PR #12: Put the PR #11 line under Unreleased (2026-09-20)
+- PR #11: Measure delay against the free-flow speed of each cell (D-2026-09-20-3) (2026-09-20)
 - PR #10: Close the t=0 destination and travel-time-start assumptions as D-2026-09-20-1 and -2 (2026-09-20)
 - PR #9: Neutral speed-ups from the code review (N8) (2026-09-19, closes N8)
 - PR #8: Move the viewers into odca.viewer (N7) (2026-09-19, closes N7)

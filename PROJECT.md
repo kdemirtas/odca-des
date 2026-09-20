@@ -3,13 +3,13 @@
 > says how the code is shaped, `DECISIONS.md` says what was decided and why.
 
 ## Overview
-The ODCA-DES simulator as one package for all ODCA papers (paper-odca-des D-2026-09-19-6).
+The ODCA-DES simulator as one package for all ODCA papers (paper-odca-des:D-2026-09-19-6).
 
 ## What "done" means
 Every ODCA paper runs on this package, each paper's golden passes, and the package is published with paper-odca-des.
 
 ## Design decisions
-In paper-odca-des `DECISIONS.md` D-2026-09-19-6 to -10 until this repo's own entries start.
+In paper-odca-des:D-2026-09-19-6 to -10 until this repo's own entries start.
 
 ## Out of scope
 Paper-specific scenarios, parameter values and figures (they stay in the papers).

@@ -6,15 +6,30 @@
 ## TL;DR
 Shared ODCA simulator, extracted from paper-odca-des 2026-09-19. Bugs fixed, lane-change rate
 rule in, refactor N2 to N8 shipped 2026-09-19; paper-odca-des ran its 124-job rerun on 2026-09-20.
-Now the assumption rows are being walked with Kerem: 7 closed on 2026-09-20 (D-2026-09-20-6 to -12),
-6 left. Otherwise BACKLOG.
+Every assumption row is closed (D-2026-09-20-6 to -18); otherwise BACKLOG. The NaSch baseline can
+now carry a per-cell posted limit, which paper-odca-des needed for its paradigm figure.
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
 after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded twice on 2026-09-20, for the three new stats keys of D-2026-09-20-5 and for the counter split of D-2026-09-20-12, no value moved either time; `uv run pytest` 86/86 passed.
 
 
-## 2026-09-20 (last): every assumption row closed
+## 2026-09-20 (last): the NaSch baseline can post a speed limit on a cell
+- `NaSchConfig.cell_v_max`, a per-cell integer limit, `None` by default (D-2026-09-20-19). Set, R1
+  accelerates only to what the cells the vehicle would cross this step allow, so no vehicle crosses
+  a cell faster than that cell posts. That is the rule ODCA's `Cell.speed_limit` already follows,
+  so a posted zone now means the same thing in both models.
+- Why: paper-odca-des needed both models in one scenario for `fig:paradigm`, a platoon that
+  accelerates, slows at a zone and accelerates again with its followers repeating the move
+  (paper-odca-des:D-2026-09-20-12). Kerem chose the mechanism from three offered.
+- `tests/test_nasch.py`, new and the first tests the baseline has ever had: the field unset leaves
+  the classical rules alone, no vehicle exceeds the posted limit of the cell it is in, a vehicle two
+  cells before the zone at speed 5 enters it at 2 rather than overshooting, and a limit of the wrong
+  length is refused.
+- Golden: unchanged, nothing re-recorded. The capability is off by default, which is what the
+  default-path test asserts directly.
+
+## 2026-09-20: every assumption row closed
 - The remaining six rows walked with Kerem, all accepted: the autonomous names, `vehicle.kind` and
   one `VehicleFactory` (D-2026-09-20-13); the typed `SimulationResult` (-14); the `odca.experiment`
   kit with `mean_ci95` as the one interval (-15); the viewers on a result, with the time-space

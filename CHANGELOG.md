@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #18: Let the NaSch baseline post a speed limit on a cell (D-2026-09-20-19) (2026-09-20)
 - PR #17: Close the last six assumptions (D-2026-09-20-13 to -18) (2026-09-20)
 - PR #16: Count lane-change failures apart, close seven assumptions (D-2026-09-20-6 to -12) (2026-09-20)
 - PR #15: Refresh the resume block: assumptions walked, occupancy reported (2026-09-20)

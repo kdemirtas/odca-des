@@ -39,7 +39,8 @@ class Direction(Enum):
 @dataclass
 class TrajectoryRecord:
     """A single passage-time record: T(x, n)."""
-    time: float
+    time: float          # T_arr: the vehicle is in this cell from here
+    acquired: float      # T_acq: it took the cell here and crossed into it by T_arr
     cell_idx: int
     lane_idx: int
     speed: float
@@ -88,9 +89,12 @@ class Vehicle:
         # Trajectory log: the T(x, n) output
         self.trajectory: List[TrajectoryRecord] = []
 
-        # Entry/exit times
+        # Entry/exit times; created is when the generator released it, entered when it got
+        # onto the road, so the gap is the wait at the origin (D-2026-09-20-5)
+        self.time_created: float = env.now
         self.time_entered: Optional[float] = None
         self.time_exited: Optional[float] = None
+
 
         # Movement counters; the driver counts its decisions
         self.count_lane_changes: int = 0
@@ -132,6 +136,17 @@ class Vehicle:
     def _request(self, cell: Cell, priority: float = 0.0):
         """Create a PriorityResource request for a cell."""
         return cell.resource.request(priority=priority)
+
+    def _acquired_at(self, cell: Cell) -> float:
+        """When this vehicle took `cell`, the T_acq of the protocol (D-2026-09-20-5).
+
+        Args:
+            cell: a cell this vehicle holds.
+        """
+        for req in cell.resource.users:
+            if getattr(req, "_vehicle", None) is self:
+                return getattr(req, "_acquired", self.env.now)
+        return self.env.now
 
     def _release(self, cell: Cell):
         """Release the resource for a cell this vehicle holds."""
@@ -191,11 +206,13 @@ class Vehicle:
             meter_req = self._request(meter)
             yield meter_req
             meter_req._vehicle = self
+            meter_req._acquired = self.env.now
             yield self.env.timeout(1.0 / min(self.cfg.v_max, meter.speed_limit))
         # Seize origin
         req = self._request(self.origin_cell)
         yield req
         req._vehicle = self
+        req._acquired = self.env.now
         if metered:
             self._delayed_release(meter)
         self.speed = self.cfg.v_max
@@ -339,6 +356,7 @@ class Vehicle:
             yield req  # Forward moves wait unconditionally
 
         req._vehicle = self
+        req._acquired = self.env.now
         if is_lateral:
             # a lane change counts, and its cooldown starts, once it happens (D-2026-09-19-18);
             # the request is used up: one decision, one lane change (D-2026-09-19-31)
@@ -484,6 +502,7 @@ class Vehicle:
         req = self._request(exit_cell)
         yield req
         req._vehicle = self
+        req._acquired = self.env.now
         self._delayed_release(self.cell)
         speed = min(self.speed, exit_cell.speed_limit) if self.speed > 0 else exit_cell.speed_limit
         yield self.env.timeout(1.0 / speed)
@@ -532,6 +551,7 @@ class Vehicle:
             return
         self.trajectory.append(TrajectoryRecord(
             time=self.env.now,
+            acquired=self._acquired_at(self.cell),
             cell_idx=self.cell.idx,
             lane_idx=self.cell.lane.idx,
             speed=self.speed,

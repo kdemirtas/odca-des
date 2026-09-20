@@ -9,11 +9,14 @@
   "S1_baseline_seed1": {
    "stats": {
     "av_penetration": 0.0,
+    "avg_cells_held": 7.580955127337376,
     "avg_delay": 22.749875607141938,
     "avg_lc_per_km": 1.8141602877597105,
+    "avg_origin_wait": 1.849571894100333,
     "avg_travel_time": 144.2333920906549,
     "hdv_action_interval": 1.0,
     "num_completed": 231,
+    "num_never_entered": 0,
     "pct_delayed_20s": 53.246753246753244,
     "seed": 1,
     "throughput_per_hour": 3080.0
@@ -32,11 +35,14 @@
   "S1_baseline_seed2": {
    "stats": {
     "av_penetration": 0.0,
+    "avg_cells_held": 7.479283253898349,
     "avg_delay": 24.207609029371696,
     "avg_lc_per_km": 1.8876352289455784,
+    "avg_origin_wait": 1.980895937722237,
     "avg_travel_time": 141.9952344474283,
     "hdv_action_interval": 1.0,
     "num_completed": 230,
+    "num_never_entered": 0,
     "pct_delayed_20s": 54.78260869565217,
     "seed": 2,
     "throughput_per_hour": 3066.6666666666665
@@ -55,11 +61,14 @@
   "S1_baseline_seed3": {
    "stats": {
     "av_penetration": 0.0,
+    "avg_cells_held": 7.211119677949632,
     "avg_delay": 31.31556798668853,
     "avg_lc_per_km": 2.001501053687005,
+    "avg_origin_wait": 2.9897429849594275,
     "avg_travel_time": 151.62720947020148,
     "hdv_action_interval": 1.0,
     "num_completed": 224,
+    "num_never_entered": 0,
     "pct_delayed_20s": 66.96428571428571,
     "seed": 3,
     "throughput_per_hour": 2986.6666666666665
@@ -78,11 +87,14 @@
   "S2_low_av_seed1": {
    "stats": {
     "av_penetration": 0.3,
+    "avg_cells_held": 6.268551707829322,
     "avg_delay": 18.144506470340914,
     "avg_lc_per_km": 1.3991917350013876,
+    "avg_origin_wait": 1.3185534619219375,
     "avg_travel_time": 140.34544529529168,
     "hdv_action_interval": 1.0,
     "num_completed": 254,
+    "num_never_entered": 0,
     "pct_delayed_20s": 44.48818897637795,
     "seed": 1,
     "throughput_per_hour": 3386.6666666666665
@@ -101,11 +113,14 @@
   "S2_low_av_seed2": {
    "stats": {
     "av_penetration": 0.3,
+    "avg_cells_held": 6.518828510510167,
     "avg_delay": 19.44043395920221,
     "avg_lc_per_km": 1.5555929427815203,
+    "avg_origin_wait": 1.6593149071703324,
     "avg_travel_time": 139.07490254404857,
     "hdv_action_interval": 1.0,
     "num_completed": 262,
+    "num_never_entered": 0,
     "pct_delayed_20s": 49.23664122137404,
     "seed": 2,
     "throughput_per_hour": 3493.3333333333335
@@ -124,11 +139,14 @@
   "S2_low_av_seed3": {
    "stats": {
     "av_penetration": 0.3,
+    "avg_cells_held": 6.121201729726107,
     "avg_delay": 26.980422053077888,
     "avg_lc_per_km": 1.5769855134806938,
+    "avg_origin_wait": 2.2949280111678196,
     "avg_travel_time": 147.560632440977,
     "hdv_action_interval": 1.0,
     "num_completed": 234,
+    "num_never_entered": 0,
     "pct_delayed_20s": 59.82905982905983,
     "seed": 3,
     "throughput_per_hour": 3120.0
@@ -147,11 +165,14 @@
   "S3_med_av_seed1": {
    "stats": {
     "av_penetration": 0.5,
+    "avg_cells_held": 5.819158232122598,
     "avg_delay": 11.923591236116293,
     "avg_lc_per_km": 1.0939597405778179,
+    "avg_origin_wait": 0.7265025820275124,
     "avg_travel_time": 133.343870956392,
     "hdv_action_interval": 1.0,
     "num_completed": 275,
+    "num_never_entered": 0,
     "pct_delayed_20s": 19.636363636363637,
     "seed": 1,
     "throughput_per_hour": 3666.6666666666665
@@ -170,11 +191,14 @@
   "S3_med_av_seed2": {
    "stats": {
     "av_penetration": 0.5,
+    "avg_cells_held": 5.838507523996225,
     "avg_delay": 13.671939009647781,
     "avg_lc_per_km": 1.1883681235467245,
+    "avg_origin_wait": 1.3866726154065647,
     "avg_travel_time": 134.8526813442322,
     "hdv_action_interval": 1.0,
     "num_completed": 286,
+    "num_never_entered": 0,
     "pct_delayed_20s": 22.727272727272727,
     "seed": 2,
     "throughput_per_hour": 3813.3333333333335
@@ -193,11 +217,14 @@
   "S3_med_av_seed3": {
    "stats": {
     "av_penetration": 0.5,
+    "avg_cells_held": 5.527590230386813,
     "avg_delay": 16.888253584808574,
     "avg_lc_per_km": 1.1054550388935447,
+    "avg_origin_wait": 1.3400972579735186,
     "avg_travel_time": 140.11227517724726,
     "hdv_action_interval": 1.0,
     "num_completed": 285,
+    "num_never_entered": 0,
     "pct_delayed_20s": 39.29824561403509,
     "seed": 3,
     "throughput_per_hour": 3800.0
@@ -216,11 +243,14 @@
   "S4_high_av_seed1": {
    "stats": {
     "av_penetration": 0.7,
+    "avg_cells_held": 4.785463579818143,
     "avg_delay": 6.267345799356149,
     "avg_lc_per_km": 0.6543470550894106,
+    "avg_origin_wait": 0.3474528287082916,
     "avg_travel_time": 129.51556281412488,
     "hdv_action_interval": 1.0,
     "num_completed": 302,
+    "num_never_entered": 0,
     "pct_delayed_20s": 2.6490066225165565,
     "seed": 1,
     "throughput_per_hour": 4026.6666666666665
@@ -239,11 +269,14 @@
   "S4_high_av_seed2": {
    "stats": {
     "av_penetration": 0.7,
+    "avg_cells_held": 4.958382235497932,
     "avg_delay": 8.590839292553397,
     "avg_lc_per_km": 0.7928497348773736,
+    "avg_origin_wait": 0.6659705386509608,
     "avg_travel_time": 130.82330714015868,
     "hdv_action_interval": 1.0,
     "num_completed": 317,
+    "num_never_entered": 0,
     "pct_delayed_20s": 6.309148264984227,
     "seed": 2,
     "throughput_per_hour": 4226.666666666667
@@ -262,11 +295,14 @@
   "S4_high_av_seed3": {
    "stats": {
     "av_penetration": 0.7,
+    "avg_cells_held": 4.911615371574415,
     "avg_delay": 10.312443966526525,
     "avg_lc_per_km": 0.7427319118392345,
+    "avg_origin_wait": 0.753278757672103,
     "avg_travel_time": 134.77600671955852,
     "hdv_action_interval": 1.0,
     "num_completed": 304,
+    "num_never_entered": 0,
     "pct_delayed_20s": 6.907894736842106,
     "seed": 3,
     "throughput_per_hour": 4053.3333333333335
@@ -285,11 +321,14 @@
   "BN_0av_seed1": {
    "stats": {
     "av_penetration": 0.0,
+    "avg_cells_held": 5.815828060440437,
     "avg_delay": 84.36945492734303,
     "avg_lc_per_km": 0.9363927786740213,
+    "avg_origin_wait": 1.2048745294424321,
     "avg_travel_time": 196.91016630509796,
     "hdv_action_interval": 1.0,
     "num_completed": 359,
+    "num_never_entered": 0,
     "pct_delayed_20s": 84.958217270195,
     "seed": 1,
     "throughput_per_hour": 2393.3333333333335
@@ -308,11 +347,14 @@
   "BN_0av_seed2": {
    "stats": {
     "av_penetration": 0.0,
+    "avg_cells_held": 6.224493209741099,
     "avg_delay": 66.7325797614929,
     "avg_lc_per_km": 1.0275309202800367,
+    "avg_origin_wait": 1.0333849098184913,
     "avg_travel_time": 179.2035521852915,
     "hdv_action_interval": 1.0,
     "num_completed": 371,
+    "num_never_entered": 0,
     "pct_delayed_20s": 78.4366576819407,
     "seed": 2,
     "throughput_per_hour": 2473.3333333333335
@@ -331,11 +373,14 @@
   "BN_0av_seed3": {
    "stats": {
     "av_penetration": 0.0,
+    "avg_cells_held": 6.113962917836854,
     "avg_delay": 69.92501804063716,
     "avg_lc_per_km": 1.0047330845864773,
+    "avg_origin_wait": 1.2191872579993457,
     "avg_travel_time": 182.37380566605114,
     "hdv_action_interval": 1.0,
     "num_completed": 368,
+    "num_never_entered": 0,
     "pct_delayed_20s": 84.23913043478261,
     "seed": 3,
     "throughput_per_hour": 2453.3333333333335
@@ -354,11 +399,14 @@
   "BN_30av_seed1": {
    "stats": {
     "av_penetration": 0.3,
+    "avg_cells_held": 5.429225243601478,
     "avg_delay": 51.88166786744796,
     "avg_lc_per_km": 0.8456989168555807,
+    "avg_origin_wait": 0.738365146314336,
     "avg_travel_time": 164.93961888503605,
     "hdv_action_interval": 1.0,
     "num_completed": 446,
+    "num_never_entered": 0,
     "pct_delayed_20s": 84.08071748878923,
     "seed": 1,
     "throughput_per_hour": 2973.3333333333335
@@ -377,11 +425,14 @@
   "BN_30av_seed2": {
    "stats": {
     "av_penetration": 0.3,
+    "avg_cells_held": 5.839238880666628,
     "avg_delay": 36.17044926640559,
     "avg_lc_per_km": 0.7923330644571609,
+    "avg_origin_wait": 0.5949184405625059,
     "avg_travel_time": 149.13402542534155,
     "hdv_action_interval": 1.0,
     "num_completed": 453,
+    "num_never_entered": 0,
     "pct_delayed_20s": 72.40618101545255,
     "seed": 2,
     "throughput_per_hour": 3020.0
@@ -400,11 +451,14 @@
   "BN_30av_seed3": {
    "stats": {
     "av_penetration": 0.3,
+    "avg_cells_held": 5.945930562037445,
     "avg_delay": 31.07193533318447,
     "avg_lc_per_km": 0.8335046134051087,
+    "avg_origin_wait": 0.9349699149879196,
     "avg_travel_time": 144.18126036263632,
     "hdv_action_interval": 1.0,
     "num_completed": 457,
+    "num_never_entered": 0,
     "pct_delayed_20s": 79.43107221006565,
     "seed": 3,
     "throughput_per_hour": 3046.6666666666665
@@ -423,11 +477,14 @@
   "BN_50av_seed1": {
    "stats": {
     "av_penetration": 0.5,
+    "avg_cells_held": 5.6036757015878775,
     "avg_delay": 12.520856434904172,
     "avg_lc_per_km": 0.5289963065274786,
+    "avg_origin_wait": 0.5135761804568589,
     "avg_travel_time": 125.89651703384249,
     "hdv_action_interval": 1.0,
     "num_completed": 524,
+    "num_never_entered": 0,
     "pct_delayed_20s": 12.022900763358779,
     "seed": 1,
     "throughput_per_hour": 3493.3333333333335
@@ -446,11 +503,14 @@
   "BN_50av_seed2": {
    "stats": {
     "av_penetration": 0.5,
+    "avg_cells_held": 5.678907630005813,
     "avg_delay": 11.428795883577404,
     "avg_lc_per_km": 0.5465277193202451,
+    "avg_origin_wait": 0.46757400729356374,
     "avg_travel_time": 124.67579454964643,
     "hdv_action_interval": 1.0,
     "num_completed": 519,
+    "num_never_entered": 0,
     "pct_delayed_20s": 9.05587668593449,
     "seed": 2,
     "throughput_per_hour": 3460.0
@@ -469,11 +529,14 @@
   "BN_50av_seed3": {
    "stats": {
     "av_penetration": 0.5,
+    "avg_cells_held": 5.530601012285985,
     "avg_delay": 16.101175105016964,
     "avg_lc_per_km": 0.5727400874054258,
+    "avg_origin_wait": 0.6426931760961837,
     "avg_travel_time": 129.41592248780697,
     "hdv_action_interval": 1.0,
     "num_completed": 507,
+    "num_never_entered": 0,
     "pct_delayed_20s": 32.544378698224854,
     "seed": 3,
     "throughput_per_hour": 3380.0
@@ -492,11 +555,14 @@
   "BN_70av_seed1": {
    "stats": {
     "av_penetration": 0.7,
+    "avg_cells_held": 4.945719159063017,
     "avg_delay": 6.082670634692384,
     "avg_lc_per_km": 0.33982347842849286,
+    "avg_origin_wait": 0.3386475209635031,
     "avg_travel_time": 119.482279500398,
     "hdv_action_interval": 1.0,
     "num_completed": 531,
+    "num_never_entered": 0,
     "pct_delayed_20s": 3.0131826741996233,
     "seed": 1,
     "throughput_per_hour": 3540.0
@@ -515,11 +581,14 @@
   "BN_70av_seed2": {
    "stats": {
     "av_penetration": 0.7,
+    "avg_cells_held": 4.887506226751706,
     "avg_delay": 4.8013911985683135,
     "avg_lc_per_km": 0.3461520301295375,
+    "avg_origin_wait": 0.2451962223470189,
     "avg_travel_time": 118.05585746166653,
     "hdv_action_interval": 1.0,
     "num_completed": 521,
+    "num_never_entered": 0,
     "pct_delayed_20s": 0.3838771593090211,
     "seed": 2,
     "throughput_per_hour": 3473.3333333333335
@@ -538,11 +607,14 @@
   "BN_70av_seed3": {
    "stats": {
     "av_penetration": 0.7,
+    "avg_cells_held": 4.960959230262713,
     "avg_delay": 5.135162065453187,
     "avg_lc_per_km": 0.33549688381572834,
+    "avg_origin_wait": 0.2552446934549912,
     "avg_travel_time": 118.51082266439106,
     "hdv_action_interval": 1.0,
     "num_completed": 524,
+    "num_never_entered": 0,
     "pct_delayed_20s": 0.7633587786259541,
     "seed": 3,
     "throughput_per_hour": 3493.3333333333335

@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-5 | 2026-09-20 | Occupancy is reported beside density: every trajectory record carries T_acq as well as T_arr, and the run reports the mean cells a vehicle holds, the wait at its origin and how many never got on | Kerem, corrected A-2026-09-19-4; closes BACKLOG B10 | none |
 | D-2026-09-20-4 | 2026-09-20 | A speed limit takes effect on the cell that posts it: arriving in a cell whose limit differs, the driver picks the speed again before that cell is crossed; `react_now` and the driver interrupt are gone | Kerem, 2026-09-20 | none |
 | D-2026-09-20-3 | 2026-09-20 | Free-flow speed is per vehicle and per cell, v_f(n, c) = min(v_max(n), v_lim(c)); delay is the per-cell excess over it, so a cell driven at a posted limit adds no delay | Kerem, corrected A-2026-09-19-3 | none |
 | D-2026-09-20-2 | 2026-09-20 | Travel time is measured from the moment a vehicle takes its origin cell; the wait before that stays out of every reported metric. Kerem prefers it reported separately, which waits for the next run that regenerates the result files (BACKLOG B10) | Kerem, accepted A-2026-09-19-2 | none |
@@ -40,6 +41,36 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-5: report what a vehicle takes from the road, not only what the road does to it
+
+**What.** A vehicle's position is still the cell label, changing at T_arr, and the lock still follows
+the delayed release, T_rel(c) = T_acq(c+1) + tau. What changes is that the second half is now
+reported, not only modelled. Every `TrajectoryRecord` carries `acquired` (T_acq) beside `time`
+(T_arr), the two stamps the protocol already defines, so `summary_statistics` reads three new
+numbers off the trajectory with no state kept on the vehicle: `avg_cells_held` (the mean number of
+cells a vehicle holds while it drives), `avg_origin_wait` (the time between the generator releasing
+it and it getting onto the road) and `num_never_entered` (vehicles that never got on at all, counted
+over every vehicle rather than the completed ones). `Vehicle.time_created` is the one new field, the
+stamp a trajectory cannot carry because it predates the trip.
+
+**Evidence.** Kerem, 2026-09-20: "We should report both together, a vehicle occupying multiple cells
+means those cells can't be seized by others", and, on how to compute it, "TBH, creating everything
+from trajectories should be fine." Measured on a 1,200 s run, seed 42: in S1 a vehicle is labelled
+in one cell and holds 5.23 of them, in S4 4.89; S1's mean origin wait is 18.9 s with 117 of 2,330
+vehicles never admitted, S4's is 0.7 s with none. The trajectory reading was checked against exact
+per-cell bookkeeping inside the vehicle and agrees to 0.15%, the remainder being the endpoint cells
+(a metered origin, a throttled exit), which are not road cells and are not in the trajectory. The
+bookkeeping was then deleted. Golden re-recorded: three keys added, zero values moved, across all
+24 runs; 86/86 tests.
+
+⚠️ My reading, not Kerem's words: the manuscript's tables carry none of these numbers yet, because
+the per-seed result files were written before the metrics existed. They arrive with the next run
+that regenerates those files, which is also what BACKLOG B10 was waiting for.
+
+**Replaces.** nothing; it closes BACKLOG B10, parked this morning.
+**Cited by.** `odca/entity/vehicle.py` (`TrajectoryRecord`, `_acquired_at`, `time_created`),
+`odca/analysis/metrics.py` (`cells_locked`, `summary_statistics`).
 
 ## D-2026-09-20-4: a speed limit takes effect on the cell that posts it
 

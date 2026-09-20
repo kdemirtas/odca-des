@@ -9,8 +9,20 @@ rule in, refactor N2 to N8 shipped 2026-09-19; next is whatever paper-odca-des N
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; `uv run pytest` 86/86 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded 2026-09-20 for the three new stats keys of D-2026-09-20-5 (no value moved); `uv run pytest` 86/86 passed.
 
+
+## 2026-09-20 (later): occupancy reported beside density
+- Every trajectory record now carries T_acq beside T_arr, the protocol's own two stamps, so lock
+  time, queueing time and crossing time are all readable from the trajectory (Kerem: "creating
+  everything from trajectories should be fine"). `summary_statistics` gained `avg_cells_held`,
+  `avg_origin_wait` and `num_never_entered` (D-2026-09-20-5, closing A-2026-09-19-4 and BACKLOG B10).
+- Measured, 1,200 s run, seed 42: S1 holds 5.23 cells per vehicle against the one it is labelled in,
+  S4 4.89; S1 origin wait 18.9 s with 117 of 2,330 never admitted, S4 0.7 s with none.
+- The trajectory reading agrees with exact in-vehicle bookkeeping to 0.15% (the endpoint cells are
+  the difference), so the bookkeeping was deleted rather than kept.
+- Golden re-recorded: three keys added, zero values moved, 24 runs, 86/86 tests.
+- ⏳ The manuscript cannot quote any of it until a rerun regenerates the per-seed files.
 
 ## 2026-09-20: free flow is per vehicle and per cell
 - `v_f(n, c) = min(v_max(n), v_lim(c))` replaces `v_max(n)` as the reference in `delay`; every

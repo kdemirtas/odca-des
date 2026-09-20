@@ -113,6 +113,28 @@ def delay(vehicle: Vehicle) -> Optional[float]:
                for j in range(len(traj) - 1) if traj[j].v_free > 0)
 
 
+def cells_locked(vehicle: Vehicle) -> Optional[float]:
+    """Mean number of cells this vehicle holds while it drives (D-2026-09-20-5).
+
+    It is labelled in one cell and holds every cell from the one it has taken back to the one
+    it has not released yet, and no other vehicle can seize those. Read off the trajectory: it
+    holds cell c from T_acq(c) to T_rel(c) = T_acq(c+1) + tau (the delayed release), so the
+    cell-seconds it takes from the road, divided by its time on the road, is the mean.
+
+    Args:
+        vehicle: a vehicle that has entered and left.
+    """
+    duration = travel_time(vehicle)
+    if not duration or not vehicle.trajectory:
+        return None
+    tau = vehicle.driver.tau
+    traj, held = vehicle.trajectory, 0.0
+    for j, record in enumerate(traj):
+        released = (traj[j + 1].acquired if j + 1 < len(traj) else vehicle.time_exited) + tau
+        held += released - record.acquired
+    return held / duration
+
+
 def count_lane_changes(vehicle: Vehicle) -> int:
     """Count number of lane changes from trajectory."""
     traj = vehicle.trajectory
@@ -186,7 +208,11 @@ def summary_statistics(
     """Aggregate metrics over the vehicles that exit during the measurement period.
 
     The measurement period is [warmup, sim_duration]; a vehicle counts when it exits in it,
-    whenever it entered (D-2026-09-19-14).
+    whenever it entered (D-2026-09-19-14). Three of the numbers are about what a vehicle takes
+    from the road rather than what the road does to it (D-2026-09-20-5): the mean number of
+    cells it holds while it drives (it is labelled in one, and the others cannot be seized by
+    anyone else), the mean time it waited at its origin before it got on, and how many vehicles
+    never got on at all, counted over every vehicle rather than the completed ones.
     """
     completed = [
         v for v in vehicles
@@ -216,6 +242,14 @@ def summary_statistics(
     delayed_20 = sum(1 for d in delays if d > 20.0)
     observation_period = sim_duration - warmup
 
+    # What a vehicle takes from the road: one cell labelled, several locked (D-2026-09-20-5)
+    cells_held = [cells_locked(v) for v in completed if travel_time(v)]
+    cells_held = [c for c in cells_held if c is not None]
+
+    # What it waited for before the road gave it anything (D-2026-09-20-5)
+    origin_waits = [v.time_entered - v.time_created for v in completed]
+    never_entered = sum(1 for v in vehicles if v.time_entered is None)
+
     return {
         "num_completed": len(completed),
         "throughput_per_hour": len(completed) * 3600.0 / observation_period,
@@ -223,4 +257,7 @@ def summary_statistics(
         "avg_delay": mean(delays),
         "avg_lc_per_km": mean(lc_per_km),
         "pct_delayed_20s": delayed_20 / len(completed) * 100 if completed else 0.0,
+        "avg_cells_held": mean(cells_held),
+        "avg_origin_wait": mean(origin_waits),
+        "num_never_entered": never_entered,
     }

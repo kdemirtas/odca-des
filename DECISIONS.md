@@ -7,6 +7,8 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-2 | 2026-09-20 | Travel time is measured from the moment a vehicle takes its origin cell; the wait before that stays out of every reported metric. Kerem prefers it reported separately, which waits for the next run that regenerates the result files (BACKLOG B10) | Kerem, accepted A-2026-09-19-2 | none |
+| D-2026-09-20-1 | 2026-09-20 | Vehicles placed on the road at t=0 follow the same destination rule as generated traffic: bound for the segment end, leaving from any lane | Kerem, accepted A-2026-09-19-1 | none |
 | D-2026-09-19-35 | 2026-09-19 | Neutral speed-ups from the code review: cell neighbour links set once when the road is built, a per-lane count of closed cells, exited AVs dropped from the controller, dead code removed | ASSUMPTIONS A-2026-09-19-19, made unattended (orchestrate loop) | none |
 | D-2026-09-19-34 | 2026-09-19 | Viewers live in `odca.viewer` and take a run result; the paper keeps two thin command-line scripts | ASSUMPTIONS A-2026-09-19-17, made unattended (orchestrate loop); implements paper-odca-des D-2026-09-19-9 | none |
 | D-2026-09-19-33 | 2026-09-19 | Experiment kit `odca.experiment` (run records, strict per-seed JSON, aggregation) and the one interval `odca.analysis.mean_ci95`; papers keep only what they measure | ASSUMPTIONS A-2026-09-19-16, made unattended (orchestrate loop); implements paper-odca-des D-2026-09-19-9 | none |
@@ -36,6 +38,30 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-2: the clock starts when the vehicle gets on the road
+**What.** `Vehicle.start` sets `time_entered` only after the origin cell is seized, so travel time
+and delay cover the road and nothing else. A vehicle that the generator has released but that
+cannot get on yet waits invisibly: no metric counts that wait, and a vehicle that never gets on
+before the run ends appears in no result file. Kerem asked for the wait to be reported beside
+travel time rather than folded into it; that reporting is deferred because no run file carries the
+creation time it needs (BACKLOG B10).
+**Evidence.** Kerem, 2026-09-20: "report it separately, third reading unless you have to rerun
+everything. o.w., accept and go on." Rerunning everything is what it would take: creation time is
+not stored on the vehicle, so the probe that measured this had to patch `VehicleFactory.build`, and
+adding the metric changes `Vehicle`, `summary_statistics` and the per-seed JSON, which means
+regenerating all 124 run files. Measured on a 1,200 s S1 probe: 2,330 vehicles created, 117 never
+got on the road, mean wait 21.9 s (median 10.0, 90th percentile 64.7, maximum 105.4), half waited
+over 10 s; mean travel time 243.6 s as reported against 262.5 s with the wait added, a difference
+of 7.8%. Manuscript tex:974 defines travel time "from entry to exit", which is what the code does.
+**Replaces.** nothing.
+**Cited by.** `odca/entity/vehicle.py` (`Vehicle.start`).
+
+## D-2026-09-20-1: the vehicles placed at t=0 leave from any lane
+**What.** `Simulation.seed_vehicles` gives every placed vehicle the segment-end destination with no lane requirement, the same treatment generated segment-end traffic gets (D-2026-09-19-11). Birth does not change the rule: a vehicle bound for the end of the road leaves from the lane it is in, whether it entered through an origin or started the run on the road.
+**Evidence.** Kerem, 2026-09-20: "accepted". Manuscript tex:874 states the rule for segment-end vehicles as a class. The scenarios it touches seed few vehicles: the bottleneck 72 against 1,169 completions in seed 1, the incident 80 against 4,025, so under 6% either way; the readings differ most in the bottleneck, where the alternative would commit a third of the seeded vehicles to the lane that closes.
+**Replaces.** nothing.
+**Cited by.** `odca/simulation/engine.py` (`seed_vehicles`).
 
 ## D-2026-09-19-35: neutral speed-ups from the code review
 **What.** `Cell` keeps its eight neighbour links (`next`, `previous`, `left`, `right`, four diagonals) and its occupant as plain slots, set when the lanes are built (`Lane`, `Freeway.link_neighbours`); a road whose shape changes after that relinks (`Lane.make_periodic` for a ring road). `Lane.blocked_count` is kept by the `Cell.blocked` setter, so `find_blockage` answers at once on a lane with no closed cell (S1 to S4 have none). `AutonomousController.active_drivers()` drops drivers whose vehicle has left, in registration order. `metrics.cell_speeds` and `RNGRegistry.get` (unused) are gone.

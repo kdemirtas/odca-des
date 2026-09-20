@@ -101,7 +101,8 @@ after one lane-change request makes one lane change (D-2026-09-19-31); unchanged
   times slower than a dataclass slot); Driver split from Vehicle with the two-way link contract
   Kerem agreed (D-2026-09-19-24). `docs/config-and-driver-design.md`. BACKLOG B5 (segment controllers, a model
   feature), B6 (own event loop instead of SimPy, v2).
-- Assumptions open: A-2026-09-19-1 to -7 (`ASSUMPTIONS.md`).
+- Assumptions open: 15 rows in `ASSUMPTIONS.md`; A-2026-09-19-1 closed 2026-09-20 as D-2026-09-20-1,
+  A-2026-09-19-2 as D-2026-09-20-2 (origin wait reported separately once a rerun can carry it, BACKLOG B10).
 - ⏳ Gate WARN: `params` (long inits), closed by N4.
 
 ## How to run

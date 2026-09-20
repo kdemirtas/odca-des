@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #14: Report what a vehicle takes from the road beside what the road does to it (D-2026-09-20-5) (2026-09-20)
 - PR #13: Make a speed limit take effect on the cell that posts it (D-2026-09-20-4) (2026-09-20)
 - PR #12: Put the PR #11 line under Unreleased (2026-09-20)
 - PR #11: Measure delay against the free-flow speed of each cell (D-2026-09-20-3) (2026-09-20)

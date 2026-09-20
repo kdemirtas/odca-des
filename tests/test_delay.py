@@ -2,6 +2,8 @@
 
 import sys
 
+import pytest
+
 from odca.analysis.metrics import delay, travel_time
 from odca.params import IncidentConfig, NetworkConfig
 from odca.simulation.engine import Simulation
@@ -37,11 +39,9 @@ def test_work_zone_lengthens_the_trip_without_adding_delay():
     # 20 cells at 1.3 instead of 5.2 cells/s: 15.38 - 3.85 = 11.5 s more driving.
     assert travel_time(slowed) - travel_time(free) > 10.0
     assert delay(free) < 0.01
-    # Almost none of it is delay: the vehicle drives every cell at what that cell allows.
-    # What is left is one cell of it. A vehicle crosses a cell at the speed it chose on
-    # arriving in the previous one, so it carries the work zone's speed one cell past the
-    # zone: 1/1.3 - 1/5.2 = 0.577 s (BACKLOG B11).
-    assert delay(slowed) < 2 * (1.0 / 1.3 - 1.0 / 5.2)
+    # None of it is delay: the limit takes effect on the cell that posts it, at both ends of
+    # the zone, so the vehicle drives every cell at exactly what that cell allows.
+    assert delay(slowed) < 0.01
 
 
 def test_a_leader_still_causes_delay():
@@ -50,3 +50,16 @@ def test_a_leader_still_causes_delay():
                                 incidents=(SLOW_ZONE,))).run()
     delays = [delay(v) for v in busy.completed_vehicles if delay(v) is not None]
     assert max(delays) > 5.0
+
+
+def test_the_limit_takes_effect_on_the_cell_that_posts_it():
+    """Entering and leaving a slow stretch, both at the sign (D-2026-09-20-4)."""
+    vehicle = _first_completed(Simulation(_corridor(incidents=(SLOW_ZONE,))).run())
+    crossing = {}
+    for first, second in zip(vehicle.trajectory, vehicle.trajectory[1:]):
+        crossing[first.cell_idx] = second.time - first.time
+
+    assert crossing[19] == pytest.approx(1 / 5.2)  # last cell before the zone: full speed
+    assert crossing[20] == pytest.approx(1 / 1.3)  # first cell of the zone: already slowed
+    assert crossing[39] == pytest.approx(1 / 1.3)  # last cell of the zone: still slowed
+    assert crossing[40] == pytest.approx(1 / 5.2)  # first cell after it: back to full speed

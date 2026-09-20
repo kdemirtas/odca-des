@@ -9,7 +9,7 @@ rule in, refactor N2 to N8 shipped 2026-09-19; next is whatever paper-odca-des N
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3; `uv run pytest` 85/85 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; `uv run pytest` 86/86 passed.
 
 
 ## 2026-09-20: free flow is per vehicle and per cell
@@ -19,8 +19,11 @@ after one lane-change request makes one lane change (D-2026-09-19-31); unchanged
   instead. The manuscript's Eq. free_flow_speed and Eq. delay say the same.
 - No number moved: every cell in every scenario of paper-odca-des posts 5.2 cells/s and both vehicle
   types have `v_max` 5.2. Golden 24/24 exact, 85 tests pass (`tests/test_delay.py` new).
-- Found on the way: a limit change takes effect one cell late at both ends of a zone, 0.577 s each
-  way at a 1.3 cells/s work zone. BACKLOG B11; no scenario here has a varying limit.
+- Found on the way and then fixed (D-2026-09-20-4, Kerem: "Fix the thing work-zone test revealede.
+  Fix B11 too."): a limit change used to take effect one cell late at both ends of a zone, 0.577 s
+  either way, which per-cell clipping reported as delay. The driver now picks the speed again on
+  arriving in a cell whose limit differs, before that cell is crossed; `react_now` and the driver
+  interrupt are gone. Golden 24/24 exact, 86/86 tests, no scenario here has a varying limit.
 
 ## 2026-09-19 (N8): neutral speed-ups from the code review
 - Cell neighbour links and occupant as plain slots set at build time, `Lane.make_periodic`, per-lane closed-cell count, exited AVs pruned from the controller, dead code removed (D-2026-09-19-35, assumption A-19). Non-neutral review items parked as BACKLOG B7 to B9; the review's correctness items were fixed earlier (D-2026-09-19-11 to -20).

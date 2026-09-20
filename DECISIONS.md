@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-4 | 2026-09-20 | A speed limit takes effect on the cell that posts it: arriving in a cell whose limit differs, the driver picks the speed again before that cell is crossed; `react_now` and the driver interrupt are gone | Kerem, 2026-09-20 | none |
 | D-2026-09-20-3 | 2026-09-20 | Free-flow speed is per vehicle and per cell, v_f(n, c) = min(v_max(n), v_lim(c)); delay is the per-cell excess over it, so a cell driven at a posted limit adds no delay | Kerem, corrected A-2026-09-19-3 | none |
 | D-2026-09-20-2 | 2026-09-20 | Travel time is measured from the moment a vehicle takes its origin cell; the wait before that stays out of every reported metric. Kerem prefers it reported separately, which waits for the next run that regenerates the result files (BACKLOG B10) | Kerem, accepted A-2026-09-19-2 | none |
 | D-2026-09-20-1 | 2026-09-20 | Vehicles placed on the road at t=0 follow the same destination rule as generated traffic: bound for the segment end, leaving from any lane | Kerem, accepted A-2026-09-19-1 | none |
@@ -39,6 +40,27 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-4: a speed limit takes effect on the cell that posts it
+
+**What.** A vehicle crosses a cell at the speed its driver last chose. When it arrives in a cell
+whose speed limit differs from the one it left, `Vehicle._on_cell_change` now calls
+`driver.evaluate_speed()` before the trajectory record is written and before the crossing begins, so
+the new limit governs that cell. The asynchronous route that used to serve this, `Driver.react_now`
+and the `simpy.Interrupt` branch in `HumanDriver._run`, is removed: it woke the driver after the
+next crossing had already started, which is the bug, and nothing else called it.
+
+**Evidence.** Kerem, 2026-09-20: "Fix the thing work-zone test revealede. Fix B11 too." Both name
+the same finding, from `tests/test_delay.py`. Before: a lone vehicle through a 20-cell work zone
+posted at 1.3 cells/s crossed the first slow cell at 5.2 (0.192 s) and the first fast cell after the
+zone at 1.3 (0.769 s), so it gained 0.577 s entering and lost 0.577 s leaving, and per-cell clipping
+reported the loss as 0.577 s of delay that no other vehicle caused. After: every cell is crossed at
+what it posts (1/5.2 at cells 19 and 40, 1/1.3 at cells 20 and 39) and the vehicle's delay is 0.000 s
+while its trip is 11.5 s longer than without the zone. Neutral for the papers: no scenario here posts
+a limit that varies along the road, so the re-evaluation never fires. Golden 24/24 exact, 86/86 tests.
+
+**Replaces.** nothing; it closes BACKLOG B11, parked the same day.
+**Cited by.** `odca/entity/vehicle.py` (`_on_cell_change`), `tests/test_delay.py`.
 
 ## D-2026-09-20-3: free flow is per vehicle and per cell
 

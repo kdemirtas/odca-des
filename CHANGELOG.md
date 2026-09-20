@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #13: Make a speed limit take effect on the cell that posts it (D-2026-09-20-4) (2026-09-20)
 - PR #12: Put the PR #11 line under Unreleased (2026-09-20)
 - PR #11: Measure delay against the free-flow speed of each cell (D-2026-09-20-3) (2026-09-20)
 - PR #10: Close the t=0 destination and travel-time-start assumptions as D-2026-09-20-1 and -2 (2026-09-20)

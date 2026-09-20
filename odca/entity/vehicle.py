@@ -152,7 +152,7 @@ class Vehicle:
             self._notify_neighbors_on_release(cell)
         self.env.process(_release_process())
 
-    def _on_cell_change(self, new_cell: Optional[Cell]):
+    def _on_cell_change(self, new_cell: Optional[Cell], limit_changed: bool = False):
         """The one place a vehicle's position changes (D-2026-09-19-12).
 
         `self.cell` and `cell.vehicle` are both position: they change together, at arrival in
@@ -161,6 +161,8 @@ class Vehicle:
 
         Args:
             new_cell: the cell just arrived in, or None when the vehicle leaves the network.
+            limit_changed: the new cell posts a different speed limit, so the driver picks the
+                speed again before this cell is crossed (D-2026-09-20-4).
         """
         old_cell = self.cell
         if old_cell is not None and old_cell.vehicle is self:
@@ -170,6 +172,8 @@ class Vehicle:
             return
         new_cell.vehicle = self
         self._cell_entry_time = self.env.now
+        if limit_changed:
+            self.driver.evaluate_speed()
         self._record_trajectory()
 
     # ------------------------------------------------------------------
@@ -362,15 +366,11 @@ class Vehicle:
                 distance_remaining -= v * step
 
         old_limit = old_cell.speed_limit if old_cell else float("inf")
-        new_limit = target.speed_limit
 
-        self._on_cell_change(target)
+        self._on_cell_change(target, limit_changed=target.speed_limit != old_limit)
 
         # Notify nearby vehicles of this movement
         self._notify_neighbors(old_cell, is_lateral)
-
-        if old_limit != new_limit:
-            self.driver.react_now()
 
     def _notify_neighbors(self, old_cell: Cell, is_lateral: bool):
         """Notify nearby vehicles after a movement.

@@ -7,6 +7,12 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-18 | 2026-09-20 | A cell's eight neighbour links are set when the road is built; code that reshapes a road afterwards relinks it (`Lane.make_periodic`, `Freeway.link_neighbours`) and no script writes `cell._next` | Kerem, accepted A-2026-09-19-19 | none |
+| D-2026-09-20-17 | 2026-09-20 | A target cell that is occupied or locked is a failed lane-change attempt, counted with the gap failures in `gap_rejections`; it is not a separate kind | Kerem, accepted A-2026-09-19-5 | none |
+| D-2026-09-20-16 | 2026-09-20 | The viewers take a `SimulationResult` (`TrafficVisualizer.from_result`, `animate_result`, `plot_trajectories`) instead of 7 to 11 arguments, and the time-space diagram joins consecutive records by lane rather than splitting on a 2 s time gap | Kerem, accepted A-2026-09-19-17 | none |
+| D-2026-09-20-15 | 2026-09-20 | The experiment kit is `odca.experiment` (`RunRecord`, `run_once`, strict per-seed JSON that refuses a duplicate seed, aggregation into today's CSV schema) and `odca.analysis.mean_ci95` is the package's one 95% interval, Student t to 30 degrees of freedom and 1.96 above | Kerem, accepted A-2026-09-19-16 | none |
+| D-2026-09-20-14 | 2026-09-20 | `Simulation.run()` returns a frozen `SimulationResult` (`config`, `vehicles`, `num_generated`, `counters`) with the completed and still-active counts derived and `config_yaml()` to rerun it; the result dict is gone and per-seed JSON keeps its keys | Kerem, accepted A-2026-09-19-15 | none |
+| D-2026-09-20-13 | 2026-09-20 | `AutonomousController` with drivers registering at build time, vehicle kinds told apart by `vehicle.kind` (`"human"`, `"autonomous"`) instead of `vtype`, and one `VehicleFactory` for the generators and the t=0 vehicles; the config fields keep `av_`/`hdv_` | Kerem, accepted A-2026-09-19-14 | none |
 | D-2026-09-20-12 | 2026-09-20 | The vehicle-to-driver link is the calls the vehicle already made (`evaluate_speed`, `evaluate_direction`, `sees_blockage`, `accepts_gap`, `merge_priority`, plus tau, action interval and patience), the vehicle counts moves and the driver counts decisions, and `lc_failures` becomes two stored counters, `lc_patience_failures` and `gap_rejections` | Kerem, accepted A-2026-09-19-13 with the counter split he asked for | none |
 | D-2026-09-20-11 | 2026-09-20 | The eight old `Vehicle` class constants are config fields with their old values as defaults: the movement ones in `VehicleConfig`, the decision ones in `DriverConfig`, not one run-wide value in `SimConfig` | Kerem, accepted A-2026-09-19-12 | none |
 | D-2026-09-20-10 | 2026-09-20 | Exposure starts at the first direction evaluation, which therefore carries none and can only fire a forced change, and it resets at every evaluation, including those inside the discretionary cooldown, which stays refractory rather than banking time | Kerem, accepted A-2026-09-19-7 | none |
@@ -48,6 +54,111 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-18: neighbour links are built once, and a reshaped road relinks
+**What.** `Cell` keeps its eight neighbour links (next, previous, left, right and the four
+diagonals) as plain slots, filled when the lanes are built. They are not recomputed on read. A road
+whose shape changes after construction relinks explicitly: `Lane.make_periodic` for the ring road
+used by the fundamental-diagram diagnostic, `Freeway.link_neighbours` otherwise. No script reaches
+into `cell._next` any more.
+**Evidence.** Kerem, 2026-09-20: "accept it". Every road in the papers is built once and then runs.
+Recomputing the links on every read cost about 15 s per S1 run in the neighbour notify lists (code
+review B4); after the change, quick-run wall time fell from 7.40 s to 7.17 s in S1 and from 10.34 s
+to 8.90 s in S3, best of three on one machine, with the golden 24/24 exact and the ring-road FD
+points byte-identical (D-2026-09-19-35). What it gives up: a road that gains or loses lanes during
+a run would need either the links back on read or a call to `link_neighbours`. No paper does that;
+the closest case, the ring road, is exactly why `make_periodic` exists.
+**Replaces.** nothing.
+**Cited by.** `odca/infrastructure/cell.py`, `odca/infrastructure/lane.py`,
+`odca/infrastructure/freeway.py`.
+
+## D-2026-09-20-17: a taken cell is a refused gap, not a separate failure
+**What.** `HumanDriver.accepts_gap` refuses the target cell and counts a rejection in two cases,
+under the same counter: the cell already holds a vehicle or its lock is held (`target.vehicle is
+not None or target.is_occupied`), and the front or rear gap is smaller than the required one, which
+grows from the jam spacing to the safety gap with the closing speed. The check is where the target
+cell's own occupant and lock holder are seen at all: `find_leader` and `find_follower` start one
+cell away.
+**Evidence.** Kerem, 2026-09-20: "accept it". The same counting as the other safety failures: in
+both cases the driver wanted the cell and did not take it. Its scale is now visible because the
+counter was split today (D-2026-09-20-12): in the 24 golden runs every one of the 306,335 refusals
+comes through this check and none through the patience timeout, since a cell refused here is never
+requested. Whether the patience path is reachable at all is the open question, BACKLOG B12; this
+decision fixes the counting, not that.
+**Replaces.** nothing.
+**Cited by.** `odca/entity/driver.py` (`accepts_gap`).
+
+## D-2026-09-20-16: the viewers take a result, and the diagram splits by lane
+**What.** `odca.viewer` takes one object: `TrafficVisualizer.from_result(result, ...)` for the
+pygame playback, `animate_result(result, ...)` for the animation and `plot_trajectories(result,
+...)` for the time-space diagram. The result already carries the network, the duration and the top
+speed that the old 7 to 11 parameters repeated. In the diagram, a vehicle's consecutive records are
+joined into one line while they stay in the same lane, instead of being split wherever more than
+2 seconds passed between them, and each lane's lines are drawn as one collection.
+**Evidence.** Kerem, 2026-09-20: "accept it". The lane test is exact where the gap test was a
+guess: a vehicle that goes lane 1 to lane 2 and back used to be joined into one line by the gap
+test, and a vehicle stopped for more than 2 seconds in one lane used to be cut in two. Nothing in
+the manuscript depends on it: the viewers are not paper inputs (paper-odca-des D-2026-09-19-9), and
+`fig:tsd` comes from `generate_paper_figures.py`. Checked headless when it landed
+(D-2026-09-19-34): a pygame frame, an animation GIF and a diagram rendered from an S1 run,
+`tests/test_viewer.py` covering the grid, the diagram and the time window at both ends. The old
+`cell_range` option was not carried over (no caller), and a window-height bug that used a removed
+argument was fixed in the move.
+**Replaces.** nothing.
+**Cited by.** `odca/viewer/animation.py`, `odca/viewer/playback.py`, `odca/viewer/snapshots.py`.
+
+## D-2026-09-20-15: one experiment kit, one interval
+**What.** `odca.experiment` holds what every paper does around a run: `RunRecord` (one per-seed
+JSON, keys unchanged, plus the paper's extra keys), `run_once(label, config, measure, prepare)`
+(build, prepare, run, time the run alone, measure), `write_run` and `read_runs` (strict JSON, the
+same seed twice raises), and `aggregate`, `write_aggregate_csv`, `write_per_seed_csv` in today's
+schema and six-decimal format. `odca.analysis.intervals.mean_ci95` is the package's only 95%
+interval: a Student t table to 30 degrees of freedom, 1.96 above it. The paper's runners write only
+per-seed JSONs; `aggregate_multiseed.py` is their one aggregator (paper-odca-des D-2026-09-19-3).
+**Evidence.** Kerem, 2026-09-20: "accept it". Proved neutral when it landed: the five CSVs rebuilt
+from the paper's 69 existing per-seed JSONs were byte-identical old against new, and the rewired
+runners reproduced the golden stats and counters (D-2026-09-19-33). At the 20 seeds the paper uses,
+the table is exact (19 degrees of freedom, t = 2.093). The 1.96 fallback only bites above 30 seeds,
+where it narrows an interval slightly (at 40 degrees of freedom the true t is 2.021, about 3%
+wider than 1.96); exact quantiles there would mean adding scipy.
+**Replaces.** nothing.
+**Cited by.** `odca/experiment/records.py`, `odca/experiment/tables.py`,
+`odca/analysis/intervals.py`.
+
+## D-2026-09-20-14: a run returns a typed result, not a dict
+**What.** `Simulation.run()` returns `SimulationResult`, a frozen dataclass of four things: the
+validated `config` it ran with, `vehicles` (those placed at t=0 first, then the generated ones, in
+order), `num_generated` (generators only) and `counters`, a frozen `RunCounters`. What can be
+derived is derived: `completed_vehicles`, `num_completed`, `num_active_at_end`. `config_yaml()`
+writes the config back as YAML, so `Simulation(validate(SimConfig, path))` reruns it. The old
+result dict is gone and every caller reads attributes; `asdict(counters)` keeps the per-seed JSON
+keys as they were.
+**Evidence.** Kerem, 2026-09-20: "accept it". Attribute names follow the old dict keys precisely so
+the result files, the figures and the golden read the same, which is how the change was proved
+neutral when it landed (D-2026-09-19-32, its golden 24/24 exact). The typed result is also what let
+the viewers drop their 7 to 11 parameter lists (D-2026-09-19-34) and what the experiment kit's
+`run_once` measures from (D-2026-09-19-33).
+**Replaces.** nothing.
+**Cited by.** `odca/simulation/result.py`, `odca/simulation/engine.py` (`Simulation.run`).
+
+## D-2026-09-20-13: the autonomous names, `kind`, and one construction path
+**What.** Three names as built. `AVController` is `AutonomousController`
+(`odca/entity/controller.py`); an `AutonomousDriver` registers with it when constructed and is
+decided for at the controller's `dt` rather than running a process of its own. A vehicle's kind is
+the string its driver class carries, `vehicle.kind` in `"human"` or `"autonomous"`, replacing the
+old `vtype` field. `VehicleFactory.build` is the one place a vehicle is built with its driver, used
+by the generators and by `Simulation.seed_vehicles`. The configs keep the short pair, `av_vehicle`,
+`av_driver`, `av_penetration`, `hdv_vehicle`, `hdv_driver`, and the manuscript keeps AV and HDV.
+**Evidence.** Kerem, 2026-09-20: "accept all three". These are the names he used when the driver
+split was designed (D-2026-09-19-24). Shape only: the split kept the golden 24/24 exact. `kind` is
+read in five places in the package (pygame viewer, snapshots, the vehicle's string form) and in two
+paper scripts, and `run_incident.py` writes it into every trajectory record, so the string is in the
+incident result files. Noted and not acted on: the code names the same distinction three ways
+(classes and `kind` long, config fields short, manuscript AV and HDV); renaming `av_penetration`
+would touch every YAML, every result file and the quoted table columns.
+**Replaces.** nothing.
+**Cited by.** `odca/entity/controller.py`, `odca/entity/driver.py` (`kind`),
+`odca/entity/vehicle.py` (`kind`), `odca/simulation/factory.py`.
 
 ## D-2026-09-20-12: the link as the vehicle uses it, and lane-change failures counted apart
 **What.** Two halves, one decision. The link: a vehicle may ask its driver to `evaluate_speed()`

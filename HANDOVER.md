@@ -2,30 +2,21 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: assumptions being walked with Kerem (2026-09-20)
-- Decisions to D-2026-09-20-12. Golden re-recorded twice on 2026-09-20, for the three new stats
-  keys (`avg_cells_held`, `avg_origin_wait`, `num_never_entered`) and for the counter split: no
-  value moved either time, 24 runs, 86 tests.
-- Closed today: A-1 (t=0 destinations), A-2 (travel time starts at the origin cell), A-3 corrected
-  (free-flow speed per vehicle and per cell), A-4 corrected (occupancy reported beside density),
-  A-9 (readable origin and destination names, D-2026-09-20-6), A-10 (the any-lane `end` kept for
-  the lane-drop runs, D-2026-09-20-7), A-11 (the wrong end lane counted as a missed exit,
-  D-2026-09-20-8), A-6 (the exposure references, D-2026-09-20-9, written into the manuscript),
-  A-7 (exposure starts at the first evaluation, the cooldown does not bank it, D-2026-09-20-10),
-  A-12 (the vehicle constants as config fields, D-2026-09-20-11), A-13 (the vehicle-driver link and
-  the counter split, D-2026-09-20-12).
-- `lc_failures` is now two stored counters, `lc_patience_failures` and `gap_rejections`
-  (D-2026-09-20-12, Kerem's call). Golden re-recorded: 24 runs, nothing moved, the two sum to the
-  old key. Patience failures are 0 everywhere and every failure is a refused gap: BACKLOG B12.
-- Also fixed: a speed limit now takes effect on the cell that posts it (D-2026-09-20-4, closing
-  BACKLOG B11 the day it opened). BACKLOG B10 closed by D-2026-09-20-5.
-- Open: 6 assumption rows, A-2026-09-19-14 next, the discretionary lane-change rate among them
-  (`docs/lane-change-rate.md`, paper-odca-des AGENDA). BACKLOG B7 to B9 hold the review's
-  non-neutral speed and memory items.
-**RESUME:** `/next-assumption` here takes A-2026-09-19-14 (`AutonomousController` and
-`AutonomousDriver` as the names, one `VehicleFactory`, vehicle kinds told apart by `kind`). Nothing
-in the manuscript can quote the new
-occupancy and origin-wait numbers until paper-odca-des reruns its 124 jobs.
+## CURRENT: every assumption closed, waiting on the paper (2026-09-20)
+- Decisions to D-2026-09-20-18. `ASSUMPTIONS.md` is empty: all thirteen rows left from the
+  extraction and the refactor were walked with Kerem on 2026-09-20 and accepted, each one a
+  decision (STATUS has the list).
+- The one change he asked for on top: `lc_failures` is two stored counters now,
+  `lc_patience_failures` and `gap_rejections` (D-2026-09-20-12, PR #16). Golden re-recorded twice
+  today, for the D-2026-09-20-5 stats keys and for the split: no value moved either time, 24 runs,
+  86 tests.
+- What the split showed: patience failures are 0 in all 24 golden runs and every failure is a
+  refused gap, because `accepts_gap` refuses a taken cell before the request is made. BACKLOG B12.
+- The discretionary lane-change rate is not an assumption row and never was: it is a
+  paper-odca-des `AGENDA.md` decision, measured here in `docs/lane-change-rate.md`.
+**RESUME:** nothing waiting here. The open work is BACKLOG: B7 to B9 (the code review's speed and
+memory items) and B12. Nothing in paper-odca-des can quote the occupancy, origin-wait or split
+failure numbers until it reruns its 124 jobs.
 
 ## NEXT STEPS (pick up here)
 None ranked. A capability a paper needs is added here, off by default, with its golden

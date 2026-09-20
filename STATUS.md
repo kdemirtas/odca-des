@@ -14,6 +14,21 @@ Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-reco
 after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded twice on 2026-09-20, for the three new stats keys of D-2026-09-20-5 and for the counter split of D-2026-09-20-12, no value moved either time; `uv run pytest` 86/86 passed.
 
 
+## 2026-09-20 (last): every assumption row closed
+- The remaining six rows walked with Kerem, all accepted: the autonomous names, `vehicle.kind` and
+  one `VehicleFactory` (D-2026-09-20-13); the typed `SimulationResult` (-14); the `odca.experiment`
+  kit with `mean_ci95` as the one interval (-15); the viewers on a result, with the time-space
+  diagram joining records by lane instead of at a 2 s gap (-16); an occupied or locked target cell
+  counted as a refused gap (-17); neighbour links set when the road is built (-18).
+- `ASSUMPTIONS.md` is empty. Every call made during the extraction and the refactor has now been
+  put to Kerem and recorded: D-2026-09-20-1 to -18, thirteen of them closing an `A-` row today.
+- Docs only, no code touched: golden and tests stand as PR #16 left them, 24 runs and 86 tests.
+- Correction carried into both resume blocks: the open rows never included the discretionary
+  lane-change rate. That question is a paper-odca-des `AGENDA.md` decision, with the measured
+  options in `docs/lane-change-rate.md` here.
+- Open here: BACKLOG only. B7 to B9 (the code review's speed and memory items) and B12 (whether the
+  lane-change patience timeout is reachable, found when the counter was split this morning).
+
 ## 2026-09-20 (assumptions walked with Kerem, lane-change failures counted apart)
 - Seven assumption rows closed with Kerem, all accepted: readable origin and destination names
   (D-2026-09-20-6), the any-lane `end` kept for the lane-drop, incident and scalability runs (-7),

@@ -26,10 +26,10 @@ failure numbers until it reruns its 124 jobs.
 
 ## NEXT STEPS (pick up here)
 None ranked. A capability a paper needs is added here, off by default, with its golden
-(paper-odca-des D-2026-09-19-6).
+(paper-odca-des:D-2026-09-19-6).
 
 ## Infra
 - Repo: `kdemirtas/odca-des` (kdemirtas, private until publication with paper-odca-des); push with `GH_TOKEN=$(gh auth token --user kdemirtas)`.
 - Python: `uv`, `.venv/`; `uv run pytest`.
 - Users: `~/Papers/paper-odca-des` (switched), `paper-lc-logistic`, `paper-odca-platoon`, `paper-odca-adaptive-platoon` (frozen copies until they switch, paper-odca-des BACKLOG B6).
-- License: MIT (paper-odca-des D-2026-09-19-10).
+- License: MIT (paper-odca-des:D-2026-09-19-10).

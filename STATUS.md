@@ -47,6 +47,11 @@ after one lane-change request makes one lane change (D-2026-09-19-31); unchanged
   length is refused.
 - Golden: unchanged, nothing re-recorded. The capability is off by default, which is what the
   default-path test asserts directly.
+- Citation format swept at putdown: seven places wrote a paper-odca-des decision id with a space
+  (`paper-odca-des D-2026-09-19-6`) instead of the colon the convention requires. All are now
+  `paper-odca-des:D-...` in HANDOVER, PROJECT, STATUS and BACKLOG, and the drift scan's
+  unknown-decision count is zero. `DECISIONS.md` bodies were left alone: they are not edited after
+  the fact, and their ids resolve locally anyway.
 
 ## 2026-09-20: every assumption row closed
 - The remaining six rows walked with Kerem, all accepted: the autonomous names, `vehicle.kind` and
@@ -83,7 +88,7 @@ after one lane-change request makes one lane change (D-2026-09-19-31); unchanged
 - Docs: `ARCHITECTURE.md` gains `rng` on the `odca/entity/` row (`DriverStreams.spawn`,
   `TraitSampler.spawn` always imported it) and names the counter split on the `RunCounters` row.
   `/fix-drift` repaired the STATUS header date, the TL;DR, the Current numbers line, a bare
-  `D-2026-09-19-6` in HANDOVER and a `Cited by` still naming `av_controller.py`.
+  `paper-odca-des:D-2026-09-19-6` in HANDOVER and a `Cited by` still naming `av_controller.py`.
 - Numbers in paper-odca-des do not move: its 124 result files keep the old key until its pending
   rerun regenerates them, and its manuscript quotes no lane-change failure count.
 

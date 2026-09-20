@@ -9,8 +9,6 @@ this file. Nothing stays here once it has been discussed.
 
 | Id | Made | What I assumed | Why | What would change it | Status |
 |---|---|---|---|---|---|
-| A-2026-09-19-1 | 2026-09-19 | Segment-end vehicles placed at t=0 (bottleneck, incident) also exit from any lane | tex:874 speaks of segment-end vehicles generally | the paper means only generated traffic | open |
-| A-2026-09-19-2 | 2026-09-19 | Travel time starts when the origin cell is taken; time queued before entry is not counted (in S1 many vehicles still wait at the origin at t=3600) | tex:974 "from entry to exit" | Kerem wants origin queueing in travel time or reported separately | open |
 | A-2026-09-19-3 | 2026-09-19 | v_f in the delay is the vehicle's own v_max; the last cell before exit is not counted; cells with a lower speed limit still count as delay | tex:975 names v_f without defining it per vehicle | v_f meant as the network speed limit | open |
 | A-2026-09-19-4 | 2026-09-19 | A vehicle's position (label) moves at arrival T_arr; the lock stays with delayed release | tex:221, 255 record position at T_arr | none expected | open |
 | A-2026-09-19-9 | 2026-09-19 | Origin and destination names are readable (`mainline_lane_<n>`, `onramp_<k>`, `offramp_<k>`, `end_lane_<n>`) instead of the dissertation's letters (1-4, O1, A-D, F1) | YAML is read without a legend; the paper can still print letters | Kerem wants the dissertation letters in the configs | open |

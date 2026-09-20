@@ -3,7 +3,10 @@ Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
 ## CURRENT: every assumption closed, NaSch can post a limit (2026-09-20)
-- Decisions to D-2026-09-20-19, the last of them the NaSch baseline's per-cell posted limit
+- Decisions to D-2026-09-20-20. The last is that the model stays first order: a vehicle
+  acceleration bound was built, measured (it cost 24.7% of completed trips on S1 with the
+  deceleration half in) and rejected, because bounding one side of a model with no
+  vehicle-dynamics layer is half a layer. Before it, the NaSch baseline's per-cell posted limit
   (`NaSchConfig.cell_v_max`, `None` by default), added for paper-odca-des's paradigm figure and
   covered by the new `tests/test_nasch.py`, the first tests the baseline has had. Golden unchanged.
 - Decisions to D-2026-09-20-18 before it. `ASSUMPTIONS.md` is empty: all thirteen rows left from the

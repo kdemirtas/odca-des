@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-3 | 2026-09-20 | Free-flow speed is per vehicle and per cell, v_f(n, c) = min(v_max(n), v_lim(c)); delay is the per-cell excess over it, so a cell driven at a posted limit adds no delay | Kerem, corrected A-2026-09-19-3 | none |
 | D-2026-09-20-2 | 2026-09-20 | Travel time is measured from the moment a vehicle takes its origin cell; the wait before that stays out of every reported metric. Kerem prefers it reported separately, which waits for the next run that regenerates the result files (BACKLOG B10) | Kerem, accepted A-2026-09-19-2 | none |
 | D-2026-09-20-1 | 2026-09-20 | Vehicles placed on the road at t=0 follow the same destination rule as generated traffic: bound for the segment end, leaving from any lane | Kerem, accepted A-2026-09-19-1 | none |
 | D-2026-09-19-35 | 2026-09-19 | Neutral speed-ups from the code review: cell neighbour links set once when the road is built, a per-lane count of closed cells, exited AVs dropped from the controller, dead code removed | ASSUMPTIONS A-2026-09-19-19, made unattended (orchestrate loop) | none |
@@ -38,6 +39,37 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-3: free flow is per vehicle and per cell
+
+**What.** Three quantities, kept apart: `v_max(n)`, what vehicle n can do; `v_lim(c)`, what cell c
+posts; and the free-flow speed `v_f(n, c) = min(v_max(n), v_lim(c))`, what n would hold on c with
+no other vehicle in the way. `Vehicle.effective_v_max()` is that quantity, every trajectory record
+carries it as `v_free`, and `analysis.metrics.delay` subtracts `l / v_f(n, c)` cell by cell instead
+of `l / v_max(n)` throughout. Delay therefore measures what other traffic costs a vehicle: a work
+zone changes the free-flow travel time, not the delay. The manuscript uses the same three symbols
+(Eq. free_flow_speed and Eq. delay).
+
+**Evidence.** Kerem, 2026-09-20: "I was using v_f and v_max interchangable, but it might be wise to
+use one as the speed limit which might be less than v_f for workzone. v_f by the traffic flow
+theory definition would stay as the unlimited free flow speed", and "Confirmed on both code and
+text change." The readings differ on one unimpeded vehicle crossing a 50-cell work zone posted at
+2.6 cells/s on a 6 km segment: trip 163.46 s, old reading 9.62 s of delay, new reading 0.00 s.
+They do not differ on anything this paper runs: every cell of S1 to S4, the bottleneck, the
+incident and the scalability runs posts 5.2 cells/s and both vehicle types have `v_max` 5.2, so
+`min()` changes nothing. Proof: 83/83 tests pass, golden 24/24 exact. New `tests/test_delay.py`:
+a work zone lengthens the trip by more than 10 s and adds under 1.2 s of delay, while a leader in
+the same zone still causes delay.
+
+⚠️ My reading, not Kerem's words: the test's residual is not noise. A vehicle crosses a cell at the
+speed it chose on arriving in the previous one, so a limit change takes effect one cell late at both
+ends of a zone. Entering, it gains 0.577 s; leaving, it loses the same, which per-cell clipping
+records as delay. Parked as BACKLOG B11; it changes no number in this paper because no scenario
+here posts a limit that varies along the road.
+
+**Replaces.** nothing.
+**Cited by.** `odca/entity/vehicle.py` (`TrajectoryRecord.v_free`, `effective_v_max`),
+`odca/analysis/metrics.py` (`delay`), `tests/test_delay.py`.
 
 ## D-2026-09-20-2: the clock starts when the vehicle gets on the road
 **What.** `Vehicle.start` sets `time_entered` only after the origin cell is seized, so travel time

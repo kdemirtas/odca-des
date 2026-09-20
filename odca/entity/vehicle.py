@@ -43,6 +43,7 @@ class TrajectoryRecord:
     cell_idx: int
     lane_idx: int
     speed: float
+    v_free: float  # the speed this vehicle could hold on this cell alone (D-2026-09-20-3)
 
 
 class Vehicle:
@@ -511,7 +512,12 @@ class Vehicle:
         return self.cell.idx + frac
 
     def effective_v_max(self) -> float:
-        """Vehicle top speed bounded by the current cell's speed limit."""
+        """Free-flow speed here: the vehicle's top speed capped by the cell's limit.
+
+        This is v_f(n, c) of the delay definition (D-2026-09-20-3): what this vehicle would
+        hold on this cell with no other vehicle in the way. A work zone lowers it; other
+        traffic does not.
+        """
         if self.cell is not None:
             return min(self.cfg.v_max, self.cell.speed_limit)
         return self.cfg.v_max
@@ -529,6 +535,7 @@ class Vehicle:
             cell_idx=self.cell.idx,
             lane_idx=self.cell.lane.idx,
             speed=self.speed,
+            v_free=self.effective_v_max(),
         ))
 
     def __repr__(self):

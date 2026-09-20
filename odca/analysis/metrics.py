@@ -99,17 +99,18 @@ def travel_time(vehicle: Vehicle) -> Optional[float]:
 
 
 def delay(vehicle: Vehicle) -> Optional[float]:
-    """Per-cell delay: sum over cells of max(0, T_arr(c+1) - T_arr(c) - l / v_f).
+    """Per-cell delay: sum over cells of max(0, T_arr(c+1) - T_arr(c) - l / v_f(n, c)).
 
-    T_arr are the arrival times in the trajectory, l is one cell and v_f the vehicle's
-    maximum speed; only cells crossed slower than free flow add delay (D-2026-09-19-15).
+    T_arr are the arrival times in the trajectory and l is one cell (D-2026-09-19-15).
+    v_f(n, c) is the free-flow speed of vehicle n on cell c, its top speed capped by that
+    cell's limit (D-2026-09-20-3), so a cell driven at a posted work-zone limit adds no
+    delay and only other traffic does.
     """
     if vehicle.time_exited is None or vehicle.cfg.v_max <= 0:
         return None
-    free_flow_cell_time = 1.0 / vehicle.cfg.v_max
     traj = vehicle.trajectory
-    return sum(max(0.0, traj[j + 1].time - traj[j].time - free_flow_cell_time)
-               for j in range(len(traj) - 1))
+    return sum(max(0.0, traj[j + 1].time - traj[j].time - 1.0 / traj[j].v_free)
+               for j in range(len(traj) - 1) if traj[j].v_free > 0)
 
 
 def count_lane_changes(vehicle: Vehicle) -> int:

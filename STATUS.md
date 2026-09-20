@@ -9,8 +9,18 @@ rule in, refactor N2 to N8 shipped 2026-09-19; next is whatever paper-odca-des N
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8; `uv run pytest` 83/83 passed.
+after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3; `uv run pytest` 85/85 passed.
 
+
+## 2026-09-20: free flow is per vehicle and per cell
+- `v_f(n, c) = min(v_max(n), v_lim(c))` replaces `v_max(n)` as the reference in `delay`; every
+  trajectory record carries it as `v_free` (D-2026-09-20-3, Kerem corrected A-2026-09-19-3). A cell
+  driven at a posted limit no longer counts as delay; a work zone changes the free-flow trip time
+  instead. The manuscript's Eq. free_flow_speed and Eq. delay say the same.
+- No number moved: every cell in every scenario of paper-odca-des posts 5.2 cells/s and both vehicle
+  types have `v_max` 5.2. Golden 24/24 exact, 85 tests pass (`tests/test_delay.py` new).
+- Found on the way: a limit change takes effect one cell late at both ends of a zone, 0.577 s each
+  way at a 1.3 cells/s work zone. BACKLOG B11; no scenario here has a varying limit.
 
 ## 2026-09-19 (N8): neutral speed-ups from the code review
 - Cell neighbour links and occupant as plain slots set at build time, `Lane.make_periodic`, per-lane closed-cell count, exited AVs pruned from the controller, dead code removed (D-2026-09-19-35, assumption A-19). Non-neutral review items parked as BACKLOG B7 to B9; the review's correctness items were fixed earlier (D-2026-09-19-11 to -20).
@@ -101,8 +111,9 @@ after one lane-change request makes one lane change (D-2026-09-19-31); unchanged
   times slower than a dataclass slot); Driver split from Vehicle with the two-way link contract
   Kerem agreed (D-2026-09-19-24). `docs/config-and-driver-design.md`. BACKLOG B5 (segment controllers, a model
   feature), B6 (own event loop instead of SimPy, v2).
-- Assumptions open: 15 rows in `ASSUMPTIONS.md`; A-2026-09-19-1 closed 2026-09-20 as D-2026-09-20-1,
-  A-2026-09-19-2 as D-2026-09-20-2 (origin wait reported separately once a rerun can carry it, BACKLOG B10).
+- Assumptions open: 14 rows in `ASSUMPTIONS.md`; A-2026-09-19-1 closed 2026-09-20 as D-2026-09-20-1,
+  A-2026-09-19-2 as D-2026-09-20-2 (origin wait reported separately once a rerun can carry it, BACKLOG B10),
+  A-2026-09-19-3 corrected as D-2026-09-20-3 (free flow per vehicle and per cell).
 - ⏳ Gate WARN: `params` (long inits), closed by N4.
 
 ## How to run

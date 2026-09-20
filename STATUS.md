@@ -6,15 +6,34 @@
 ## TL;DR
 Shared ODCA simulator, extracted from paper-odca-des 2026-09-19. Bugs fixed, lane-change rate
 rule in, refactor N2 to N8 shipped 2026-09-19; paper-odca-des ran its 124-job rerun on 2026-09-20.
-Every assumption row is closed (D-2026-09-20-6 to -18); otherwise BACKLOG. The NaSch baseline can
-now carry a per-cell posted limit, which paper-odca-des needed for its paradigm figure.
+Every assumption row is closed (D-2026-09-20-6 to -19); otherwise BACKLOG. The NaSch baseline can
+now carry a per-cell posted limit, which paper-odca-des needed for its paradigm figure. The model
+stays first order: a vehicle acceleration bound was built, measured and rejected (D-2026-09-20-20).
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
 after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded twice on 2026-09-20, for the three new stats keys of D-2026-09-20-5 and for the counter split of D-2026-09-20-12, no value moved either time; `uv run pytest` 86/86 passed.
 
 
-## 2026-09-20 (last): the NaSch baseline can post a speed limit on a cell
+## 2026-09-20 (last): bounded acceleration built, measured and rejected
+- Kerem asked for the PhD's acceleration bound back, then withdrew it on the sounder argument:
+  "adding acceleration without deceleration is not sound". The model stays first order
+  (D-2026-09-20-20). Nothing shipped; this entry and the decision are the whole trace.
+- Why the deceleration half had to go first: Newell's spacing rule already prescribes up to
+  1.5 cells/s^2 (11.3 m/s^2) of braking when a free-flowing vehicle meets a stopped queue nine
+  cells ahead, three times the 0.5 that was being proposed. A bound there does not soften the
+  braking, it contradicts the rule, and the resource protocol stops the vehicle anyway.
+- Measured, S1 seed 1, accel 0.4 with decel 0.5 against unbounded: completed trips 5,389 to 4,057
+  (-24.7%), origin wait 77.7 s to 426.3 s, cells held 4.08 to 5.06. Delay and travel time fell only
+  because a quarter of the demand never got in. That is a capacity collapse, not an improvement.
+- Then the acceleration half: consistent with the spacing rule, which only sets a ceiling, but not
+  consistent as a vehicle, since the same car would brake at 11 m/s^2 and accelerate at 3.
+- Worth keeping in mind: the model's deceleration is already smooth with no second-order term,
+  because a leader constrains it. The paradigm figure's last vehicle slides 5.02, 3.53, 1.99, 1.86,
+  2.02 to the posted 2.00 over 14 cells. The only step is a vehicle leaving the zone onto a clear
+  road, where nothing is ahead to constrain it.
+
+## 2026-09-20: the NaSch baseline can post a speed limit on a cell
 - `NaSchConfig.cell_v_max`, a per-cell integer limit, `None` by default (D-2026-09-20-19). Set, R1
   accelerates only to what the cells the vehicle would cross this step allow, so no vehicle crosses
   a cell faster than that cell posts. That is the rule ODCA's `Cell.speed_limit` already follows,

@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-20-20 | 2026-09-20 | The model stays first order: no vehicle acceleration or deceleration bound. The spacing rule sets speed from spacing, and bounding one side without the other does not describe a vehicle. Built, measured and removed the same day | Kerem, 2026-09-20 ("adding acceleration without deceleration is not sound, let's remove it as well") | none |
 | D-2026-09-20-19 | 2026-09-20 | The NaSch baseline can carry a per-cell posted limit (`NaSchConfig.cell_v_max`, `None` by default): R1 accelerates only to what the cells the vehicle would cross this step allow, which is the rule ODCA's `Cell.speed_limit` already follows | Kerem, 2026-09-20 (the paradigm figure needs both models in one speed-limit zone) | none |
 | D-2026-09-20-18 | 2026-09-20 | A cell's eight neighbour links are set when the road is built; code that reshapes a road afterwards relinks it (`Lane.make_periodic`, `Freeway.link_neighbours`) and no script writes `cell._next` | Kerem, accepted A-2026-09-19-19 | none |
 | D-2026-09-20-17 | 2026-09-20 | A target cell that is occupied or locked is a failed lane-change attempt, counted with the gap failures in `gap_rejections`; it is not a separate kind | Kerem, accepted A-2026-09-19-5 | none |
@@ -55,6 +56,22 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-20-20: the model stays first order, with no acceleration bound
+
+**What.** A vehicle has no `max_accel` and no `max_decel`. Its speed is whatever the spacing rule gives it, taken immediately. This entry exists because the opposite was built, measured and removed on the same day, and the question is worth not reopening.
+
+**Why not bound deceleration.** Newell's spacing rule already prescribes it, and prescribes more of it than any plausible bound. With tau = 1.5 s and a jam spacing of 1 cell, a vehicle at 5 cells behind a stopped leader is told to hold 2.67 cells/s and to be at zero by the time the spacing is 1 cell, which is 0.89 cells/s^2 (6.7 m/s^2) over those 4 cells; a vehicle meeting a stopped queue 10 cells ahead at free flow is told to shed 5.2 cells/s over 9 cells, which is 1.5 cells/s^2 (11.3 m/s^2). A bound of 0.5 cells/s^2 does not soften that, it contradicts it: the vehicle cannot slow as told, arrives at the leader's cell still moving, and the resource protocol stops it dead anyway. Measured on S1, seed 1, against the unbounded model: completed trips 5,389 to 4,057 (-24.7%), origin wait 77.7 s to 426.3 s (+449%), cells held 4.08 to 5.06 (+24.1%). Delay and travel time fell only because a quarter of the demand never entered the network.
+
+**Why not bound acceleration alone.** It is consistent with the spacing rule, which sets a ceiling that a slower vehicle never violates, and that is the argument that was made for it. It is not consistent as a vehicle: the same car would brake at up to 11 m/s^2 and accelerate at 3. A first-order model has no vehicle-dynamics layer at all, and adding one on a single side is half a layer, not a refinement. Kerem's call.
+
+**What the model already does, which is what prompted the whole question.** Deceleration is smooth without any second-order term, because a leader constrains it. From the paradigm figure's own run, the last vehicle approaching the posted zone: 5.02 cells/s at cell 76, then 3.53, 1.99, 1.86, 2.02, reaching the posted 2.00 by cell 90, a slide over 14 cells and about 105 m. The one step in the model is a vehicle leaving the zone with a clear road: 2.00 to 5.20 at a single cell entry, at cell 111. It is a step because nothing is ahead of it to constrain it, not because a parameter is missing. A genuinely second-order model means replacing Newell with Gipps or IDM, which would take the analytic headway result with it.
+
+**Evidence.** Kerem, 2026-09-20: "So, we should add bounded acceleration. We used to have that parameter before. in the PhD. Let's reintroduce it.", then "So now we have a second order model but still use newell's linear model for spacing?", then "Adding acceleration without deceleration is not sound, let's remove it as well." The dissertation's code is not on this machine; the only trace of the old parameter is `accel_rate = 0.8` with `decel_rate` 0.8 and 1.0 in paper-odca-des's `code/plot_car_following.py`, where a scripted leader still uses them, and those are 6.0 and 7.5 m/s^2.
+
+**Replaces.** nothing.
+
+**Cited by.** paper-odca-des `BACKLOG.md` B7 (closed by this), and the sentence in Section 4.3 that says the return to free flow is a single step.
 
 ## D-2026-09-20-19: the NaSch baseline can post a speed limit on a cell
 

@@ -197,9 +197,6 @@ class Driver:
     def wake(self):
         """A neighbour moved or freed a cell."""
 
-    def react_now(self):
-        """The speed limit changed under the vehicle."""
-
     def merge_priority(self) -> float:
         """Request priority for the next cell: lower is served first, growing with the wait
         behind a blockage."""
@@ -535,16 +532,13 @@ class HumanDriver(Driver):
         """Decide, then wait for the action interval or a wake-up, whichever comes first.
 
         Drivers are reactive in congestion (neighbours move often) and relaxed in free flow
-        (the timeout dominates). An interrupt (speed-limit change) decides again at once.
+        (the timeout dominates).
         """
         while self.vehicle.active:
             self._wake_event = self.env.event()
             self._last_eval_time = self.env.now
             self.decide()
-            try:
-                yield self.env.timeout(self.action_interval) | self._wake_event
-            except simpy.Interrupt:
-                pass  # re-evaluate immediately on next loop iteration
+            yield self.env.timeout(self.action_interval) | self._wake_event
 
     def wake(self):
         """Decide now, unless this driver decided within `min_reeval_ratio` of tau."""
@@ -554,10 +548,6 @@ class HumanDriver(Driver):
             return
         self._wake_event.succeed()
 
-    def react_now(self):
-        """Interrupt the wait and decide again."""
-        if self._process is not None and self._process.is_alive:
-            self._process.interrupt()
 
 
 class AutonomousDriver(Driver):

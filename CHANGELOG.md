@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #10: Close the t=0 destination and travel-time-start assumptions as D-2026-09-20-1 and -2 (2026-09-20)
 - PR #9: Neutral speed-ups from the code review (N8) (2026-09-19, closes N8)
 - PR #8: Move the viewers into odca.viewer (N7) (2026-09-19, closes N7)
 - PR #7: Add the experiment kit and the one 95% interval (N6) (2026-09-19, closes N6)

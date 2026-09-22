@@ -67,3 +67,8 @@ After the fix, S1 still makes about 2.3 lane changes per vehicle-km, and about 4
 from the needed lane: mostly the zero-advantage DLC rate above (0.047/s at dv = 0), with the MLC
 then bringing the vehicle back. The two columns on the right are candidate rules, not adopted:
 both change the model the paper describes, so they are Kerem's call (paper-odca-des AGENDA).
+
+## Adopted (2026-09-22)
+Option B, "DLC only toward a faster lane", is now the flag `dlc_requires_advantage` on the lane-change
+config (D-2026-09-22-1), off by default. paper-odca-des sets it on and reruns its 124 jobs; the
+numbers in this file are the 900 s seed-1 measurements, not the paper's.

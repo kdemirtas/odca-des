@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-22-3 | 2026-09-22 | The paper-odca-des golden runs with `dlc_requires_advantage: true`, the paper's own rule, and is re-recorded: 24 runs, 352 of 508 fingerprint values move (every trip statistic and every lane-change counter), 156 stay (seeds, configs, controller updates, patience failures) | paper-odca-des HANDOVER NEXT 2 (its D-2026-09-22-5), the rerun finished 2026-09-22 | none |
 | D-2026-09-22-2 | 2026-09-22 | The paper-odca-des golden passes `result.vehicles` to `summary_statistics`, not `completed_vehicles`, so `num_never_entered` counts over every vehicle as the function documents; re-recorded fingerprint, only that key moves (24 runs: 0 to between 6 and 28 per run), every other stat identical | the wiring half of paper-odca-des HANDOVER NEXT 2 (its D-2026-09-22-5), applying D-2026-09-20-5 | none |
 | D-2026-09-22-1 | 2026-09-22 | `dlc_requires_advantage` on the lane-change config, `False` by default: when set, the discretionary curve is evaluated only toward a neighbouring lane that is faster than the current one, so a lane with no speed advantage is never a DLC candidate. This is option B of `docs/lane-change-rate.md` (S1 1.94 lane changes per vehicle-km against 2.27, 900 s seed 1). Off by default so no golden moves; paper-odca-des turns it on (its D-2026-09-22-5) and reruns | paper-odca-des, Kerem 2026-09-22 ("isn't there a 3rd way? fix it?", then option 1) | none |
 | D-2026-09-20-20 | 2026-09-20 | The model stays first order: no vehicle acceleration or deceleration bound. The spacing rule sets speed from spacing, and bounding one side without the other does not describe a vehicle. Built, measured and removed the same day | Kerem, 2026-09-20 ("adding acceleration without deceleration is not sound, let's remove it as well") | none |
@@ -58,6 +59,18 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-22-3: the golden follows the paper onto the fixed lane-change rule
+
+**What.** `tests/golden/paper_odca_des/configs/simulation.yaml` overrides `hdv_driver` with `_base_: odca://hdv_driver.yaml` and `lane_change.dlc_requires_advantage: true`, exactly as the paper's `code/configs/simulation.yaml` does (paper-odca-des D-2026-09-22-5), so the golden fingerprints the setup the paper reports. Re-recorded with `uv run pytest tests/test_golden.py --write-golden`, 25 passed in 5 min 43 s.
+
+**What moved.** 352 of the 508 leaves of `fingerprint.json`: in every one of the 24 runs the SimPy events, speed and car-following evaluations, slowdowns, lane changes and gap rejections, and the trip statistics (travel time, delay, lane changes per km, cells held, origin wait); in 22 runs completed count and throughput, in 11 the never-entered count, in 10 the missed exits. Unchanged, 156: seeds, penetrations, action intervals, controller updates, and patience failures (zero before and after). Means over the three seeds per scenario, before to after: S1_baseline: lane changes per vehicle-km 1.90 to 1.50, throughput 3,044 to 3,204 veh/h, delay 26.1 to 24.4 s; S2_low_av: lane changes per vehicle-km 1.51 to 1.20, throughput 3,333 to 3,449 veh/h, delay 21.5 to 19.0 s; S3_med_av: lane changes per vehicle-km 1.13 to 0.86, throughput 3,760 to 3,853 veh/h, delay 14.2 to 13.2 s; S4_high_av: lane changes per vehicle-km 0.73 to 0.57, throughput 4,102 to 4,156 veh/h, delay 8.4 to 8.0 s; BN_0av: lane changes per vehicle-km 0.99 to 0.68, throughput 2,440 to 2,418 veh/h, delay 73.7 to 74.4 s; BN_30av: lane changes per vehicle-km 0.82 to 0.61, throughput 3,013 to 3,029 veh/h, delay 39.7 to 40.1 s; BN_50av: lane changes per vehicle-km 0.55 to 0.38, throughput 3,444 to 3,451 veh/h, delay 13.4 to 12.6 s; BN_70av: lane changes per vehicle-km 0.34 to 0.21, throughput 3,502 to 3,520 veh/h, delay 5.3 to 4.6 s.
+
+**Evidence.** The rerun of the paper's 124 jobs under the same flag (paper-odca-des HANDOVER NEXT 1, finished 2026-09-22 19:53, 0 failed) and its restated manuscript; the fingerprint diff above.
+
+**Replaces.** nothing; extends D-2026-09-22-1 (the flag) and D-2026-09-22-2 (the vehicles list) to the recorded golden.
+
+**Cited by.** `tests/golden/paper_odca_des/configs/simulation.yaml`.
 
 ## D-2026-09-22-2: the golden counts the vehicles that never got on
 

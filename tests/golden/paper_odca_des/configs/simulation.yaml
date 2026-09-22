@@ -3,7 +3,10 @@
 network: network_s1.yaml
 demand: demand_s1.yaml
 hdv_vehicle: odca://hdv_vehicle.yaml
-hdv_driver: odca://hdv_driver.yaml
+hdv_driver:
+  _base_: odca://hdv_driver.yaml
+  lane_change:
+    dlc_requires_advantage: true   # the paper's rule: DLC only toward a faster lane (paper-odca-des D-2026-09-22-5, D-2026-09-22-3)
 av_vehicle: odca://av_vehicle.yaml
 av_driver: odca://av_driver.yaml
 controller: odca://controller.yaml

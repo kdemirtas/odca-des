@@ -36,7 +36,8 @@ BOTTLENECK_INITIAL_SPACING = 25
 
 
 def _stats(results, config, av_penetration, seed):
-    stats = summary_statistics(results.completed_vehicles, warmup=config.warmup,
+    # every vehicle, so never_entered is counted (D-2026-09-22-2)
+    stats = summary_statistics(results.vehicles, warmup=config.warmup,
                                sim_duration=config.sim_duration)
     stats["av_penetration"] = av_penetration
     stats["seed"] = seed

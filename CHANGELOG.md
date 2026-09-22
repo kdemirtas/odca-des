@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #22: Re-record the paper-odca-des golden with never_entered counted over every vehicle (D-2026-09-22-2) (2026-09-22)
 - PR #21: Add dlc_requires_advantage: DLC only toward a faster lane, off by default (D-2026-09-22-1) (2026-09-22)
 - PR #20: Write cross-repo decision ids with the colon (2026-09-20)
 - PR #19: Record that the model stays first order (D-2026-09-20-20) (2026-09-20)

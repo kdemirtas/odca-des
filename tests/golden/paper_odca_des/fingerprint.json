@@ -16,7 +16,7 @@
     "avg_travel_time": 144.2333920906549,
     "hdv_action_interval": 1.0,
     "num_completed": 231,
-    "num_never_entered": 0,
+    "num_never_entered": 6,
     "pct_delayed_20s": 53.246753246753244,
     "seed": 1,
     "throughput_per_hour": 3080.0
@@ -43,7 +43,7 @@
     "avg_travel_time": 141.9952344474283,
     "hdv_action_interval": 1.0,
     "num_completed": 230,
-    "num_never_entered": 0,
+    "num_never_entered": 28,
     "pct_delayed_20s": 54.78260869565217,
     "seed": 2,
     "throughput_per_hour": 3066.6666666666665
@@ -70,7 +70,7 @@
     "avg_travel_time": 151.62720947020148,
     "hdv_action_interval": 1.0,
     "num_completed": 224,
-    "num_never_entered": 0,
+    "num_never_entered": 6,
     "pct_delayed_20s": 66.96428571428571,
     "seed": 3,
     "throughput_per_hour": 2986.6666666666665
@@ -124,7 +124,7 @@
     "avg_travel_time": 139.07490254404857,
     "hdv_action_interval": 1.0,
     "num_completed": 262,
-    "num_never_entered": 0,
+    "num_never_entered": 10,
     "pct_delayed_20s": 49.23664122137404,
     "seed": 2,
     "throughput_per_hour": 3493.3333333333335
@@ -151,7 +151,7 @@
     "avg_travel_time": 147.560632440977,
     "hdv_action_interval": 1.0,
     "num_completed": 234,
-    "num_never_entered": 0,
+    "num_never_entered": 8,
     "pct_delayed_20s": 59.82905982905983,
     "seed": 3,
     "throughput_per_hour": 3120.0
@@ -178,7 +178,7 @@
     "avg_travel_time": 133.343870956392,
     "hdv_action_interval": 1.0,
     "num_completed": 275,
-    "num_never_entered": 0,
+    "num_never_entered": 2,
     "pct_delayed_20s": 19.636363636363637,
     "seed": 1,
     "throughput_per_hour": 3666.6666666666665
@@ -232,7 +232,7 @@
     "avg_travel_time": 140.11227517724726,
     "hdv_action_interval": 1.0,
     "num_completed": 285,
-    "num_never_entered": 0,
+    "num_never_entered": 3,
     "pct_delayed_20s": 39.29824561403509,
     "seed": 3,
     "throughput_per_hour": 3800.0
@@ -286,7 +286,7 @@
     "avg_travel_time": 130.82330714015868,
     "hdv_action_interval": 1.0,
     "num_completed": 317,
-    "num_never_entered": 0,
+    "num_never_entered": 1,
     "pct_delayed_20s": 6.309148264984227,
     "seed": 2,
     "throughput_per_hour": 4226.666666666667
@@ -313,7 +313,7 @@
     "avg_travel_time": 134.77600671955852,
     "hdv_action_interval": 1.0,
     "num_completed": 304,
-    "num_never_entered": 0,
+    "num_never_entered": 2,
     "pct_delayed_20s": 6.907894736842106,
     "seed": 3,
     "throughput_per_hour": 4053.3333333333335

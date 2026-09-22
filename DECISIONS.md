@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-09-22-2 | 2026-09-22 | The paper-odca-des golden passes `result.vehicles` to `summary_statistics`, not `completed_vehicles`, so `num_never_entered` counts over every vehicle as the function documents; re-recorded fingerprint, only that key moves (24 runs: 0 to between 6 and 28 per run), every other stat identical | the wiring half of paper-odca-des HANDOVER NEXT 2 (its D-2026-09-22-5), applying D-2026-09-20-5 | none |
 | D-2026-09-22-1 | 2026-09-22 | `dlc_requires_advantage` on the lane-change config, `False` by default: when set, the discretionary curve is evaluated only toward a neighbouring lane that is faster than the current one, so a lane with no speed advantage is never a DLC candidate. This is option B of `docs/lane-change-rate.md` (S1 1.94 lane changes per vehicle-km against 2.27, 900 s seed 1). Off by default so no golden moves; paper-odca-des turns it on (its D-2026-09-22-5) and reruns | paper-odca-des, Kerem 2026-09-22 ("isn't there a 3rd way? fix it?", then option 1) | none |
 | D-2026-09-20-20 | 2026-09-20 | The model stays first order: no vehicle acceleration or deceleration bound. The spacing rule sets speed from spacing, and bounding one side without the other does not describe a vehicle. Built, measured and removed the same day | Kerem, 2026-09-20 ("adding acceleration without deceleration is not sound, let's remove it as well") | none |
 | D-2026-09-20-19 | 2026-09-20 | The NaSch baseline can carry a per-cell posted limit (`NaSchConfig.cell_v_max`, `None` by default): R1 accelerates only to what the cells the vehicle would cross this step allow, which is the rule ODCA's `Cell.speed_limit` already follows | Kerem, 2026-09-20 (the paradigm figure needs both models in one speed-limit zone) | none |
@@ -57,6 +58,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-09-22-2: the golden counts the vehicles that never got on
+
+**What.** `tests/golden/paper_odca_des/scenarios.py` hands `summary_statistics` the run's `vehicles`, every vehicle the run created, instead of `completed_vehicles`. The function filters to the completed ones itself for every trip statistic and counts `num_never_entered` over the whole list (D-2026-09-20-5); given only the completed vehicles it reported 0 for every run. The fingerprint is re-recorded: in the 24 runs only `num_never_entered` moves, from 0 to between 6 and 28, and every other stat and counter is identical. The paper's runners make the same change in the same session (paper-odca-des `code/run.py`, `run_experiments.py`, `run_bottleneck.py`, `run_incident.py`) and add the two lane-change failure counters of D-2026-09-20-12 to what they aggregate.
+
+**Evidence.** The docstring of `summary_statistics` ("counted over every vehicle rather than the completed ones") against the four call sites that passed the completed list; `uv run pytest tests/test_golden.py`, 25 passed, on the re-recorded fingerprint.
+
+**Replaces.** nothing.
+
+**Cited by.** `tests/golden/paper_odca_des/scenarios.py`; paper-odca-des HANDOVER NEXT 2.
 
 ## D-2026-09-20-20: the model stays first order, with no acceleration bound
 

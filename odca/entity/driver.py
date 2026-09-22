@@ -442,6 +442,8 @@ class Driver:
             if side and side.find_blockage(self.blockage_scan) is None:
                 side_leader = side.find_leader(self.look_ahead)
                 side_speed = side_leader.speed if side_leader else self._v_max
+                if lc.dlc_requires_advantage and side_speed <= current_speed:
+                    continue
                 p = probability_over(
                     dlc_probability(side_speed, current_speed, lc.dlc_k, lc.dlc_v0), elapsed)
                 if self.streams.dlc.random() < p:

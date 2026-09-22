@@ -83,6 +83,7 @@ class BaseLaneChangeConfig(ConfigFamily):
     safety_gap_rear: float     # min rear gap (cells)
     dlc_cooldown: float        # refractory time after a lane change (s)
     dlc_enabled: bool = True
+    dlc_requires_advantage: bool = False   # evaluate DLC only toward a faster lane (D-2026-09-22-1)
 
 
 @family_member("logistic")

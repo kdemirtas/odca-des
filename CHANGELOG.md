@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #27: Count vehicle ids per run in VehicleFactory; fix two stale lines of text (2026-10-02)
 - PR #26: One YAML conversion in params; edie_fd_points takes a SpaceTimeRegion (D-2026-10-02-5) (2026-10-02)
 - PR #25: Never release a cell while its vehicle is in it; strict JSON reader; look_behind (D-2026-10-02-2 to -4) (2026-10-02)
 - PR #24: Retrofit the architecture contract to the code (D-2026-10-02-1 to -3) (2026-10-02)

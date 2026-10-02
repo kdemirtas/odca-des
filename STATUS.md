@@ -19,7 +19,7 @@ Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re
 `[viewer]` extra).
 
 
-## 2026-10-02 (last of the day): vehicle ids per run, two text fixes; the retrofit list is empty. Shipped as PR #?
+## 2026-10-02 (last of the day): vehicle ids per run, two text fixes; the retrofit list is empty. Shipped as PR #27
 - `VehicleFactory` numbers its vehicles from 0; the class-level `Vehicle._id_counter` and its
   reset in `Simulation.__init__` are gone. A vehicle built by hand has id `None`. Test: two
   simulations built side by side count 0, 1 each. Golden unchanged.

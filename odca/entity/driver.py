@@ -159,6 +159,7 @@ class Driver:
         self.slowdown_prob = traits.slowdown_prob
         self.slowdown_delta = cfg.slowdown_delta
         self.look_ahead = cfg.look_ahead
+        self.look_behind = cfg.look_behind
         self.blockage_scan = cfg.look_ahead * cfg.blockage_scan_mult
         self.lc_patience = cfg.lc_patience
         self.lane_change = lane_change
@@ -214,6 +215,8 @@ class Driver:
 
         The required gap grows from the jam spacing to the safety gap with the closing speed
         (to the leader in front, from the follower behind), so vehicles merge in slow queues.
+        The leader is looked for within `look_ahead` cells, the follower within `look_behind`
+        (D-2026-10-02-2).
 
         Args:
             target: the cell in the next lane.
@@ -226,7 +229,7 @@ class Driver:
             return False
 
         leader = target.find_leader(self.look_ahead)
-        follower = target.find_follower(self.look_ahead)
+        follower = target.find_follower(self.look_behind)
         d = self._d
 
         front_gap = float("inf")

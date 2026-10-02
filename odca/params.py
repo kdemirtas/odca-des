@@ -103,7 +103,7 @@ class LogisticLaneChangeConfig(BaseLaneChangeConfig):
 class DriverConfig:
     """What every driver has: reaction time, perception range, random slowdown, lane changing."""
 
-    tau: float                 # reaction time; the cell is released tau after leaving it (s)
+    tau: float                 # reaction time; a cell is released tau after the next is taken (s)
     action_interval: float     # time between decisions (s)
     slowdown_prob: float       # chance of a random slowdown per decision
     slowdown_delta: float      # speed lost in a slowdown (cells/s)

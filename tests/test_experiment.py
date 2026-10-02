@@ -47,6 +47,22 @@ def test_an_unreadable_file_is_refused(tmp_path):
         list(read_runs(str(tmp_path / "*.json")))
 
 
+@pytest.mark.parametrize("key", ["label", "av_penetration", "seed", "hdv_action_interval",
+                                 "av_action_interval", "stats", "counters"])
+def test_a_file_with_a_key_missing_is_refused(tmp_path, key):
+    payload = _record(1).to_json()
+    del payload[key]
+    (tmp_path / "S1_seed1.json").write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match=f"S1_seed1.json: missing {key}"):
+        list(read_runs(str(tmp_path / "*.json")))
+
+
+def test_a_file_that_is_not_an_object_is_refused(tmp_path):
+    (tmp_path / "S1_seed1.json").write_text("5")
+    with pytest.raises(ValueError, match="S1_seed1.json: not a JSON object"):
+        list(read_runs(str(tmp_path / "*.json")))
+
+
 def test_unknown_objects_fail_instead_of_becoming_strings():
     assert json.loads(json.dumps({"n": np.int64(3)}, default=numpy_default)) == {"n": 3}
     with pytest.raises(TypeError):

@@ -1,7 +1,8 @@
 """One run as a record: what was run, its summary statistics and counters, and extra data.
 
 A record is written as one JSON file per (scenario, seed, action interval); the keys are the
-per-seed JSON contract the aggregation and the paper figures read.
+per-seed JSON contract the aggregation and the paper figures read. Reading is strict: a file
+without one of those keys is refused (D-2026-10-02-3).
 """
 
 from __future__ import annotations
@@ -68,15 +69,21 @@ class RunRecord:
 
         Args:
             payload: the parsed file.
+
+        Raises:
+            ValueError: the payload is not an object, or one of the record's own keys is missing.
         """
-        known = {"label", "av_penetration", "seed", "hdv_action_interval",
-                 "av_action_interval", "stats", "counters"}
-        return cls(label=payload["label"], av_penetration=payload.get("av_penetration"),
-                   seed=payload.get("seed"),
-                   hdv_action_interval=payload.get("hdv_action_interval", 1.0),
-                   av_action_interval=payload.get("av_action_interval"),
-                   stats=payload.get("stats", {}), counters=payload.get("counters", {}),
-                   extra={k: v for k, v in payload.items() if k not in known})
+        if not isinstance(payload, dict):
+            raise ValueError(f"not a JSON object but a {type(payload).__name__}")
+        missing = [key for key in RECORD_KEYS if key not in payload]
+        if missing:
+            raise ValueError(f"missing {', '.join(missing)}")
+        return cls(**{key: payload[key] for key in RECORD_KEYS},
+                   extra={k: v for k, v in payload.items() if k not in RECORD_KEYS})
+
+
+RECORD_KEYS = ("label", "av_penetration", "seed", "hdv_action_interval", "av_action_interval",
+               "stats", "counters")
 
 
 Measure = Callable[[SimulationResult], Dict[str, Any]]
@@ -126,13 +133,18 @@ def read_runs(pattern: str) -> Iterator[RunRecord]:
         pattern: a recursive glob.
 
     Raises:
-        ValueError: the same run (label, AV share, action interval, seed) appears twice.
+        ValueError: the same run (label, AV share, action interval, seed) appears twice, or
+            a file lacks one of the record's own keys.
         json.JSONDecodeError: a file is not valid JSON.
     """
     seen = {}
     for path in sorted(glob.glob(pattern, recursive=True)):
         with open(path) as f:
-            record = RunRecord.from_json(json.load(f))
+            payload = json.load(f)
+        try:
+            record = RunRecord.from_json(payload)
+        except ValueError as error:
+            raise ValueError(f"{path}: {error}") from None
         if record.key in seen:
             raise ValueError(f"duplicate run {record.key}: {seen[record.key]} and {path}")
         seen[record.key] = path

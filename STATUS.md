@@ -19,7 +19,7 @@ Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re
 `[viewer]` extra).
 
 
-## 2026-10-02 (last): strict JSON reader, look_behind, and no release under a vehicle. Shipped as PR #?
+## 2026-10-02 (last): strict JSON reader, look_behind, and no release under a vehicle. Shipped as PR #25
 - NEXT 1: `RunRecord.from_json` requires all seven keys and `read_runs` names the file
   (D-2026-10-02-3). The 180 per-seed files of paper-odca-des still load.
 - NEXT 2: `Driver.accepts_gap` scans backward with `look_behind` (D-2026-10-02-2). Golden

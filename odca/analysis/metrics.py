@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from odca.params import CELL_LENGTH_M
@@ -12,16 +13,25 @@ from odca.entity.vehicle import Vehicle, TrajectoryRecord
 # Edie's generalized definitions (space-time region)
 # ──────────────────────────────────────────────────────────────────────
 
-def edie_fd_points(
-    vehicles: List[Vehicle],
-    region_lo: int,
-    region_hi: int,
-    warmup: float,
-    duration: float,
-    interval: float = 20.0,
-    num_lanes: int = 1,
-) -> List[dict]:
+@dataclass(frozen=True, slots=True)
+class SpaceTimeRegion:
+    """The cells, lanes and time span Edie's definitions are taken over (D-2026-10-02-5)."""
+
+    first_cell: int      # first cell of the region
+    end_cell: int        # the cell after its last one
+    start_time: float    # s; the warm-up end, usually
+    end_time: float      # s; the end of the run, usually
+    num_lanes: int = 1
+
+
+def edie_fd_points(vehicles: List[Vehicle], region: SpaceTimeRegion,
+                   interval: float = 20.0) -> List[dict]:
     """Compute FD points using Edie's generalized definitions over T(x,n).
+
+    Args:
+        vehicles: the vehicles whose trajectories are measured.
+        region: the cells, lanes and time span to measure over.
+        interval: length of each time window (s).
 
     For each time window [t, t+interval):
       D = total distance traveled in the region (cells)
@@ -34,6 +44,8 @@ def edie_fd_points(
 
     Distance and time are clipped to the measurement window boundaries.
     """
+    region_lo, region_hi = region.first_cell, region.end_cell
+    warmup, duration, num_lanes = region.start_time, region.end_time, region.num_lanes
     region_len = region_hi - region_lo
 
     # Build cell-occupancy segments: (cell_idx, t_enter, t_leave)

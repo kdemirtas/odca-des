@@ -8,10 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List
 
-from omegaconf import OmegaConf
-
 from odca.entity.vehicle import Vehicle
-from odca.params import SimConfig
+from odca.params import SimConfig, to_yaml
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,4 +79,4 @@ class SimulationResult:
 
     def config_yaml(self) -> str:
         """The config as YAML; `Simulation(validate(SimConfig, path))` reruns it."""
-        return OmegaConf.to_yaml(OmegaConf.structured(self.config))
+        return to_yaml(self.config)

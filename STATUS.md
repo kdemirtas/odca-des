@@ -9,7 +9,7 @@ N2 to N8 shipped 2026-09-19 and every assumption row is closed (D-2026-09-20-6 t
 paper-odca-des runs with `dlc_requires_advantage` on (D-2026-09-22-1, -3). On 2026-10-02 the
 contract was retrofitted to the code (PR #24) and a cell stopped being released while its vehicle
 is still in it (D-2026-10-02-4), which moved the golden: paper-odca-des has to rerun its 124 jobs
-before it quotes a number again. Open work: HANDOVER NEXT 1 to 4, then BACKLOG.
+before it quotes a number again. Open work: HANDOVER NEXT 1 and 2, then BACKLOG.
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re-recorded
@@ -18,6 +18,16 @@ Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re
 `uv run pytest` on 2026-10-02: 99 passed, 3 skipped (the viewer tests, in a venv without the
 `[viewer]` extra).
 
+
+## 2026-10-02 (later): one YAML conversion, and `edie_fd_points` on a region type. Shipped as PR #26
+- NEXT 1: `odca.params.to_yaml` is the one way a config becomes YAML; `ConfigMixin.save_config`
+  and `SimulationResult.config_yaml` call it and `simulation/` no longer imports omegaconf.
+- NEXT 2: `edie_fd_points(vehicles, region, interval)` takes a `SpaceTimeRegion` (first cell,
+  end cell, start time, end time, lanes), D-2026-10-02-5. The old and the new call return
+  identical lists on an S1 quick run (150 s, cells 100 to 300, six points). The three callers
+  in paper-odca-des are edited there in the same pass.
+- No number moved; the golden is untouched.
+- ⏳ paper-odca-des still has to rerun its 124 jobs under D-2026-10-02-4.
 
 ## 2026-10-02 (last): strict JSON reader, look_behind, and no release under a vehicle. Shipped as PR #25
 - NEXT 1: `RunRecord.from_json` requires all seven keys and `read_runs` names the file

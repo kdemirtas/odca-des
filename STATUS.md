@@ -1,6 +1,6 @@
 # odca-des: status
 > Read `PROJECT.md` first (the spec). This file = where things stand and what to do next. Entries
-> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-09-20**.
+> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-02**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
 ## TL;DR
@@ -14,6 +14,22 @@ stays first order: a vehicle acceleration bound was built, measured and rejected
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
 after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded twice on 2026-09-20, for the three new stats keys of D-2026-09-20-5 and for the counter split of D-2026-09-20-12, no value moved either time; `uv run pytest` 86/86 passed.
 
+
+## 2026-10-02: the architecture contract retrofitted to the code. Shipped as PR #24
+- `/architect` retrofit: the code read against `ARCHITECTURE.md`, which was last written on
+  2026-09-20, before the three decisions of 2026-09-22. All ten module boundaries match their
+  imports; no violated boundary.
+- Three rows now carry `drift:`: `RunRecord.from_json` fills a missing key (`hdv_action_interval`
+  as 1.0) though the doc called the reader strict; `Driver.accepts_gap` scans backward with
+  `look_ahead` and nothing reads `look_behind`; `simulation/result.py` imports omegaconf itself.
+- Kerem decided three things: `dlc_requires_advantage` is deleted at the last paper's switch-over
+  (D-2026-10-02-1, BACKLOG B13), the rear gap scan reads `look_behind` (D-2026-10-02-2), the
+  per-seed JSON reader is strict (D-2026-10-02-3). D-2026-09-22-1 had a table row and no body;
+  one is written from the row and PR #21.
+- HANDOVER NEXT holds seven ranked, behaviour-neutral items. BACKLOG B14: a typed owner for the
+  cell lock.
+- Docs only. `uv run pytest` on main: 90 passed, the 24 golden runs matching exactly.
+- ⏳ The TL;DR and Current numbers above, and `PROJECT.md`, still describe 2026-09-20.
 
 ## 2026-09-20 (last): bounded acceleration built, measured and rejected
 - Kerem asked for the PhD's acceleration bound back, then withdrew it on the sounder argument:

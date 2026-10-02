@@ -7,6 +7,9 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-02-3 | 2026-10-02 | The per-seed JSON reader is strict: `label`, `av_penetration`, `seed`, `hdv_action_interval`, `av_action_interval`, `stats` and `counters` are all required, and a file missing one is refused with its path and the key, where today a missing `hdv_action_interval` is read as 1.0 | Kerem, 2026-10-02 (`/architect` retrofit) | none |
+| D-2026-10-02-2 | 2026-10-02 | The rear gap scan of `Driver.accepts_gap` reads `look_behind`; `look_ahead` is the forward range only. The field stays in `DriverConfig` and both driver YAMLs | Kerem, 2026-10-02 (`/architect` retrofit) | none |
+| D-2026-10-02-1 | 2026-10-02 | `dlc_requires_advantage` is removed when the last ODCA paper has switched onto this package: the faster-lane rule becomes the only rule and the flag is deleted, unless a paper has recorded a need for the old rule by then | Kerem, 2026-10-02 (`/architect` retrofit) | none; gives D-2026-09-22-1 its removal date |
 | D-2026-09-22-3 | 2026-09-22 | The paper-odca-des golden runs with `dlc_requires_advantage: true`, the paper's own rule, and is re-recorded: 24 runs, 352 of 508 fingerprint values move (every trip statistic and every lane-change counter), 156 stay (seeds, configs, controller updates, patience failures) | paper-odca-des HANDOVER NEXT 2 (its D-2026-09-22-5), the rerun finished 2026-09-22 | none |
 | D-2026-09-22-2 | 2026-09-22 | The paper-odca-des golden passes `result.vehicles` to `summary_statistics`, not `completed_vehicles`, so `num_never_entered` counts over every vehicle as the function documents; re-recorded fingerprint, only that key moves (24 runs: 0 to between 6 and 28 per run), every other stat identical | the wiring half of paper-odca-des HANDOVER NEXT 2 (its D-2026-09-22-5), applying D-2026-09-20-5 | none |
 | D-2026-09-22-1 | 2026-09-22 | `dlc_requires_advantage` on the lane-change config, `False` by default: when set, the discretionary curve is evaluated only toward a neighbouring lane that is faster than the current one, so a lane with no speed advantage is never a DLC candidate. This is option B of `docs/lane-change-rate.md` (S1 1.94 lane changes per vehicle-km against 2.27, 900 s seed 1). Off by default so no golden moves; paper-odca-des turns it on (its D-2026-09-22-5) and reruns | paper-odca-des, Kerem 2026-09-22 ("isn't there a 3rd way? fix it?", then option 1) | none |
@@ -60,6 +63,36 @@
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
 
+## D-2026-10-02-3: the per-seed JSON reader refuses a file with a key missing
+
+**What.** `RunRecord.from_json` requires all seven keys of the per-seed JSON contract (`label`, `av_penetration`, `seed`, `hdv_action_interval`, `av_action_interval`, `stats`, `counters`). A file missing one is refused, the error naming the file and the key. Nothing is filled in.
+
+**Evidence.** Kerem, 2026-10-02, chose "Strict" in the `/architect` retrofit. `odca/experiment/records.py` (`from_json`) reads `hdv_action_interval` with a default of 1.0 and `stats` and `counters` with `{}`, so a file without the interval would be grouped with the 1.0 s runs and one without stats would drop out of every mean without a word; `ARCHITECTURE.md` already called the reader strict, and `tests/test_experiment.py` covers a duplicate and unparseable JSON but no missing key. All 180 per-seed files under `paper-odca-des/code/output` carry `hdv_action_interval` today, so nothing on disk is refused.
+
+**Replaces.** nothing.
+
+**Cited by.** `ARCHITECTURE.md` (Data contracts); `HANDOVER.md` NEXT 1 until the code does.
+
+## D-2026-10-02-2: the rear gap scan reads `look_behind`
+
+**What.** `Driver.accepts_gap` looks for the follower in the target lane within `look_behind` cells and for the leader within `look_ahead` cells. `look_behind` stays a `DriverConfig` field.
+
+**Evidence.** Kerem, 2026-10-02, chose "Use it" in the `/architect` retrofit. `odca/entity/driver.py` (line 229) calls `target.find_follower(self.look_ahead)`, and no module reads `look_behind`, which `odca/params.py` (line 111) declares as "cells scanned backward" and both package YAMLs set (10 human, 12 autonomous). The two ranges are equal in both YAMLs, so the golden does not move.
+
+**Replaces.** nothing.
+
+**Cited by.** `ARCHITECTURE.md` (Core types); `HANDOVER.md` NEXT 2 until the code does.
+
+## D-2026-10-02-1: `dlc_requires_advantage` goes at the last switch-over
+
+**What.** The flag of D-2026-09-22-1 lives until `paper-lc-logistic`, `paper-odca-platoon` and `paper-odca-adaptive-platoon` have all switched onto this package. At that point discretionary lane changing only toward a faster lane becomes the one rule and the flag is deleted, unless one of those papers has recorded, in its own ledger, that it needs the old rule.
+
+**Evidence.** Kerem, 2026-10-02, chose "At last switch-over" in the `/architect` retrofit. The repo rule "no switch without a decision" asks every flag for the date it may be removed, and D-2026-09-22-1 gave none. The flag is off by default while paper-odca-des and its golden run with it on (D-2026-09-22-3, which calls it the fixed rule); the three frozen copies still run the old rule.
+
+**Replaces.** nothing; gives D-2026-09-22-1 its removal date.
+
+**Cited by.** `ARCHITECTURE.md` (Core types); `BACKLOG.md` B13.
+
 ## D-2026-09-22-3: the golden follows the paper onto the fixed lane-change rule
 
 **What.** `tests/golden/paper_odca_des/configs/simulation.yaml` overrides `hdv_driver` with `_base_: odca://hdv_driver.yaml` and `lane_change.dlc_requires_advantage: true`, exactly as the paper's `code/configs/simulation.yaml` does (paper-odca-des D-2026-09-22-5), so the golden fingerprints the setup the paper reports. Re-recorded with `uv run pytest tests/test_golden.py --write-golden`, 25 passed in 5 min 43 s.
@@ -81,6 +114,16 @@
 **Replaces.** nothing.
 
 **Cited by.** `tests/golden/paper_odca_des/scenarios.py`; paper-odca-des HANDOVER NEXT 2.
+
+## D-2026-09-22-1: discretionary lane changes only toward a faster lane, as a flag
+
+**What.** `dlc_requires_advantage` on `BaseLaneChangeConfig`, `False` by default. When set, the discretionary curve is evaluated only toward a neighbouring lane that is faster than the current one, so a lane with no speed advantage is never a candidate and the logistic curve's 0.047 per second at zero advantage stops firing. This is option B of `docs/lane-change-rate.md`.
+
+**Evidence.** Kerem, 2026-09-22 ("isn't there a 3rd way? fix it?", then option 1), from paper-odca-des. `docs/lane-change-rate.md`: S1, 900 s, seed 1, 1.94 lane changes per vehicle-km with the rule against 2.27 without. PR #21: off by default, the full suite passed (90 tests) and every golden was unchanged. This body was written on 2026-10-02 from the table row and PR #21, which had recorded the decision without one.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/params.py` (`BaseLaneChangeConfig`), `odca/entity/driver.py` (`_dlc_direction`); removal date in D-2026-10-02-1.
 
 ## D-2026-09-20-20: the model stays first order, with no acceleration bound
 

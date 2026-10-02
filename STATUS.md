@@ -19,7 +19,7 @@ Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re
 `[viewer]` extra).
 
 
-## 2026-10-02 (later): one YAML conversion, and `edie_fd_points` on a region type. Shipped as PR #?
+## 2026-10-02 (later): one YAML conversion, and `edie_fd_points` on a region type. Shipped as PR #26
 - NEXT 1: `odca.params.to_yaml` is the one way a config becomes YAML; `ConfigMixin.save_config`
   and `SimulationResult.config_yaml` call it and `simulation/` no longer imports omegaconf.
 - NEXT 2: `edie_fd_points(vehicles, region, interval)` takes a `SpaceTimeRegion` (first cell,

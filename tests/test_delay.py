@@ -63,3 +63,16 @@ def test_the_limit_takes_effect_on_the_cell_that_posts_it():
     assert crossing[20] == pytest.approx(1 / 1.3)  # first cell of the zone: already slowed
     assert crossing[39] == pytest.approx(1 / 1.3)  # last cell of the zone: still slowed
     assert crossing[40] == pytest.approx(1 / 5.2)  # first cell after it: back to full speed
+
+
+def test_edie_points_of_a_lone_vehicle_at_free_flow():
+    from odca.analysis.metrics import SpaceTimeRegion, edie_fd_points
+    result = Simulation(_corridor()).run()
+    vehicle = _first_completed(result)
+    entered, left = vehicle.trajectory[10].time, vehicle.trajectory[30].time
+    region = SpaceTimeRegion(first_cell=10, end_cell=30, start_time=entered, end_time=left)
+    (point,) = edie_fd_points([vehicle], region, interval=left - entered)
+    # one vehicle crossing all 20 cells in the window: D = 20 cells, W = the window
+    assert point["speed"] == pytest.approx(20 / (left - entered))
+    assert point["density"] == pytest.approx(1 / 20)
+    assert point["flow"] == pytest.approx(point["density"] * point["speed"])

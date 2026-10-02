@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-02-5 | 2026-10-02 | `edie_fd_points(vehicles, region, interval)` takes one `SpaceTimeRegion` (first cell, end cell, start time, end time, lanes) in place of five separate values; the function had 7 parameters against a limit of 6. Same arithmetic, same output | Kerem, 2026-10-02 (chose "One SpaceTimeRegion") | none |
 | D-2026-10-02-4 | 2026-10-02 | A cell's lock opens tau after its vehicle takes the next cell, and never while the vehicle is still in the cell: a vehicle that needs longer than tau to cross keeps the lock until it has left. Two vehicles are never in one cell. The golden is re-recorded, 348 of 504 values move | Kerem, 2026-10-02 ("agree with your narrower idea") | none |
 | D-2026-10-02-3 | 2026-10-02 | The per-seed JSON reader is strict: `label`, `av_penetration`, `seed`, `hdv_action_interval`, `av_action_interval`, `stats` and `counters` are all required, and a file missing one is refused with its path and the key, where today a missing `hdv_action_interval` is read as 1.0 | Kerem, 2026-10-02 (`/architect` retrofit) | none |
 | D-2026-10-02-2 | 2026-10-02 | The rear gap scan of `Driver.accepts_gap` reads `look_behind`; `look_ahead` is the forward range only. The field stays in `DriverConfig` and both driver YAMLs | Kerem, 2026-10-02 (`/architect` retrofit) | none |
@@ -63,6 +64,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-02-5: `edie_fd_points` takes one `SpaceTimeRegion`
+
+**What.** A frozen dataclass `SpaceTimeRegion(first_cell, end_cell, start_time, end_time, num_lanes=1)` in `odca/analysis/metrics.py`, `end_cell` exclusive, and `edie_fd_points(vehicles, region, interval=20.0)`. The five values it replaces were `region_lo`, `region_hi`, `warmup`, `duration` and `num_lanes`.
+
+**Evidence.** Kerem, 2026-10-02, chose "One SpaceTimeRegion" over a road section plus a time window and over leaving the signature at 7. The review gate flagged 7 parameters against the limit of 6. On an S1 quick run (150 s, cells 100 to 300, four lanes, 20 s windows) the old and the new call return identical lists, six points. The three callers, all in paper-odca-des (its scripts run_demand_sweep, diagnose_fd_capacity and run_bottleneck under code/), are edited in that repo in the same pass.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/analysis/metrics.py` (`SpaceTimeRegion`), `ARCHITECTURE.md` (Core types).
 
 ## D-2026-10-02-4: a cell is not released while its vehicle is still in it
 

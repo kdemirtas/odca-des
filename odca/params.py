@@ -267,6 +267,20 @@ def validate(schema: type, cfg: Any) -> Any:
     return _build(schema, cfg, base_dir)
 
 
+def to_yaml(cfg: Any) -> str:
+    """A config as YAML that `validate` reads back.
+
+    Args:
+        cfg: an instance of a schema dataclass from this module.
+
+    Raises:
+        TypeError: `cfg` is not a config dataclass.
+    """
+    if not is_dataclass(cfg) or isinstance(cfg, type):
+        raise TypeError(f"{type(cfg).__name__} is not a config dataclass")
+    return OmegaConf.to_yaml(OmegaConf.structured(cfg))
+
+
 def _load(ref: str, base_dir: Path):
     """Read the YAML file `ref` names.
 
@@ -412,7 +426,9 @@ class ConfigMixin:
         return cls(cls.validate_config(cfg), *runtime, **runtime_kw)
 
     def save_config(self) -> str:
-        """The resolved config as YAML."""
-        if not is_dataclass(self.cfg):
-            raise TypeError(f"{type(self).__name__}.cfg is not a config dataclass")
-        return OmegaConf.to_yaml(OmegaConf.structured(self.cfg))
+        """The resolved config as YAML.
+
+        Raises:
+            TypeError: `cfg` is not a config dataclass.
+        """
+        return to_yaml(self.cfg)

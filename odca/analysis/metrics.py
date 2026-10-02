@@ -118,8 +118,9 @@ def cells_locked(vehicle: Vehicle) -> Optional[float]:
 
     It is labelled in one cell and holds every cell from the one it has taken back to the one
     it has not released yet, and no other vehicle can seize those. Read off the trajectory: it
-    holds cell c from T_acq(c) to T_rel(c) = T_acq(c+1) + tau (the delayed release), so the
-    cell-seconds it takes from the road, divided by its time on the road, is the mean.
+    holds cell c from T_acq(c) to T_rel(c), the later of T_acq(c+1) + tau (the delayed release)
+    and T_arr(c+1), since a cell is not released while its vehicle is in it (D-2026-10-02-4).
+    The cell-seconds it takes from the road, divided by its time on the road, is the mean.
 
     Args:
         vehicle: a vehicle that has entered and left.
@@ -130,7 +131,10 @@ def cells_locked(vehicle: Vehicle) -> Optional[float]:
     tau = vehicle.driver.tau
     traj, held = vehicle.trajectory, 0.0
     for j, record in enumerate(traj):
-        released = (traj[j + 1].acquired if j + 1 < len(traj) else vehicle.time_exited) + tau
+        if j + 1 < len(traj):
+            released = max(traj[j + 1].acquired + tau, traj[j + 1].time)
+        else:
+            released = vehicle.time_exited + tau
         held += released - record.acquired
     return held / duration
 

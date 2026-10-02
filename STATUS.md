@@ -4,16 +4,36 @@
 > **Current wave:** extraction and refactor, since 2026-09-19
 
 ## TL;DR
-Shared ODCA simulator, extracted from paper-odca-des 2026-09-19. Bugs fixed, lane-change rate
-rule in, refactor N2 to N8 shipped 2026-09-19; paper-odca-des ran its 124-job rerun on 2026-09-20.
-Every assumption row is closed (D-2026-09-20-6 to -19); otherwise BACKLOG. The NaSch baseline can
-now carry a per-cell posted limit, which paper-odca-des needed for its paradigm figure. The model
-stays first order: a vehicle acceleration bound was built, measured and rejected (D-2026-09-20-20).
+Shared ODCA simulator, extracted from paper-odca-des 2026-09-19, public since 2026-09-22. Refactor
+N2 to N8 shipped 2026-09-19 and every assumption row is closed (D-2026-09-20-6 to -19).
+paper-odca-des runs with `dlc_requires_advantage` on (D-2026-09-22-1, -3). On 2026-10-02 the
+contract was retrofitted to the code (PR #24) and a cell stopped being released while its vehicle
+is still in it (D-2026-10-02-4), which moved the golden: paper-odca-des has to rerun its 124 jobs
+before it quotes a number again. Open work: HANDOVER NEXT 1 to 4, then BACKLOG.
 
 ## Current numbers
-Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-recorded 2026-09-19
-after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded twice on 2026-09-20, for the three new stats keys of D-2026-09-20-5 and for the counter split of D-2026-09-20-12, no value moved either time; `uv run pytest` 86/86 passed.
+Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re-recorded
+2026-10-02 under D-2026-10-02-4, 348 of 504 values moved; before that on 2026-09-22 for
+`num_never_entered` (D-2026-09-22-2) and for `dlc_requires_advantage` on (D-2026-09-22-3).
+`uv run pytest` on 2026-10-02: 99 passed, 3 skipped (the viewer tests, in a venv without the
+`[viewer]` extra).
 
+
+## 2026-10-02 (last): strict JSON reader, look_behind, and no release under a vehicle. Shipped as PR #25
+- NEXT 1: `RunRecord.from_json` requires all seven keys and `read_runs` names the file
+  (D-2026-10-02-3). The 180 per-seed files of paper-odca-des still load.
+- NEXT 2: `Driver.accepts_gap` scans backward with `look_behind` (D-2026-10-02-2). Golden
+  unchanged by it, the two ranges being equal.
+- NEXT 3 found invariant 1 broken: a cell's lock opened tau after the next cell was taken, so a
+  vehicle crossing slower than 1/tau was joined in its cell by the one behind, 2,896 of 7,415,365
+  passages in the 24 golden runs. Kerem chose the narrow fix: the lock is not released while the
+  vehicle is still in the cell (D-2026-10-02-4, `docs/cell-overlap.md`). `cells_locked` reads the
+  release the same way. `tests/test_invariants.py`, three tests.
+- Golden re-recorded: 348 of 504 values moved, no consistent direction (S1 throughput 3,204 to
+  3,107 veh/h, delay 24.4 to 23.6 s; BN_0av 2,418 to 2,462, 74.4 to 73.0).
+- `uv run pytest`: 99 passed, 3 skipped (viewer extra absent in the worktree venv).
+- ⏳ paper-odca-des reruns its 124 jobs. BACKLOG B15: a saturated lane carries about 1,350 veh/h
+  against a floor of 2,127, unexplained.
 
 ## 2026-10-02: the architecture contract retrofitted to the code. Shipped as PR #24
 - `/architect` retrofit: the code read against `ARCHITECTURE.md`, which was last written on

@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #25: Never release a cell while its vehicle is in it; strict JSON reader; look_behind (D-2026-10-02-2 to -4) (2026-10-02)
 - PR #24: Retrofit the architecture contract to the code (D-2026-10-02-1 to -3) (2026-10-02)
 - PR #23: Re-record the paper-odca-des golden under the fixed lane-change rule (D-2026-09-22-3) (2026-09-22)
 - PR #22: Re-record the paper-odca-des golden with never_entered counted over every vehicle (D-2026-09-22-2) (2026-09-22)

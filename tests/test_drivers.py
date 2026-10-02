@@ -1,6 +1,7 @@
 """The driver split (D-2026-09-19-24): factory, link, controller, a driver subclass."""
 
 import sys
+from dataclasses import replace
 
 import simpy
 
@@ -86,6 +87,31 @@ def test_one_request_makes_one_lane_change():
     env.run(until=60)
     assert vehicle.count_lane_changes == 1
     assert vehicle.trajectory[-1].lane_idx == 2
+
+
+def _gap_accepted(look_ahead, look_behind):
+    """Whether a stopped vehicle accepts a gap with a fast follower one cell behind it."""
+    env = simpy.Environment()
+    freeway = Freeway(env, NetworkConfig.corridor(2, 40, 5.2))
+    streams = DriverStreams.spawn(RNGRegistry(master_seed=1))
+    cfg = replace(HDV_DRIVER, look_ahead=look_ahead, look_behind=look_behind)
+
+    def placed(lane, cell_idx, speed):
+        vehicle = Vehicle(env, HDV_VEHICLE, HumanDriver(cfg, streams, DriverTraits.exact(cfg)),
+                          freeway.cell(lane, cell_idx))
+        vehicle.cell = freeway.cell(lane, cell_idx)
+        vehicle.cell.vehicle = vehicle
+        vehicle.speed = speed
+        return vehicle
+
+    subject = placed(1, 20, 0.0)
+    placed(2, 20, HDV_VEHICLE.v_max)  # the follower, one cell behind the target
+    return subject.driver.accepts_gap(freeway.cell(2, 21))
+
+
+def test_the_rear_gap_scan_reads_look_behind():
+    assert not _gap_accepted(look_ahead=1, look_behind=10)  # seen behind, gap refused
+    assert _gap_accepted(look_ahead=10, look_behind=0)      # not looked for, gap accepted
 
 
 def test_result_carries_the_config_it_ran_with(tmp_path):

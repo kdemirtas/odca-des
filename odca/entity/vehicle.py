@@ -2,7 +2,8 @@
 
 A vehicle is a SimPy process that moves cell by cell through the freeway with the
 request-wait-seize-delay-release protocol: it takes the next cell, crosses its current cell at
-its speed, and releases the cell it left tau seconds later. Its driver (`odca.entity.driver`)
+its speed, and releases that cell tau seconds after taking the next one, or when it has left it
+if the crossing takes longer (D-2026-10-02-4). Its driver (`odca.entity.driver`)
 decides the speed and the direction; the vehicle carries them out.
 
 The link contract: the driver reads the vehicle's state and its neighbours through cells, and
@@ -81,6 +82,7 @@ class Vehicle:
         # State
         self.cell: Optional[Cell] = None
         self._cell_entry_time: float = 0.0  # when current cell was entered
+        self._cell_left: Optional[simpy.Event] = None  # a release waiting for the next cell change
         self.speed: float = 0.0
         self.desired_direction: Direction = Direction.FORWARD
         self.active: bool = False
@@ -157,12 +159,22 @@ class Vehicle:
         raise RuntimeError(f"Vehicle {self.id} does not hold {cell}")
 
     def _delayed_release(self, cell: Cell):
-        """Release a cell's resource tau seconds after the next cell is taken (headway).
+        """Release a cell's resource tau seconds after the next cell is taken (headway), and
+        never while this vehicle is still in the cell (D-2026-10-02-4).
 
-        Releases the lock only; the cell's position label changes in _on_cell_change.
+        A vehicle that needs longer than tau to cross keeps the lock until it has left, so no
+        other vehicle arrives in a cell that still holds one. Releases the lock only; the cell's
+        position label changes in _on_cell_change.
+
+        Args:
+            cell: the cell to release.
         """
         def _release_process():
             yield self.env.timeout(self.driver.tau)
+            while self.cell is cell:
+                if self._cell_left is None:
+                    self._cell_left = self.env.event()
+                yield self._cell_left
             self._release(cell)
             self._notify_neighbors_on_release(cell)
         self.env.process(_release_process())
@@ -183,6 +195,9 @@ class Vehicle:
         if old_cell is not None and old_cell.vehicle is self:
             old_cell.vehicle = None
         self.cell = new_cell
+        if self._cell_left is not None:
+            waiting, self._cell_left = self._cell_left, None
+            waiting.succeed()
         if new_cell is None:
             return
         new_cell.vehicle = self

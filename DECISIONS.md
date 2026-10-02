@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-02-4 | 2026-10-02 | A cell's lock opens tau after its vehicle takes the next cell, and never while the vehicle is still in the cell: a vehicle that needs longer than tau to cross keeps the lock until it has left. Two vehicles are never in one cell. The golden is re-recorded, 348 of 504 values move | Kerem, 2026-10-02 ("agree with your narrower idea") | none |
 | D-2026-10-02-3 | 2026-10-02 | The per-seed JSON reader is strict: `label`, `av_penetration`, `seed`, `hdv_action_interval`, `av_action_interval`, `stats` and `counters` are all required, and a file missing one is refused with its path and the key, where today a missing `hdv_action_interval` is read as 1.0 | Kerem, 2026-10-02 (`/architect` retrofit) | none |
 | D-2026-10-02-2 | 2026-10-02 | The rear gap scan of `Driver.accepts_gap` reads `look_behind`; `look_ahead` is the forward range only. The field stays in `DriverConfig` and both driver YAMLs | Kerem, 2026-10-02 (`/architect` retrofit) | none |
 | D-2026-10-02-1 | 2026-10-02 | `dlc_requires_advantage` is removed when the last ODCA paper has switched onto this package: the faster-lane rule becomes the only rule and the flag is deleted, unless a paper has recorded a need for the old rule by then | Kerem, 2026-10-02 (`/architect` retrofit) | none; gives D-2026-09-22-1 its removal date |
@@ -62,6 +63,18 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-02-4: a cell is not released while its vehicle is still in it
+
+**What.** `Vehicle._delayed_release` opens a cell's lock tau seconds after the vehicle takes the next cell, as before, but waits for the vehicle to leave the cell when the crossing takes longer than tau. At speeds above 1/tau nothing changes, so the headway floor tau + d / v_max and the 2,127 veh/h it implies stay. Below it, the vehicle behind can no longer arrive in a cell that still holds one.
+
+**Evidence.** Kerem, 2026-10-02: "agree with your narrower idea", after asking why the delay does not start when the vehicle leaves. Found while writing the test for invariant 1: in the 24 golden runs 2,896 of 7,415,365 cell passages had a second vehicle arrive before the first had left (S1 246 of 776,098; the bottleneck with no AVs 1,434 of 930,352), the first one hidden from `find_leader` and `accepts_gap` meanwhile. Starting the delay at leaving removes them too but adds one crossing time to every headway (floor 1.692 s to 1.885 s) and lowered throughput in seven of eight scenarios, so it was not taken. `docs/cell-overlap.md` has the case, both measurements and the table.
+
+**What moved.** `fingerprint.json` re-recorded, 24 runs: 348 of 504 values move, every trip statistic and every counter except controller updates and patience failures. Means over three seeds, before to after: S1 throughput 3,204 to 3,107 veh/h, delay 24.4 to 23.6 s; S2 3,449 to 3,467, 19.0 to 19.8; S3 3,853 to 3,836, 13.2 to 12.5; S4 4,156 to 4,111, 8.0 to 7.1; BN_0av 2,418 to 2,462, 74.4 to 73.0; BN_30av 3,029 to 2,998, 40.1 to 41.3; BN_50av 3,451 to 3,480, 12.6 to 11.5; BN_70av 3,520 to 3,516, 4.6 to 4.6. No consistent direction; three seeds of 300 to 600 s do not separate an effect from reordered draws. paper-odca-des has to rerun its 124 jobs before it quotes any number again.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/entity/vehicle.py` (`_delayed_release`), `odca/analysis/metrics.py` (`cells_locked`, which reads the release time the same way), `tests/test_invariants.py`, `ARCHITECTURE.md` (Invariants 1 and 2).
 
 ## D-2026-10-02-3: the per-seed JSON reader refuses a file with a key missing
 

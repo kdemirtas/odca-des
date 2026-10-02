@@ -33,6 +33,17 @@ def test_factory_links_both_kinds():
     assert human.driver.tau != HDV_DRIVER.tau  # drawn, not the mean
 
 
+def test_each_run_numbers_its_own_vehicles_from_zero():
+    first, second = Simulation(sim_config()), Simulation(sim_config())
+    cell, end = first.freeway.cell(1, 0), first.freeway.destination("end_lane_1")
+    other_cell, other_end = second.freeway.cell(1, 0), second.freeway.destination("end_lane_1")
+    ids = [first.factory.build(False, cell, end).id, second.factory.build(True, other_cell,
+                                                                         other_end).id,
+           first.factory.build(True, cell, end).id, second.factory.build(False, other_cell,
+                                                                        other_end).id]
+    assert ids == [0, 0, 1, 1]
+
+
 def test_counters_split_between_vehicle_and_driver_sum_in_results():
     sim = Simulation(sim_config(sim_duration=400.0, seed=2))
     results = sim.run()

@@ -8,8 +8,8 @@ decides the speed and the direction; the vehicle carries them out.
 
 The link contract: the driver reads the vehicle's state and its neighbours through cells, and
 changes the vehicle only through `set_target_speed` and `request_direction`. The vehicle calls
-its driver to wake it, to make it react now, to judge a gap or a blockage, and reads its tau,
-action interval, lane-change patience and merge priority.
+its driver to wake it, to pick the speed again where the limit changes, to judge a gap or a
+blockage, and reads its tau, action interval, lane-change patience and merge priority.
 """
 
 from __future__ import annotations
@@ -51,10 +51,9 @@ class TrajectoryRecord:
 class Vehicle:
     """One vehicle: position, cell lock, movement, exit and trajectory."""
 
-    _id_counter = 0
-
     def __init__(self, env: simpy.Environment, cfg: VehicleConfig, driver: Driver,
-                 origin_cell: Cell, destination: Optional[Destination] = None):
+                 origin_cell: Cell, destination: Optional[Destination] = None,
+                 vehicle_id: Optional[int] = None):
         """A vehicle waiting to enter at `origin_cell`, linked both ways with `driver`.
 
         Args:
@@ -63,9 +62,10 @@ class Vehicle:
             driver: who decides for this vehicle; it is attached here.
             origin_cell: the road cell it enters at.
             destination: where it leaves; None drives on until the road ends (a ring never ends).
+            vehicle_id: its number within the run, given by `VehicleFactory`; None for a
+                vehicle built by hand.
         """
-        self.id = Vehicle._id_counter
-        Vehicle._id_counter += 1
+        self.id = vehicle_id
         self.env = env
         self.cfg = cfg
 

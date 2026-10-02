@@ -2,30 +2,25 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: two retrofit items closed, the model fix of PR #25 stands (2026-10-02)
-- Decisions to D-2026-10-02-5. The last: `edie_fd_points` takes one `SpaceTimeRegion` in place
-  of five values; paper-odca-des's three callers are edited in that repo in the same pass.
-- The YAML conversion has one copy, `odca.params.to_yaml`; `simulation/` no longer imports
-  omegaconf. `ARCHITECTURE.md` carries no `drift:` mark on a Boundaries or Data contracts row.
-- Before these, PR #25: a cell is not released while its vehicle is still in it
-  (D-2026-10-02-4, `docs/cell-overlap.md`), golden re-recorded, 348 of 504 values moved; the
-  strict per-seed JSON reader (-3) and the rear gap scan on `look_behind` (-2).
-- PR #24: `ARCHITECTURE.md` retrofitted to the code; `dlc_requires_advantage` goes at the last
-  paper's switch-over (D-2026-10-02-1, BACKLOG B13).
-**RESUME:** paper-odca-des must rerun its 124 jobs under D-2026-10-02-4 before it quotes any
-number. Here, `/next-task` takes NEXT 1.
+## CURRENT: the retrofit list is empty (2026-10-02)
+- Every item `/architect` ranked on 2026-10-02 is shipped (PR #25 to #27). The last two: vehicle
+  ids are counted per run by `VehicleFactory`, a hand-built vehicle has id `None`, and two stale
+  lines of text are corrected.
+- Decisions to D-2026-10-02-5. The one that moved numbers: a cell is not released while its
+  vehicle is still in it (D-2026-10-02-4, `docs/cell-overlap.md`), golden re-recorded, 348 of
+  504 values moved. The rest are neutral: strict per-seed JSON reader (-3), rear gap scan on
+  `look_behind` (-2), one YAML conversion in `odca.params`, `edie_fd_points` on a
+  `SpaceTimeRegion` (-5).
+- `ARCHITECTURE.md` carries no `drift:` mark on a Boundaries or Data contracts row.
+  `dlc_requires_advantage` goes at the last paper's switch-over (D-2026-10-02-1, BACKLOG B13).
+- The tag `v0.1.0` is at `66b6a72`, before `dlc_requires_advantage` existed, so it cannot run
+  paper-odca-des; that paper's numbers came from `9a3897b`. Kerem's call, with the paper's
+  decision on the release rule (paper-odca-des AGENDA, Open decisions).
+**RESUME:** nothing ranked here. paper-odca-des decides first: submit on the old release rule,
+or rerun its 124 jobs under D-2026-10-02-4. Then BACKLOG: B15 (saturation flow), B12, B7 to B9.
 
 ## NEXT STEPS (pick up here)
-Ranked by `/architect` retrofit on 2026-10-02. Each is behaviour-neutral and closes on
-`uv run pytest` with the golden matching exactly.
-1. Vehicle ids counted per run (in `VehicleFactory`) instead of the class-level
-   `Vehicle._id_counter` that `Simulation.__init__` resets: two simulations built before either
-   runs share one counter today. Ids label vehicles only, so no number moves.
-2. Text only: the docstring of `odca/entity/vehicle.py` still says the vehicle makes its driver
-   "react now" (gone since D-2026-09-20-4); `tests/golden/paper_odca_des/configs/simulation.yaml`
-   (line 9) writes a paper-odca-des decision id with a space instead of the colon.
-
-A capability a paper needs is added here, off by default, with its golden
+None ranked. A capability a paper needs is added here, off by default, with its golden
 (paper-odca-des:D-2026-09-19-6).
 
 ## Infra

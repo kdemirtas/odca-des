@@ -9,7 +9,7 @@ N2 to N8 shipped 2026-09-19 and every assumption row is closed (D-2026-09-20-6 t
 paper-odca-des runs with `dlc_requires_advantage` on (D-2026-09-22-1, -3). On 2026-10-02 the
 contract was retrofitted to the code (PR #24) and a cell stopped being released while its vehicle
 is still in it (D-2026-10-02-4), which moved the golden: paper-odca-des has to rerun its 124 jobs
-before it quotes a number again. Open work: HANDOVER NEXT 1 and 2, then BACKLOG.
+before it quotes a number again. The retrofit list is empty; open work is BACKLOG.
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re-recorded
@@ -18,6 +18,17 @@ Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re
 `uv run pytest` on 2026-10-02: 99 passed, 3 skipped (the viewer tests, in a venv without the
 `[viewer]` extra).
 
+
+## 2026-10-02 (last of the day): vehicle ids per run, two text fixes; the retrofit list is empty. Shipped as PR #?
+- `VehicleFactory` numbers its vehicles from 0; the class-level `Vehicle._id_counter` and its
+  reset in `Simulation.__init__` are gone. A vehicle built by hand has id `None`. Test: two
+  simulations built side by side count 0, 1 each. Golden unchanged.
+- paper-odca-des: four scripts lose the line that reset the class counter; none reads an id.
+- Text: the `vehicle.py` docstring no longer says "react now"; the golden's `simulation.yaml`
+  writes the paper's decision id with the colon.
+- Found while shipping the paper side: tag `v0.1.0` is at `66b6a72`, before
+  `dlc_requires_advantage`, so it cannot run paper-odca-des, whose numbers came from `9a3897b`.
+- ⏳ Kerem: the paper's release-rule decision and the tag (paper-odca-des AGENDA).
 
 ## 2026-10-02 (later): one YAML conversion, and `edie_fd_points` on a region type. Shipped as PR #26
 - NEXT 1: `odca.params.to_yaml` is the one way a config becomes YAML; `ConfigMixin.save_config`

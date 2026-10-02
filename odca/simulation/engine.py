@@ -55,9 +55,6 @@ class Simulation(ConfigMixin):
         # Central RNG registry: all randomness flows from this master seed
         self.rng_registry = RNGRegistry(master_seed=config.seed)
 
-        # Reset vehicle IDs
-        Vehicle._id_counter = 0
-
         # Create SimPy environment
         self.env = CountingEnvironment()
 

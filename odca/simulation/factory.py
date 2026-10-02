@@ -36,6 +36,7 @@ class VehicleFactory:
         self.streams = streams
         self.traits = traits
         self.controller = controller
+        self.num_built = 0  # the next vehicle's id: ids count from 0 within a run
 
     def build(self, autonomous: bool, origin_cell: Cell,
               destination: Optional[Destination]) -> Vehicle:
@@ -47,8 +48,10 @@ class VehicleFactory:
             destination: where it leaves.
         """
         sim = self.sim
+        vehicle_id, self.num_built = self.num_built, self.num_built + 1
         if autonomous:
             driver = AutonomousDriver(sim.av_driver, self.streams, self.controller)
-            return Vehicle(self.env, sim.av_vehicle, driver, origin_cell, destination)
+            return Vehicle(self.env, sim.av_vehicle, driver, origin_cell, destination,
+                           vehicle_id)
         driver = HumanDriver(sim.hdv_driver, self.streams, self.traits.draw(sim.hdv_driver))
-        return Vehicle(self.env, sim.hdv_vehicle, driver, origin_cell, destination)
+        return Vehicle(self.env, sim.hdv_vehicle, driver, origin_cell, destination, vehicle_id)

@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #24: Retrofit the architecture contract to the code (D-2026-10-02-1 to -3) (2026-10-02)
 - PR #23: Re-record the paper-odca-des golden under the fixed lane-change rule (D-2026-09-22-3) (2026-09-22)
 - PR #22: Re-record the paper-odca-des golden with never_entered counted over every vehicle (D-2026-09-22-2) (2026-09-22)
 - PR #21: Add dlc_requires_advantage: DLC only toward a faster lane, off by default (D-2026-09-22-1) (2026-09-22)

@@ -15,7 +15,7 @@ Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3), re-reco
 after one lane-change request makes one lane change (D-2026-09-19-31); unchanged by N5 to N8 and by D-2026-09-20-3 and -4; re-recorded twice on 2026-09-20, for the three new stats keys of D-2026-09-20-5 and for the counter split of D-2026-09-20-12, no value moved either time; `uv run pytest` 86/86 passed.
 
 
-## 2026-10-02: the architecture contract retrofitted to the code. Shipped as PR #?
+## 2026-10-02: the architecture contract retrofitted to the code. Shipped as PR #24
 - `/architect` retrofit: the code read against `ARCHITECTURE.md`, which was last written on
   2026-09-20, before the three decisions of 2026-09-22. All ten module boundaries match their
   imports; no violated boundary.

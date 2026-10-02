@@ -1,5 +1,5 @@
 # ARCHITECTURE: odca-des
-> **Owned by `/architect`. Two pages max. Last updated 2026-09-20.** Code follows this file; when
+> **Owned by `/architect`. Two pages max. Last updated 2026-10-02.** Code follows this file; when
 > they disagree, either the code is wrong or this file is, and a `DECISIONS.md` entry says which.
 
 ## Purpose
@@ -14,12 +14,12 @@ Modules, what each owns, and what it may import. A module not listed here does n
 
 | Module | Owns | May import | Never imports |
 |---|---|---|---|
-| `odca/params.py`, `odca/configs/*.yaml` | `ConfigMixin`, `validate` (YAML with file references, `odca://` defaults, `_base_` overrides, `model` picks a family member); every config schema; `CELL_LENGTH_M`; the published vehicle, driver and controller defaults as YAML (D-2026-09-19-23) | stdlib, omegaconf | any other `odca` module, any paper |
+| `odca/params.py`, `odca/configs/*.yaml` | `ConfigMixin`, `validate` (YAML with file references, `odca://` defaults, `_base_` overrides, `model` picks a family member); every config schema of the ODCA model (the NaSch baseline keeps its own `NaSchConfig`, since it imports nothing from `odca`); `CELL_LENGTH_M`; the published vehicle, driver and controller defaults as YAML (D-2026-09-19-23) | stdlib, omegaconf | any other `odca` module, any paper |
 | `odca/rng.py` | `RNGRegistry`: one `SeedSequence` stream per source | numpy | any other `odca` module |
 | `odca/models/` | Newell, MLC and DLC probabilities; pure functions | stdlib | simpy, any `odca` module |
 | `odca/infrastructure/` | `Cell` and its endpoint subclasses `OriginCell`, `DestinationCell`; `Lane`; `Freeway` with its named `Origin`s and `Destination`s; `Incident` (D-2026-09-19-26 to -28) | simpy, params | entity, simulation |
 | `odca/entity/` | `Vehicle` (physical: cell label, lock, movement, trajectory), `Driver`, `HumanDriver`, `AutonomousDriver`, `DriverStreams`, `DriverTraits` and `TraitSampler` (`driver.py`), `AutonomousController` (`controller.py`), `TrajectoryRecord` (D-2026-09-19-24, -30) | infrastructure, models, params, rng (`DriverStreams.spawn`, `TraitSampler.spawn`) | simulation, analysis, experiment |
-| `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver), `SimulationResult` and `RunCounters` (`result.py`, D-2026-09-19-32), RNG stream order | entity, infrastructure, rng, params | analysis, experiment, viewer |
+| `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver), `SimulationResult` and `RunCounters` (`result.py`, D-2026-09-19-32), RNG stream order | entity, infrastructure, rng, params. `drift: result.py` imports omegaconf itself for `config_yaml`, repeating the conversion `ConfigMixin.save_config` owns | analysis, experiment, viewer |
 | `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`; `mean_ci95` in `intervals.py`, the only interval code (D-2026-09-19-33) | entity (read-only), params | simulation, experiment |
 | `odca/baselines/` | NaSch | numpy | the rest of `odca` |
 | `odca/experiment/` | `RunRecord`, `run_once` (simulate, time, measure), per-seed JSON writer and strict reader (`records.py`), aggregation into the CSV schema below (`tables.py`) (D-2026-09-19-33) | simulation, analysis, params | viewer, any paper |
@@ -31,7 +31,7 @@ Papers keep: parameter values (`config.py`), scenario definitions, figure script
 ## Layout
 
     odca/            the package (import name odca)
-    tests/           unit tests; tests/golden/<paper>/ = config.py, scenarios.py, fingerprint.json per paper
+    tests/           unit tests; tests/golden/<paper>/ = config.py, configs/*.yaml, scenarios.py, fingerprint.json per paper
     docs/            longer reference docs ARCHITECTURE.md links
     pyproject.toml   distribution odca-des, extra [viewer], dev group pytest
 
@@ -41,9 +41,9 @@ readers, and where the contract is asserted. "Nowhere" is a legal entry and a ba
 
 | Artifact | Grain (key) | Written by | Read by | Asserted in |
 |---|---|---|---|---|
-| per-seed JSON | (scenario, AV share, hdv_action_interval, seed); keys label, av_penetration, seed, hdv_action_interval, av_action_interval, stats, counters, plus the paper's extra keys | `odca.experiment.write_run` | `odca.experiment.read_runs` (duplicates refused) | `tests/test_experiment.py` |
+| per-seed JSON | (scenario, AV share, hdv_action_interval, seed); keys label, av_penetration, seed, hdv_action_interval, av_action_interval, stats, counters, plus the paper's extra keys; all seven are required (D-2026-10-02-3) | `odca.experiment.write_run` | `odca.experiment.read_runs` (a duplicate run, or a file with a key missing, is refused) | `tests/test_experiment.py` for the duplicate. `drift: RunRecord.from_json` fills a missing key (`hdv_action_interval` as 1.0, `stats` as `{}`) and no test covers one |
 | aggregate CSV | (scenario, av_penetration, hdv_action_interval, metric): n, mean, std, ci95_lo, ci95_hi, six decimals | `odca.experiment.write_aggregate_csv` | paper figure scripts, manuscript tables | `tests/test_experiment.py` |
-| `tests/golden/<paper>/fingerprint.json` | (scenario, seed) in quick mode: stats and counters | `golden --write`, only under a decision | the golden test | the golden test, exact match |
+| `tests/golden/<paper>/fingerprint.json` | run id `<scenario>_seed<n>` in quick mode: 12 stats over every vehicle of the run (D-2026-09-22-2) and 9 counters | `uv run pytest tests/test_golden.py --write-golden`, only under a decision | the golden test | the golden test, exact match |
 
 ## Core types
 The concepts the code passes around. Each has one definition; functions take the type, not its
@@ -51,7 +51,7 @@ fields.
 
 | Type | Meaning | Defined in |
 |---|---|---|
-| `VehicleConfig`, `HumanDriverConfig`, `AutonomousDriverConfig`, `ControllerConfig` | one class's parameters each, population values (means and spreads for humans); validated by omegaconf once per run, frozen dataclasses after | `odca/params.py`. Lane-change models are a family: `BaseLaneChangeConfig` (gaps, cooldown), `LogisticLaneChangeConfig`. The movement resolution and escape speed are `VehicleConfig` fields, the decision constants (patience, re-evaluation ratio, blockage scan, creep and slowdown floors) `DriverConfig` fields (D-2026-09-19-30) |
+| `VehicleConfig`, `HumanDriverConfig`, `AutonomousDriverConfig`, `ControllerConfig` | one class's parameters each, population values (means and spreads for humans); validated by omegaconf once per run, frozen dataclasses after | `odca/params.py`. Lane-change models are a family: `BaseLaneChangeConfig` (gaps, cooldown, and the one switch `dlc_requires_advantage`: off by default, on in paper-odca-des, deleted at the last paper's switch-over, D-2026-09-22-1, D-2026-10-02-1), `LogisticLaneChangeConfig`. `look_ahead` is the forward range and `look_behind` the rear one (D-2026-10-02-2; `drift: accepts_gap` scans backward with `look_ahead` and nothing reads `look_behind`). The movement resolution and escape speed are `VehicleConfig` fields, the decision constants (patience, re-evaluation ratio, blockage scan, creep and slowdown floors) `DriverConfig` fields (D-2026-09-19-30) |
 | `DriverTraits` | one driver's sampled values (tau, action interval, slowdown probability), drawn once at creation by `TraitSampler` | `odca/entity/driver.py` |
 | `SimConfig`, `NetworkConfig`, `ODFlow`, `Destination` | one run: geometry, demand, the two vehicle types, AV penetration, seed, duration, warm-up; values come from the paper's YAML | `odca/params.py` |
 | `Cell`, `Lane`, `Freeway` | the spatial resources; a cell's neighbour links are set when the road is built, reshaping a road relinks it (`Lane.make_periodic`, D-2026-09-19-35) | `odca/infrastructure/` |
@@ -65,10 +65,10 @@ fields.
 ## Invariants
 What must hold after every run, each with the check that proves it.
 
-1. **One vehicle per cell.** `Cell.resource` has capacity 1. Checked by construction (`cell.py`), no test.
-2. **Headway by delayed release.** A cell is released tau seconds after its vehicle leaves it (`_delayed_release`, `_exit`), so homogeneous single-lane capacity is 3600 / (tau + d / v_max) = 2127 veh/h at HDV defaults. Checked by eye in `diagnose_fd_capacity.py`; no assertion (BACKLOG B2).
+1. **One vehicle per cell.** `Cell.resource` has capacity 1. Checked by construction (`cell.py`), no test (HANDOVER NEXT).
+2. **Headway by delayed release.** A cell is released tau seconds after its vehicle leaves it (`_delayed_release`, `_exit`), so homogeneous single-lane capacity is 3600 / (tau + d / v_max) = 2127 veh/h at HDV defaults. Checked by eye in paper-odca-des `diagnose_fd_capacity.py`; no assertion (HANDOVER NEXT).
 3. **Same config and seed, same numbers.** `Simulation` spawns its streams in a fixed order: three decision streams (`DriverStreams`), three trait streams (`TraitSampler`), then one per OD pair in demand-table order, then `initial_vehicle_type`. A new stream goes last, or every number moves. Checked by `tests/test_golden.py`.
-4. **One driver-heterogeneity rule.** tau LogNormal clipped to [tau_min, tau_max] (0.5, 3.0), action_interval LogNormal clipped to [0.3, 3.0], slowdown_prob Normal clipped to [0, 1], drawn in that order from their own streams, only when the spread is above 0: `odca.entity.driver.TraitSampler`, the only copy (N3). Checked by `tests/test_driver_traits.py` and the golden.
+4. **One driver-heterogeneity rule.** tau LogNormal clipped to [tau_min, tau_max] (0.5, 3.0), action_interval LogNormal clipped to [0.3, 3.0], slowdown_prob Normal clipped to [0, 1], drawn in that order from their own streams, only when the spread is above 0: `odca.entity.driver.TraitSampler`, the only copy. Checked by `tests/test_driver_traits.py` and the golden.
 5. **Units stay inside.** Cells, cells/s and seconds everywhere in `odca/`; km/h, veh/h and veh/km appear only at the reporting edge, through `CELL_LENGTH_M`.
 6. **Driver and vehicle keep to the link contract** (D-2026-09-19-24, -30). The driver reads its vehicle's state and neighbours through cells, and changes the vehicle only through `set_target_speed` and `request_direction`; the vehicle calls its driver to wake it (`wake`), to pick the speed again where the limit changes (`evaluate_speed`, D-2026-09-20-4), to judge a gap or a blockage (`accepts_gap`, `sees_blockage`, `evaluate_direction` when stopped), and reads its tau, action interval, lane-change patience and merge priority. Checked by review; a driver writing a vehicle field is a finding.
 7. **A new capability is off by default,** and every paper's golden matches with it off. Checked by `tests/test_golden.py`.
@@ -85,7 +85,7 @@ to move only that number.
 What does not fit in two pages lives under `docs/` and is linked from the row or section it
 supports; a doc no row links is a candidate for deletion.
 
-`docs/code-review-2026-09-19.md`: the Opus principal-engineer review that feeds N8.
+`docs/code-review-2026-09-19.md`: the Opus principal-engineer review; its neutral items shipped in PR #9, the rest are BACKLOG B7 to B9.
 `docs/config-and-driver-design.md`: the ConfigMixin pattern and the Driver split, with examples (D-2026-09-19-23, -24).
 `docs/lane-change-rate.md`: lane-change probability per distance and per second (D-2026-09-19-22).
 

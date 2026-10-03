@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-10-03: the rate rule is selectable. Shipped as PR #?.**
+> **2026-10-03: the rate rule is selectable. Shipped as PR #32.**
 > `rate_rule` on the logistic lane-change config: `distance` (default, unchanged), `second`, `evaluation` (D-2026-10-03-4), for paper-lc-logistic's rate-rule experiment. Every golden unchanged, full suite 113 passed, 3 skipped; `tests/test_rate_rule.py` added.
 > ⏳ Pending: nothing from that paper is waiting here now; BACKLOG B13 (`dlc_requires_advantage`) still waits on the two platoon papers.
 

@@ -7,3 +7,4 @@ or a NEXT item and marks the entry. Nothing here is committed work.
 
 | # | idea | why it came up | raise when | state | noted |
 |---|---|---|---|---|---|
+| I1 | What if we add vehicle lengths and let a single vehicle hold multiple cells at the same time. Now we are interested in both the rear and front position of the vehicle. So long vehicles like buses can occupy 3 cells at the same time depending on cell length. This can further be extended to the platoon idea: a platoon holds multiple cells by definition. | Kerem, 2026-10-03, during the paper-lc-logistic rerun, after the lane-change diagnosis showed 66% of refused gap checks came from a cell still locked by the vehicle that had just left it | next pickup of odca-des, or when either platoon paper moves onto the package | open | 2026-10-03 |

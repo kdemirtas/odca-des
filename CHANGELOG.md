@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #33: Sync the golden copy of paper-lc-logistic scenarios.py (2026-10-03)
 - PR #32: Make the lane-change rate rule selectable (D-2026-10-03-4) (2026-10-03)
 - PR #31: Pick the human driver class from the lane-change config; add MOBIL and Gipps runs to the paper-lc-logistic golden (D-2026-10-03-3) (2026-10-03)
 - PR #30: Log lane changes with their reason; add the paper-lc-logistic golden (D-2026-10-03-1, D-2026-10-03-2) (2026-10-03)

@@ -42,6 +42,18 @@ exposure x since the vehicle's previous evaluation:
 Splitting one evaluation into k steps gives the same total: (1 - p)^(x/k * k) = (1 - p)^x, so the
 outcome is independent of the evaluation rate by construction.
 
+## The alternatives stay selectable (2026-10-03)
+`rate_rule` on the logistic lane-change config picks `distance` (the rule above, the default),
+`second` or `evaluation`, so paper-lc-logistic can measure the three rows of the table above
+(D-2026-10-03-4).
+
+What the two alternatives do differently, beyond the table: under `evaluation` every call of
+the direction decision is a full draw, the first one of a vehicle included (the other rules give
+the first evaluation no exposure) and the extra calls a stopped vehicle makes when it looks for a
+way round a blockage; under `second` a stopped or queued vehicle keeps collecting mandatory
+exposure, because time passes while no distance is driven. Both are what the names say, and both
+are reasons the model uses `distance`.
+
 ## A finding for the lane-change paper
 
 The DLC curve gives p = 0.047 per second even at zero speed advantage (dv = 0). That is one

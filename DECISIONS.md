@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-03-4 | 2026-10-03 | The logistic lane-change config has a `rate_rule`: `distance` (the default and the model's rule: MLC per 5.2 cells driven, DLC per second), `second` (both per second) or `evaluation` (both per evaluation). The two others exist so a paper can measure what the rule changes; they are not removed | paper-lc-logistic:D-2026-10-03-5 (Kerem: the rate rule is a contribution with its own experiment) | none; extends D-2026-09-19-22 |
 | D-2026-10-03-3 | 2026-10-03 | A `HumanDriver` subclass names the lane-change config class it decides with (`lane_change_config`), and `VehicleFactory` builds the subclass registered for the run's human `lane_change` config (`HumanDriver.class_for`): `HumanDriver` itself for the logistic model, an error for a model no class is registered for. The config alone still says which model a run uses | A-2026-10-03-2 (unattended, paper-lc-logistic `/orchestrate` run); paper-lc-logistic A-2026-10-03-2 | none |
 | D-2026-10-03-2 | 2026-10-03 | paper-lc-logistic has a golden: `tests/golden/paper_lc_logistic/`, two runs at seed 42 (300 s, 30 s warm-up), human-driven only and 50% AVs, fingerprinting the 9 statistics, the 9 counters and the lane-change totals by kind | paper-lc-logistic:D-2026-10-03-3, its switch-over | none |
 | D-2026-10-03-1 | 2026-10-03 | Every lane change that happens is logged on its vehicle as a `LaneChangeRecord` (time, cell, from lane, to lane, reason), and `Vehicle.request_direction` refuses LEFT or RIGHT without a `LaneChangeReason`. Always on, no switch: a log draws no random number and moves no golden | A-2026-10-03-1 (unattended, paper-lc-logistic `/orchestrate` run); BACKLOG B2 | none |
@@ -68,6 +69,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-03-4: the rate rule is selectable
+
+**What.** `LogisticLaneChangeConfig.rate_rule` is `distance` by default and may be `second` or `evaluation`; any other value is refused when the config is built. `odca.models.lane_changing.rate.exposures(rule, elapsed, reference_distances)` returns the exposure of the mandatory and of the discretionary curve for one evaluation, and `Driver.evaluate_direction` uses it. Under `evaluation` the exposure is 1 at every evaluation, the first included, so the curve's value is applied as it is.
+
+**Evidence.** paper-lc-logistic presents the rate rule as a contribution and needs the two alternatives of `docs/lane-change-rate.md` as comparison runs (its D-2026-10-03-5, Kerem). The default is the rule of D-2026-09-19-22, so every golden is unchanged (full suite, this PR). `tests/test_rate_rule.py`: the exposures per rule, and a 10 Hz driver changing lanes more often per evaluation than per distance.
+
+**Replaces.** nothing; extends D-2026-09-19-22.
+
+**Cited by.** `odca/params.py` (`LogisticLaneChangeConfig`), `odca/models/lane_changing/rate.py`.
 
 ## D-2026-10-03-3: the lane-change model in the config picks the human driver class
 

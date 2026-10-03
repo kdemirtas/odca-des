@@ -3,6 +3,10 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
+> **2026-10-03: the rate rule is selectable. Shipped as PR #?.**
+> `rate_rule` on the logistic lane-change config: `distance` (default, unchanged), `second`, `evaluation` (D-2026-10-03-4), for paper-lc-logistic's rate-rule experiment. Every golden unchanged, full suite 113 passed, 3 skipped; `tests/test_rate_rule.py` added.
+> ⏳ Pending: nothing from that paper is waiting here now; BACKLOG B13 (`dlc_requires_advantage`) still waits on the two platoon papers.
+
 > **2026-10-03: the lane-change model in the config picks the human driver class. Shipped as PR #31.**
 > `HumanDriver.class_for` and `lane_change_config` (D-2026-10-03-3, made unattended, A-2026-10-03-2 open); `VehicleFactory` uses it. The paper-lc-logistic golden gains a MOBIL and a Gipps run, whose drivers live in that paper's `code/models/` (copied into the golden folder).
 > Proof: every earlier fingerprint unchanged; full suite 109 passed, 3 skipped.

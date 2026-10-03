@@ -15,6 +15,7 @@ from odca.analysis.metrics import summary_statistics
 from odca.entity.vehicle import LaneChangeReason
 from odca.params import SimConfig
 from odca.simulation.engine import Simulation
+from odca.simulation.result import SimulationResult
 
 GOLDEN_SEED = 42
 GOLDEN_DURATION = 300.0   # s
@@ -66,23 +67,41 @@ def lane_change_totals(vehicles, warmup: float) -> dict:
     return {"total_lc": mlc + dlc, "total_mlc": mlc, "total_dlc": dlc}
 
 
-def run(config: SimConfig):
-    """Run `config` once.
+def simulate(config: SimConfig) -> SimulationResult:
+    """Run `config` once and return the package's result.
 
     Args:
         config: the run config.
+    """
+    return Simulation(config).run()
+
+
+def measure(result: SimulationResult):
+    """The numbers of one run.
+
+    Args:
+        result: what `simulate` returned.
 
     Returns:
         (stats, counters): the summary statistics over every vehicle, with the lane-change
         totals and the run's identifying values added, and the event counters.
     """
-    result = Simulation(config).run()
+    config = result.config
     stats = summary_statistics(result.vehicles, warmup=config.warmup,
                                sim_duration=config.sim_duration)
     stats.update(lane_change_totals(result.vehicles, config.warmup))
     stats["av_penetration"] = config.av_penetration
     stats["seed"] = config.seed
     return stats, asdict(result.counters)
+
+
+def run(config: SimConfig):
+    """Run `config` once and measure it (see `measure`).
+
+    Args:
+        config: the run config.
+    """
+    return measure(simulate(config))
 
 
 def golden_runs():

@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-10-03: golden copy of paper-lc-logistic's `scenarios.py` synced. Shipped as PR #?.**
+> **2026-10-03: golden copy of paper-lc-logistic's `scenarios.py` synced. Shipped as PR #33.**
 > That paper's runner work changed `scenarios.py` (`model_config` accepts a human-driver override for any model); the copy here follows. No fingerprint moved: its 4 golden runs passed.
 
 > **2026-10-03: the rate rule is selectable. Shipped as PR #32.**

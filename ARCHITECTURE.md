@@ -31,7 +31,7 @@ Papers keep: parameter values (`config.py`), scenario definitions, figure script
 ## Layout
 
     odca/            the package (import name odca)
-    tests/           unit tests; tests/golden/<paper>/ = config.py, configs/*.yaml, scenarios.py, fingerprint.json per paper
+    tests/           unit tests; tests/golden/<paper>/ = config.py, configs/*.yaml, scenarios.py, fingerprint.json per paper (paper_lc_logistic also models/)
     docs/            longer reference docs ARCHITECTURE.md links
     pyproject.toml   distribution odca-des, extra [viewer], dev group pytest
 
@@ -60,6 +60,7 @@ fields.
 | `Vehicle` | one vehicle's physical side: position label, cell lock with delayed release (reads tau from its driver), movement, exit, trajectory, move counters; `kind` names its driver's kind | `odca/entity/vehicle.py` |
 | `Driver` (`HumanDriver`, `AutonomousDriver`) | the decisions: target speed, direction, lane-change curves, gap acceptance, exposure since the last decision, decision counters. `HumanDriver` runs its own SimPy process; `AutonomousDriver` registers with an `AutonomousController`, which decides for it every `dt`. A new behaviour is a subclass overriding `decide`, `evaluate_speed` or `evaluate_direction` | `odca/entity/driver.py` |
 | `TrajectoryRecord` | one T(x, n) passage record: the cell, the lane, the speed, the free-flow speed of that cell, and both of the protocol's stamps, `acquired` (T_acq) and `time` (T_arr), so lock time, queueing time and crossing time are all read off the trajectory rather than kept as state (D-2026-09-20-5) | `odca/entity/vehicle.py` |
+| lane-change model of a run | the type of the human `lane_change` config picks the driver class: a `HumanDriver` subclass registers for a family member through `lane_change_config`, `HumanDriver.class_for` looks it up: `HumanDriver` for the logistic model, an error for an unregistered one (D-2026-10-03-3) | `odca/entity/driver.py`; used by `odca/simulation/factory.py` |
 | `LaneChangeRecord`, `LaneChangeReason` | one lane change that happened: time, cell left, from lane, to lane, and why (blockage, destination, discretionary); kept on `Vehicle.lane_changes`, always written (D-2026-10-03-1) | `odca/entity/vehicle.py` |
 | `SpaceTimeRegion` | the cells, lanes and time span Edie's definitions are taken over; `edie_fd_points` takes it whole (D-2026-10-02-5) | `odca/analysis/metrics.py` |
 | `SimulationResult`, `RunCounters` | one run: the validated config it ran with (`config_yaml()` reruns it), every vehicle, the generated count, the event counters; completed and still-active vehicles are derived. The counters keep the split: the vehicle's moves (`lane_changes`, `lc_patience_failures`, `missed_exits`) and the driver's decisions (`gap_rejections`, `slowdowns`, `cf_evaluations`, `speed_evaluations`), plus the controller's and SimPy's. `lc_failures` is a derived property, not a stored key (D-2026-09-20-12) | `odca/simulation/result.py` (D-2026-09-19-32) |
@@ -79,7 +80,7 @@ What must hold after every run, each with the check that proves it.
 How a change is shown to be neutral, and how a change that is meant to move a number is shown
 to move only that number.
 
-- **Goldens.** `uv run pytest`: every paper's fingerprint (quick mode; paper_odca_des seeds 1-3, paper_lc_logistic seed 42, D-2026-10-03-2; stats and counters) matches exactly. During the code-quality refactor a golden may change: re-record it and state which values moved and why (Kerem, 2026-09-19).
+- **Goldens.** `uv run pytest`: every paper's fingerprint (quick mode; paper_odca_des seeds 1-3, paper_lc_logistic seed 42, D-2026-10-03-2, with one MOBIL and one Gipps run, D-2026-10-03-3; stats and counters) matches exactly. During the code-quality refactor a golden may change: re-record it and state which values moved and why (Kerem, 2026-09-19).
 - **A change that moves a paper's numbers** gets its own `D-` id here and is noted in that paper's STATUS, whose quoted numbers are rechecked there.
 - Only quick goldens run per change; full paper reruns belong to the papers.
 

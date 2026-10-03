@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #31: Pick the human driver class from the lane-change config; add MOBIL and Gipps runs to the paper-lc-logistic golden (D-2026-10-03-3) (2026-10-03)
 - PR #30: Log lane changes with their reason; add the paper-lc-logistic golden (D-2026-10-03-1, D-2026-10-03-2) (2026-10-03)
 - PR #28: Release a cell after tau, hold the follower's arrival instead (D-2026-10-02-6) (2026-10-03)
 - PR #27: Count vehicle ids per run in VehicleFactory; fix two stale lines of text (2026-10-02)

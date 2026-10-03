@@ -6,9 +6,11 @@ reproduces this paper's runs (paper-lc-logistic:D-2026-10-03-3).
 """
 
 from collections import Counter
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
-from config import sim_config
+from config import HDV_DRIVER, sim_config
+from models.gipps_lc import GippsLaneChangeConfig
+from models.mobil import MobilLaneChangeConfig
 from odca.analysis.metrics import summary_statistics
 from odca.entity.vehicle import LaneChangeReason
 from odca.params import SimConfig
@@ -18,9 +20,32 @@ GOLDEN_SEED = 42
 GOLDEN_DURATION = 300.0   # s
 GOLDEN_WARMUP = 30.0      # s
 GOLDEN_SCENARIOS = [
-    ("logistic_hdv", 0.0),
-    ("logistic_mixed50", 0.5),
+    ("logistic_hdv", "logistic", 0.0),
+    ("logistic_mixed50", "logistic", 0.5),
+    ("mobil_hdv", "mobil", 0.0),
+    ("gipps_hdv", "gipps", 0.0),
 ]
+
+COMPARED_MODELS = {"mobil": MobilLaneChangeConfig, "gipps": GippsLaneChangeConfig}
+
+
+def model_config(model: str, **overrides) -> SimConfig:
+    """The default run with the human drivers' lane changes decided by `model`.
+
+    Gap acceptance, the cooldown and the car following stay the default's; only the decision
+    to change lanes differs.
+
+    Args:
+        model: `logistic`, `mobil` or `gipps`.
+        **overrides: new values for any `SimConfig` field.
+    """
+    if model == "logistic":
+        return sim_config(**overrides)
+    default = HDV_DRIVER.lane_change
+    lane_change = COMPARED_MODELS[model](
+        safety_gap_front=default.safety_gap_front, safety_gap_rear=default.safety_gap_rear,
+        dlc_cooldown=default.dlc_cooldown)
+    return sim_config(hdv_driver=replace(HDV_DRIVER, lane_change=lane_change), **overrides)
 
 
 def lane_change_totals(vehicles, warmup: float) -> dict:
@@ -63,8 +88,8 @@ def run(config: SimConfig):
 def golden_runs():
     """(run_id, callable returning (stats, counters)) for every fingerprinted run."""
     runs = []
-    for label, av_penetration in GOLDEN_SCENARIOS:
-        config = sim_config(av_penetration=av_penetration, seed=GOLDEN_SEED,
-                            sim_duration=GOLDEN_DURATION, warmup=GOLDEN_WARMUP)
+    for label, model, av_penetration in GOLDEN_SCENARIOS:
+        config = model_config(model, av_penetration=av_penetration, seed=GOLDEN_SEED,
+                              sim_duration=GOLDEN_DURATION, warmup=GOLDEN_WARMUP)
         runs.append((f"{label}_seed{GOLDEN_SEED}", lambda c=config: run(c)))
     return runs

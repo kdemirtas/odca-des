@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #36: Record idea I2: controller and single-driver responsibilities (2026-10-03)
 - PR #35: Record idea I1: vehicles that hold several cells (2026-10-03)
 - PR #34: Add two destination rules, off by default (D-2026-10-03-5, D-2026-10-03-6) (2026-10-03)
 - PR #33: Sync the golden copy of paper-lc-logistic scenarios.py (2026-10-03)

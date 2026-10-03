@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-10-03: the lane-change model in the config picks the human driver class. Shipped as PR #?.**
+> **2026-10-03: the lane-change model in the config picks the human driver class. Shipped as PR #31.**
 > `HumanDriver.class_for` and `lane_change_config` (D-2026-10-03-3, made unattended, A-2026-10-03-2 open); `VehicleFactory` uses it. The paper-lc-logistic golden gains a MOBIL and a Gipps run, whose drivers live in that paper's `code/models/` (copied into the golden folder).
 > Proof: every earlier fingerprint unchanged; full suite 109 passed, 3 skipped.
 > ⏳ Pending from that paper: the rate-rule options (paper-lc-logistic:D-2026-10-03-5).

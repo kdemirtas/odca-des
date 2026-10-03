@@ -1,7 +1,7 @@
 """The driver split (D-2026-09-19-24): factory, link, controller, a driver subclass."""
 
 import sys
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 import pytest
 import simpy
@@ -9,7 +9,7 @@ import simpy
 from odca.entity.driver import DriverStreams, DriverTraits, HumanDriver
 from odca.entity.vehicle import Direction, LaneChangeReason, Vehicle
 from odca.infrastructure.freeway import Freeway
-from odca.params import NetworkConfig
+from odca.params import BaseLaneChangeConfig, NetworkConfig, family_member
 from odca.rng import RNGRegistry
 from odca.simulation.engine import Simulation
 
@@ -147,3 +147,36 @@ def test_result_carries_the_config_it_ran_with(tmp_path):
     path.write_text(result.config_yaml())
     assert validate(SimConfig, path) == config
     assert result.num_completed + result.num_active_at_end <= len(result.vehicles)
+
+
+def test_a_lane_change_model_picks_its_driver_class():
+    @family_member("keep_lane")
+    @dataclass(frozen=True, slots=True, kw_only=True)
+    class KeepLaneConfig(BaseLaneChangeConfig):
+        model: str = "keep_lane"
+
+    class KeepLaneDriver(HumanDriver):
+        lane_change_config = KeepLaneConfig
+
+        def evaluate_direction(self):
+            self.vehicle.request_direction(Direction.FORWARD)
+
+    try:
+        assert HumanDriver.class_for(HDV_DRIVER) is HumanDriver
+        base = dict(safety_gap_front=2.0, safety_gap_rear=2.0, dlc_cooldown=10.0)
+        keep = replace(HDV_DRIVER, lane_change=KeepLaneConfig(**base))
+        assert HumanDriver.class_for(keep) is KeepLaneDriver
+        result = Simulation(sim_config(hdv_driver=keep, seed=1, sim_duration=60.0,
+                                       warmup=0.0)).run()
+        assert result.vehicles and result.counters.lane_changes == 0
+        assert all(type(v.driver) is KeepLaneDriver for v in result.vehicles)
+
+        @dataclass(frozen=True, slots=True, kw_only=True)
+        class UnclaimedConfig(BaseLaneChangeConfig):
+            model: str = "unclaimed"
+
+        with pytest.raises(ValueError):
+            HumanDriver.class_for(replace(HDV_DRIVER, lane_change=UnclaimedConfig(**base)))
+    finally:
+        HumanDriver._by_lane_change.pop(KeepLaneConfig, None)
+        BaseLaneChangeConfig.members.pop("keep_lane", None)

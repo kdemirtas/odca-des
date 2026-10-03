@@ -53,5 +53,6 @@ class VehicleFactory:
             driver = AutonomousDriver(sim.av_driver, self.streams, self.controller)
             return Vehicle(self.env, sim.av_vehicle, driver, origin_cell, destination,
                            vehicle_id)
-        driver = HumanDriver(sim.hdv_driver, self.streams, self.traits.draw(sim.hdv_driver))
+        driver_class = HumanDriver.class_for(sim.hdv_driver)
+        driver = driver_class(sim.hdv_driver, self.streams, self.traits.draw(sim.hdv_driver))
         return Vehicle(self.env, sim.hdv_vehicle, driver, origin_cell, destination, vehicle_id)

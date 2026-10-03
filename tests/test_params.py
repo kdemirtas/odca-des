@@ -61,7 +61,7 @@ def test_yaml_names_the_lane_change_model(tmp_path):
     assert validate(HumanDriverConfig, path) == HumanDriverConfig(**DRIVER)
 
 
-@pytest.mark.parametrize("model", [None, "gipps"])
+@pytest.mark.parametrize("model", [None, "no_such_model"])
 def test_unknown_or_missing_model_is_refused(model):
     lane_change = {"safety_gap_front": 2, "safety_gap_rear": 2, "dlc_cooldown": 10}
     if model:

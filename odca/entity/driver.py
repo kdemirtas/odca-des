@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar, Dict, Optional
 
 import numpy as np
 import simpy
@@ -28,7 +28,9 @@ from odca.models.car_following import newell
 from odca.models.lane_changing.discretionary import dlc_probability
 from odca.models.lane_changing.mandatory import MLC_REFERENCE_CELLS, mlc_probability
 from odca.models.lane_changing.rate import probability_over
-from odca.params import AutonomousDriverConfig, DriverConfig, HumanDriverConfig
+from odca.params import (
+    AutonomousDriverConfig, DriverConfig, HumanDriverConfig, LogisticLaneChangeConfig,
+)
 from odca.rng import RNGRegistry
 
 if TYPE_CHECKING:
@@ -519,6 +521,45 @@ class HumanDriver(Driver):
     """A human: decides every action interval in its own process, sooner when woken."""
 
     kind = "human"
+
+    # A subclass that decides with another lane-change model names that model's config class
+    # here; a run whose human `lane_change` config is of that class gets the subclass
+    # (D-2026-10-03-3).
+    lane_change_config: ClassVar[Optional[type]] = None
+    _by_lane_change: ClassVar[Dict[type, type]] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        """Register a subclass under the lane-change config class it names.
+
+        Args:
+            **kwargs: passed on to `object.__init_subclass__`.
+        """
+        super().__init_subclass__(**kwargs)
+        claimed = cls.__dict__.get("lane_change_config")
+        if claimed is not None:
+            HumanDriver._by_lane_change[claimed] = cls
+
+    @classmethod
+    def class_for(cls, cfg: HumanDriverConfig) -> type:
+        """The driver class for `cfg`: the one registered for its lane-change model.
+
+        The logistic model is this class; a config class derived from a registered one gets
+        the same driver.
+
+        Args:
+            cfg: the human driver config of a run.
+
+        Raises:
+            ValueError: no driver class is registered for the lane-change config's type
+                (the module defining it was not imported).
+        """
+        for config_class in type(cfg.lane_change).__mro__:
+            if config_class is LogisticLaneChangeConfig:
+                return HumanDriver
+            if config_class in cls._by_lane_change:
+                return cls._by_lane_change[config_class]
+        raise ValueError(
+            f"no driver class is registered for {type(cfg.lane_change).__name__}")
 
     def __init__(self, cfg: HumanDriverConfig, streams: DriverStreams, traits: DriverTraits):
         """A human driver with its own sampled traits.

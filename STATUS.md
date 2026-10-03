@@ -3,6 +3,11 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
+> **2026-10-03: the lane-change model in the config picks the human driver class. Shipped as PR #?.**
+> `HumanDriver.class_for` and `lane_change_config` (D-2026-10-03-3, made unattended, A-2026-10-03-2 open); `VehicleFactory` uses it. The paper-lc-logistic golden gains a MOBIL and a Gipps run, whose drivers live in that paper's `code/models/` (copied into the golden folder).
+> Proof: every earlier fingerprint unchanged; full suite 109 passed, 3 skipped.
+> ⏳ Pending from that paper: the rate-rule options (paper-lc-logistic:D-2026-10-03-5).
+
 > **2026-10-03: lane-change log and the paper-lc-logistic golden. Shipped as PR #30.**
 > `Vehicle.lane_changes` records every lane change with its reason (`LaneChangeRecord`, `LaneChangeReason`); `request_direction` refuses a lateral direction without one (D-2026-10-03-1, made unattended, A-2026-10-03-1 open).
 > New golden `tests/golden/paper_lc_logistic/`: two seed-42 runs, human-driven and 50% AVs (D-2026-10-03-2). It passed twice in separate processes; the paper_odca_des fingerprint did not move.

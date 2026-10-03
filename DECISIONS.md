@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-03-3 | 2026-10-03 | A `HumanDriver` subclass names the lane-change config class it decides with (`lane_change_config`), and `VehicleFactory` builds the subclass registered for the run's human `lane_change` config (`HumanDriver.class_for`): `HumanDriver` itself for the logistic model, an error for a model no class is registered for. The config alone still says which model a run uses | A-2026-10-03-2 (unattended, paper-lc-logistic `/orchestrate` run); paper-lc-logistic A-2026-10-03-2 | none |
 | D-2026-10-03-2 | 2026-10-03 | paper-lc-logistic has a golden: `tests/golden/paper_lc_logistic/`, two runs at seed 42 (300 s, 30 s warm-up), human-driven only and 50% AVs, fingerprinting the 9 statistics, the 9 counters and the lane-change totals by kind | paper-lc-logistic:D-2026-10-03-3, its switch-over | none |
 | D-2026-10-03-1 | 2026-10-03 | Every lane change that happens is logged on its vehicle as a `LaneChangeRecord` (time, cell, from lane, to lane, reason), and `Vehicle.request_direction` refuses LEFT or RIGHT without a `LaneChangeReason`. Always on, no switch: a log draws no random number and moves no golden | A-2026-10-03-1 (unattended, paper-lc-logistic `/orchestrate` run); BACKLOG B2 | none |
 | D-2026-10-02-6 | 2026-10-02 | A cell's lock opens tau after its vehicle takes the next cell, whatever the crossing time, and a vehicle that holds the lock of a cell another vehicle is still in waits at the boundary until that one has left (`Vehicle._wait_until_left`, at arrival and at placement in the origin cell). Two vehicles are never in one cell, and two vehicles at the same speed keep tau + d / v at every speed. The golden is re-recorded, 350 of 508 values move | Kerem, 2026-10-02 (paper-odca-des: "Option 2, with the full run at night time not now"; its D-2026-10-02-4) | D-2026-10-02-4 |
@@ -67,6 +68,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-03-3: the lane-change model in the config picks the human driver class
+
+**What.** `HumanDriver.lane_change_config` is `None` on the base class; a subclass sets it to a `BaseLaneChangeConfig` family member and is registered under it when the class is created. `HumanDriver.class_for(cfg)` returns `HumanDriver` for the logistic config, the subclass registered for the config's class (or a class it derives from) otherwise, and raises when there is none, so a model whose module was not imported cannot run as logistic by accident; `VehicleFactory.build` calls it. A paper defines its model as a family member plus a driver subclass in its own code; nothing in `odca` imports it. The paper-lc-logistic golden gains `mobil_hdv_seed42` and `gipps_hdv_seed42`.
+
+**Evidence.** paper-lc-logistic compares the logistic model with MOBIL and Gipps and used to overwrite `Vehicle._evaluate_direction` at run time, a method this package does not have. Chosen over a `Simulation(cfg, human_driver=...)` argument because the saved config then still reruns the run. Made unattended, row A-2026-10-03-2. Proof: the two logistic fingerprints and all 24 paper_odca_des fingerprints unchanged; `tests/test_drivers.py::test_a_lane_change_model_picks_its_driver_class`; full suite 109 passed, 3 skipped. `tests/test_params.py` now refuses `no_such_model` where it refused `gipps`, which that paper's golden registers.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/entity/driver.py` (`HumanDriver`).
 
 ## D-2026-10-03-2: the paper-lc-logistic golden
 

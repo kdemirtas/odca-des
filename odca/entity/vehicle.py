@@ -38,6 +38,25 @@ class Direction(Enum):
     RIGHT = "right"
 
 
+class LaneChangeReason(Enum):
+    """Why a driver asked for a lane change."""
+
+    MLC_BLOCKAGE = "mlc_blockage"        # mandatory: a blocked cell ahead in the lane
+    MLC_DESTINATION = "mlc_destination"  # mandatory: the destination is in another lane
+    DLC = "dlc"                          # discretionary: a faster neighbouring lane
+
+
+@dataclass(frozen=True, slots=True)
+class LaneChangeRecord:
+    """One lane change that happened, with the reason it was asked for (D-2026-10-03-1)."""
+
+    time: float        # when the target cell was taken
+    cell_idx: int      # the cell the vehicle left
+    from_lane: int
+    to_lane: int
+    reason: LaneChangeReason
+
+
 @dataclass
 class TrajectoryRecord:
     """A single passage-time record: T(x, n)."""
@@ -86,11 +105,13 @@ class Vehicle:
         self._cell_left: Optional[simpy.Event] = None  # a follower waiting for this vehicle to leave its cell
         self.speed: float = 0.0
         self.desired_direction: Direction = Direction.FORWARD
+        self._direction_reason: Optional[LaneChangeReason] = None
         self.active: bool = False
         self.last_lc_time: float = -999.0
 
         # Trajectory log: the T(x, n) output
         self.trajectory: List[TrajectoryRecord] = []
+        self.lane_changes: List[LaneChangeRecord] = []  # one record per lane change made
 
         # Entry/exit times; created is when the generator released it, entered when it got
         # onto the road, so the gap is the wait at the origin (D-2026-09-20-5)
@@ -124,13 +145,21 @@ class Vehicle:
         """
         self.speed = speed
 
-    def request_direction(self, direction: Direction):
+    def request_direction(self, direction: Direction,
+                          reason: Optional[LaneChangeReason] = None):
         """Move forward, or change lanes at the next move if the gap allows.
 
         Args:
             direction: where the driver wants to go.
+            reason: why, for LEFT or RIGHT; it is logged if the lane change happens.
+
+        Raises:
+            ValueError: a lane change is asked for without a reason.
         """
+        if direction is not Direction.FORWARD and reason is None:
+            raise ValueError(f"{direction.name} needs a LaneChangeReason")
         self.desired_direction = direction
+        self._direction_reason = reason
 
     # ------------------------------------------------------------------
     # Resource protocol
@@ -358,6 +387,8 @@ class Vehicle:
         goes back to FORWARD.
         """
         is_lateral = (target != self.cell.next) if self.cell.next else False
+        # the reason of this request: the driver may decide again while the vehicle waits
+        reason = self._direction_reason
 
         # lower is served first; a driver waiting behind a blockage merges with urgency
         req = self._request(target, priority=self.driver.merge_priority())
@@ -387,6 +418,9 @@ class Vehicle:
             # the request is used up: one decision, one lane change (D-2026-09-19-31)
             self.last_lc_time = self.env.now
             self.count_lane_changes += 1
+            self.lane_changes.append(LaneChangeRecord(
+                self.env.now, self.cell.idx, self.cell.lane.idx, target.lane.idx,
+                reason))
             self.desired_direction = Direction.FORWARD
 
         old_cell = self.cell

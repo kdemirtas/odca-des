@@ -7,6 +7,8 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-03-2 | 2026-10-03 | paper-lc-logistic has a golden: `tests/golden/paper_lc_logistic/`, two runs at seed 42 (300 s, 30 s warm-up), human-driven only and 50% AVs, fingerprinting the 9 statistics, the 9 counters and the lane-change totals by kind | paper-lc-logistic:D-2026-10-03-3, its switch-over | none |
+| D-2026-10-03-1 | 2026-10-03 | Every lane change that happens is logged on its vehicle as a `LaneChangeRecord` (time, cell, from lane, to lane, reason), and `Vehicle.request_direction` refuses LEFT or RIGHT without a `LaneChangeReason`. Always on, no switch: a log draws no random number and moves no golden | A-2026-10-03-1 (unattended, paper-lc-logistic `/orchestrate` run); BACKLOG B2 | none |
 | D-2026-10-02-6 | 2026-10-02 | A cell's lock opens tau after its vehicle takes the next cell, whatever the crossing time, and a vehicle that holds the lock of a cell another vehicle is still in waits at the boundary until that one has left (`Vehicle._wait_until_left`, at arrival and at placement in the origin cell). Two vehicles are never in one cell, and two vehicles at the same speed keep tau + d / v at every speed. The golden is re-recorded, 350 of 508 values move | Kerem, 2026-10-02 (paper-odca-des: "Option 2, with the full run at night time not now"; its D-2026-10-02-4) | D-2026-10-02-4 |
 | D-2026-10-02-5 | 2026-10-02 | `edie_fd_points(vehicles, region, interval)` takes one `SpaceTimeRegion` (first cell, end cell, start time, end time, lanes) in place of five separate values; the function had 7 parameters against a limit of 6. Same arithmetic, same output | Kerem, 2026-10-02 (chose "One SpaceTimeRegion") | none |
 | D-2026-10-02-4 | 2026-10-02 | A cell's lock opens tau after its vehicle takes the next cell, and never while the vehicle is still in the cell: a vehicle that needs longer than tau to cross keeps the lock until it has left. Two vehicles are never in one cell. The golden is re-recorded, 348 of 504 values move | Kerem, 2026-10-02 ("agree with your narrower idea") | none |
@@ -65,6 +67,26 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-03-2: the paper-lc-logistic golden
+
+**What.** `tests/golden/paper_lc_logistic/` holds that paper's `config.py`, `configs/` and `scenarios.py`, copied unchanged from its `code/`, and `fingerprint.json` for two runs: `logistic_hdv_seed42` and `logistic_mixed50_seed42`, 300 s with a 30 s warm-up. The stats carry `total_lc`, `total_mlc` and `total_dlc` from the lane-change log (D-2026-10-03-1) beside the summary statistics. That paper's MOBIL and Gipps runs join when it moves them onto the package.
+
+**Evidence.** Recorded with `uv run pytest tests/test_golden.py -k paper_lc_logistic --write-golden`, then passed twice in separate processes (2 passed each). In both runs MLC plus DLC equals the total. The paper_odca_des fingerprint is unchanged (full suite, this PR).
+
+**Replaces.** nothing.
+
+**Cited by.** `tests/golden/paper_lc_logistic/`; paper-lc-logistic `code/scenarios.py`.
+
+## D-2026-10-03-1: lane changes are logged with their reason
+
+**What.** `Vehicle.lane_changes` is a list of `LaneChangeRecord` (time, cell left, from lane, to lane, `LaneChangeReason`: blockage, destination, or discretionary), appended where the lane change is counted. `request_direction(direction, reason)` raises on a lateral direction without a reason, so a lane change with no kind cannot exist. There is no switch: the log is always written.
+
+**Evidence.** paper-lc-logistic reports mandatory and discretionary counts separately and its frozen copy logged events with a type that could be missing (its D-2026-04-21-1 patched a table for that). The call was made unattended in that paper's `/orchestrate` run and is row A-2026-10-03-1 here. Every existing golden passes unchanged; `tests/test_drivers.py` covers the record and the refusal.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/entity/vehicle.py` (`LaneChangeRecord`).
 
 ## D-2026-10-02-6: the lock opens after tau; the follower's arrival is what waits
 

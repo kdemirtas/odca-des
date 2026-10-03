@@ -8,7 +8,7 @@ import pytest
 import simpy
 
 from odca.entity.driver import DriverStreams, DriverTraits, HumanDriver
-from odca.entity.vehicle import Vehicle
+from odca.entity.vehicle import LaneChangeReason, Vehicle
 from odca.infrastructure.freeway import Freeway
 from odca.params import NetworkConfig
 from odca.rng import RNGRegistry
@@ -55,6 +55,17 @@ class CrawlingDriver(FixedSpeedDriver):
     """Crosses a cell in 5 s, longer than tau."""
 
     fixed_speed = 0.2
+
+
+def test_every_lane_change_is_logged_with_its_reason():
+    result = Simulation(sim_config(av_penetration=0.5, seed=1, sim_duration=120.0,
+                                   warmup=0.0)).run()
+    assert result.counters.lane_changes > 0
+    for vehicle in result.vehicles:
+        assert len(vehicle.lane_changes) == vehicle.count_lane_changes
+        for record in vehicle.lane_changes:
+            assert isinstance(record.reason, LaneChangeReason)
+            assert abs(record.to_lane - record.from_lane) == 1
 
 
 def test_no_vehicle_arrives_behind_a_crawling_vehicle_before_it_has_left():

@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #30: Log lane changes with their reason; add the paper-lc-logistic golden (D-2026-10-03-1, D-2026-10-03-2) (2026-10-03)
 - PR #28: Release a cell after tau, hold the follower's arrival instead (D-2026-10-02-6) (2026-10-03)
 - PR #27: Count vehicle ids per run in VehicleFactory; fix two stale lines of text (2026-10-02)
 - PR #26: One YAML conversion in params; edie_fd_points takes a SpaceTimeRegion (D-2026-10-02-5) (2026-10-02)

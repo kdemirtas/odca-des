@@ -3,10 +3,11 @@
 import sys
 from dataclasses import replace
 
+import pytest
 import simpy
 
 from odca.entity.driver import DriverStreams, DriverTraits, HumanDriver
-from odca.entity.vehicle import Direction, Vehicle
+from odca.entity.vehicle import Direction, LaneChangeReason, Vehicle
 from odca.infrastructure.freeway import Freeway
 from odca.params import NetworkConfig
 from odca.rng import RNGRegistry
@@ -85,7 +86,7 @@ class OneLeftDriver(SteadyDriver):
     def decide(self):
         super().decide()
         if self.vehicle.count_lane_changes == 0:
-            self.vehicle.request_direction(Direction.LEFT)
+            self.vehicle.request_direction(Direction.LEFT, LaneChangeReason.DLC)
 
 
 def test_one_request_makes_one_lane_change():
@@ -98,6 +99,18 @@ def test_one_request_makes_one_lane_change():
     env.run(until=60)
     assert vehicle.count_lane_changes == 1
     assert vehicle.trajectory[-1].lane_idx == 2
+    (record,) = vehicle.lane_changes
+    assert (record.from_lane, record.to_lane, record.reason) == (1, 2, LaneChangeReason.DLC)
+
+
+def test_lane_change_request_needs_a_reason():
+    env = simpy.Environment()
+    freeway = Freeway(env, NetworkConfig.corridor(2, 40, 5.2))
+    streams = DriverStreams.spawn(RNGRegistry(master_seed=1))
+    driver = SteadyDriver(HDV_DRIVER, streams, DriverTraits.exact(HDV_DRIVER))
+    vehicle = Vehicle(env, HDV_VEHICLE, driver, freeway.cell(1, 0), freeway.destination("end"))
+    with pytest.raises(ValueError):
+        vehicle.request_direction(Direction.LEFT)
 
 
 def _gap_accepted(look_ahead, look_behind):

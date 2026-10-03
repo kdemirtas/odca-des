@@ -1,5 +1,5 @@
 # ARCHITECTURE: odca-des
-> **Owned by `/architect`. Two pages max. Last updated 2026-10-02.** Code follows this file; when
+> **Owned by `/architect`. Two pages max. Last updated 2026-10-03.** Code follows this file; when
 > they disagree, either the code is wrong or this file is, and a `DECISIONS.md` entry says which.
 
 ## Purpose
@@ -60,6 +60,7 @@ fields.
 | `Vehicle` | one vehicle's physical side: position label, cell lock with delayed release (reads tau from its driver), movement, exit, trajectory, move counters; `kind` names its driver's kind | `odca/entity/vehicle.py` |
 | `Driver` (`HumanDriver`, `AutonomousDriver`) | the decisions: target speed, direction, lane-change curves, gap acceptance, exposure since the last decision, decision counters. `HumanDriver` runs its own SimPy process; `AutonomousDriver` registers with an `AutonomousController`, which decides for it every `dt`. A new behaviour is a subclass overriding `decide`, `evaluate_speed` or `evaluate_direction` | `odca/entity/driver.py` |
 | `TrajectoryRecord` | one T(x, n) passage record: the cell, the lane, the speed, the free-flow speed of that cell, and both of the protocol's stamps, `acquired` (T_acq) and `time` (T_arr), so lock time, queueing time and crossing time are all read off the trajectory rather than kept as state (D-2026-09-20-5) | `odca/entity/vehicle.py` |
+| `LaneChangeRecord`, `LaneChangeReason` | one lane change that happened: time, cell left, from lane, to lane, and why (blockage, destination, discretionary); kept on `Vehicle.lane_changes`, always written (D-2026-10-03-1) | `odca/entity/vehicle.py` |
 | `SpaceTimeRegion` | the cells, lanes and time span Edie's definitions are taken over; `edie_fd_points` takes it whole (D-2026-10-02-5) | `odca/analysis/metrics.py` |
 | `SimulationResult`, `RunCounters` | one run: the validated config it ran with (`config_yaml()` reruns it), every vehicle, the generated count, the event counters; completed and still-active vehicles are derived. The counters keep the split: the vehicle's moves (`lane_changes`, `lc_patience_failures`, `missed_exits`) and the driver's decisions (`gap_rejections`, `slowdowns`, `cf_evaluations`, `speed_evaluations`), plus the controller's and SimPy's. `lc_failures` is a derived property, not a stored key (D-2026-09-20-12) | `odca/simulation/result.py` (D-2026-09-19-32) |
 
@@ -71,14 +72,14 @@ What must hold after every run, each with the check that proves it.
 3. **Same config and seed, same numbers.** `Simulation` spawns its streams in a fixed order: three decision streams (`DriverStreams`), three trait streams (`TraitSampler`), then one per OD pair in demand-table order, then `initial_vehicle_type`. A new stream goes last, or every number moves. Checked by `tests/test_golden.py`.
 4. **One driver-heterogeneity rule.** tau LogNormal clipped to [tau_min, tau_max] (0.5, 3.0), action_interval LogNormal clipped to [0.3, 3.0], slowdown_prob Normal clipped to [0, 1], drawn in that order from their own streams, only when the spread is above 0: `odca.entity.driver.TraitSampler`, the only copy. Checked by `tests/test_driver_traits.py` and the golden.
 5. **Units stay inside.** Cells, cells/s and seconds everywhere in `odca/`; km/h, veh/h and veh/km appear only at the reporting edge, through `CELL_LENGTH_M`.
-6. **Driver and vehicle keep to the link contract** (D-2026-09-19-24, -30). The driver reads its vehicle's state and neighbours through cells, and changes the vehicle only through `set_target_speed` and `request_direction`; the vehicle calls its driver to wake it (`wake`), to pick the speed again where the limit changes (`evaluate_speed`, D-2026-09-20-4), to judge a gap or a blockage (`accepts_gap`, `sees_blockage`, `evaluate_direction` when stopped), and reads its tau, action interval, lane-change patience and merge priority. Checked by review; a driver writing a vehicle field is a finding.
+6. **Driver and vehicle keep to the link contract** (D-2026-09-19-24, -30). The driver reads its vehicle's state and neighbours through cells, and changes the vehicle only through `set_target_speed` and `request_direction` (a lane change carries its reason, D-2026-10-03-1); the vehicle calls its driver to wake it (`wake`), to pick the speed again where the limit changes (`evaluate_speed`, D-2026-09-20-4), to judge a gap or a blockage (`accepts_gap`, `sees_blockage`, `evaluate_direction` when stopped), and reads its tau, action interval, lane-change patience and merge priority. Checked by review; a driver writing a vehicle field is a finding.
 7. **A new capability is off by default,** and every paper's golden matches with it off. Checked by `tests/test_golden.py`.
 
 ## Proof strategy
 How a change is shown to be neutral, and how a change that is meant to move a number is shown
 to move only that number.
 
-- **Goldens.** `uv run pytest`: every paper's fingerprint (quick mode, seeds 1-3, stats and counters) matches exactly. During the code-quality refactor a golden may change: re-record it and state which values moved and why (Kerem, 2026-09-19).
+- **Goldens.** `uv run pytest`: every paper's fingerprint (quick mode; paper_odca_des seeds 1-3, paper_lc_logistic seed 42, D-2026-10-03-2; stats and counters) matches exactly. During the code-quality refactor a golden may change: re-record it and state which values moved and why (Kerem, 2026-09-19).
 - **A change that moves a paper's numbers** gets its own `D-` id here and is noted in that paper's STATUS, whose quoted numbers are rechecked there.
 - Only quick goldens run per change; full paper reruns belong to the papers.
 

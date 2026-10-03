@@ -1,7 +1,12 @@
 # odca-des: status
 > Read `PROJECT.md` first (the spec). This file = where things stand and what to do next. Entries
-> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-02**.
+> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
+
+> **2026-10-03: lane-change log and the paper-lc-logistic golden. Shipped as PR #30.**
+> `Vehicle.lane_changes` records every lane change with its reason (`LaneChangeRecord`, `LaneChangeReason`); `request_direction` refuses a lateral direction without one (D-2026-10-03-1, made unattended, A-2026-10-03-1 open).
+> New golden `tests/golden/paper_lc_logistic/`: two seed-42 runs, human-driven and 50% AVs (D-2026-10-03-2). It passed twice in separate processes; the paper_odca_des fingerprint did not move.
+> ⏳ Pending: that paper's MOBIL and Gipps runs join the golden when it moves them onto the package (driver-class selection, paper-lc-logistic A-2026-10-03-2); the rate-rule options (paper-lc-logistic:D-2026-10-03-5).
 
 ## TL;DR
 Shared ODCA simulator, extracted from paper-odca-des 2026-09-19, public since 2026-09-22. Refactor

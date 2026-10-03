@@ -7,6 +7,8 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-03-6 | 2026-10-03 | `stops_for_offramp` on a driver config (off by default): a vehicle outside its exit lane brakes for a stop line beside its off-ramp, one cell further back per extra lane to cross, waits there for a gap, and its mandatory change is certain while it is held at the line. A vehicle whose way to the exit lane is closed is not held. The end of the segment is not a stop line | Kerem, in the paper-lc-logistic session ("Fix both") | nothing |
+| D-2026-10-03-5 | 2026-10-03 | `dlc_keeps_destination` on the logistic lane-change config (off by default): a discretionary change into a lane further from the destination lane is drawn with its probability times 1 - P_MLC(r, n + 1) | Kerem, in the paper-lc-logistic session ("Fix both") | nothing |
 | D-2026-10-03-4 | 2026-10-03 | The logistic lane-change config has a `rate_rule`: `distance` (the default and the model's rule: MLC per 5.2 cells driven, DLC per second), `second` (both per second) or `evaluation` (both per evaluation). The two others exist so a paper can measure what the rule changes; they are not removed | paper-lc-logistic:D-2026-10-03-5 (Kerem: the rate rule is a contribution with its own experiment) | none; extends D-2026-09-19-22 |
 | D-2026-10-03-3 | 2026-10-03 | A `HumanDriver` subclass names the lane-change config class it decides with (`lane_change_config`), and `VehicleFactory` builds the subclass registered for the run's human `lane_change` config (`HumanDriver.class_for`): `HumanDriver` itself for the logistic model, an error for a model no class is registered for. The config alone still says which model a run uses | A-2026-10-03-2 (unattended, paper-lc-logistic `/orchestrate` run); paper-lc-logistic A-2026-10-03-2 | none |
 | D-2026-10-03-2 | 2026-10-03 | paper-lc-logistic has a golden: `tests/golden/paper_lc_logistic/`, two runs at seed 42 (300 s, 30 s warm-up), human-driven only and 50% AVs, fingerprinting the 9 statistics, the 9 counters and the lane-change totals by kind | paper-lc-logistic:D-2026-10-03-3, its switch-over | none |
@@ -69,6 +71,26 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-03-6: a stop line ahead of the off-ramp
+
+**What.** With `DriverConfig.stops_for_offramp` on, `Driver.offramp_stop_distance()` gives the cells to the vehicle's off-ramp while it is outside the exit lane, less one per lane still to cross after the first (a lane change moves one cell forward). `evaluate_speed` brakes for it as for a blocked cell. `Driver.held_at_offramp()` is true at the line when the cell toward the exit lane exists and is open: `Vehicle._resolve_next_target` then holds the vehicle, the stopped vehicle tries the lateral move as it does at a blockage, the logistic mandatory probability is 1, and its merge priority counts from that moment. Before the line the curve decides as everywhere. Off by default, so every other golden is unchanged.
+
+**Evidence.** paper-lc-logistic, seed 42, all-automated fleet, 1500 s: off-ramp vehicles that missed their ramp 16.7% without, 0.7% with the line at the ramp for every vehicle, 0.0% with the line set back per lane; human fleet 9.3% to 0.0%. Without it a refused vehicle drives past at free-flow speed: median 110 mandatory requests and 56 refused gap checks before the miss, 95% of checks refused because the cell beside was held or still locked. Cost, 1800 s, seed 42, throughput (veh/h) and mean delay (s), neither rule / line alone / both: human fleet 5952, 152 / 5786, 162 / 6041, 137; half automated 7003, 17 / 7013, 37 / 6977, 15. The line alone queues traffic behind held vehicles; with D-2026-10-03-5 on few vehicles reach it. `tests/test_destination_rules.py`.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/params.py`, `odca/entity/driver.py` (`offramp_stop_distance`, `held_at_offramp`), `odca/entity/vehicle.py` (`_resolve_next_target`).
+
+## D-2026-10-03-5: a discretionary change does not lead away from the exit near the exit
+
+**What.** With `LogisticLaneChangeConfig.dlc_keeps_destination` on, `HumanDriver._dlc_direction` multiplies the probability of a discretionary change into a lane further from the destination lane by 1 - P_MLC(r, n + 1), the mandatory curve the vehicle would face after it. No new parameter. Off by default.
+
+**Evidence.** paper-lc-logistic, seed 42, human fleet: 51 of 55 vehicles that missed their off-ramp had been in the exit lane and left it by a discretionary change (one at 19 cells before the ramp); a vehicle in its exit lane needs 0 mandatory changes, so nothing weighed the exit. With the rule, 1500 s: off-ramp missed 9.3% to 2.9%, through vehicles ending in another lane 16.7% to 5.8%, lane changes 22,467 to 14,548, throughput 5877 to 6057 veh/h. `tests/test_destination_rules.py`.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/params.py`, `odca/entity/driver.py` (`_keeps_destination_weight`).
 
 ## D-2026-10-03-4: the rate rule is selectable
 

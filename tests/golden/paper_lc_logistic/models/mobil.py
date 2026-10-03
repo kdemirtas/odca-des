@@ -22,7 +22,7 @@ from odca.entity.driver import HumanDriver
 from odca.entity.vehicle import Direction, LaneChangeReason
 from odca.params import CELL_LENGTH_M, BaseLaneChangeConfig, family_member
 
-from models.neighbours import NeighbourState, observe
+from models.neighbours import leads_away_too_late, NeighbourState, observe
 
 
 @family_member("mobil")
@@ -135,6 +135,8 @@ class MobilDriver(HumanDriver):
         best_direction, best = Direction.FORWARD, lc.a_threshold / CELL_LENGTH_M
         for side, direction in ((cell.left, Direction.LEFT), (cell.right, Direction.RIGHT)):
             if side is None:
+                continue
+            if leads_away_too_late(self, side, lc.mlc_urgency_r0):
                 continue
             incentive = mobil_incentive(vehicle.speed, current, observe(side, self), lc)
             if incentive is not None and incentive > best:

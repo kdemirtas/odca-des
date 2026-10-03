@@ -5,14 +5,20 @@ demand: demand.yaml
 hdv_vehicle: odca://hdv_vehicle.yaml
 hdv_driver:
   _base_: odca://hdv_driver.yaml
+  # the two destination rules (paper-lc-logistic:D-2026-10-03-13): wait ahead of the off-ramp
+  # for a gap; no DLC away from the exit lane near the exit
+  stops_for_offramp: true
   lane_change:
     dlc_requires_advantage: true   # DLC only toward a faster lane (odca-des:D-2026-10-02-1)
+    dlc_keeps_destination: true
 av_vehicle: odca://av_vehicle.yaml
 av_driver:
   _base_: odca://av_driver.yaml
+  stops_for_offramp: true
   lane_change:
     dlc_enabled: true              # this paper's AVs change lanes for speed (CONTEXT.md, AV parameters)
     dlc_requires_advantage: true
+    dlc_keeps_destination: true
 controller: odca://controller.yaml
 av_penetration: 0.0
 sim_duration: 3600.0    # s

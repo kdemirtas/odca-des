@@ -102,6 +102,10 @@ class LogisticLaneChangeConfig(BaseLaneChangeConfig):
     # what the curves are a probability per: `distance` (MLC per 5.2 cells, DLC per second),
     # `second` (both per second) or `evaluation` (both per evaluation) (D-2026-10-03-4)
     rate_rule: str = "distance"
+    # a discretionary change that leads away from the destination lane is drawn with its
+    # probability times 1 - P_MLC(r, n + 1), the mandatory curve it would then face
+    # (D-2026-10-03-5)
+    dlc_keeps_destination: bool = False
 
     def __post_init__(self):
         """Refuse a rate rule that does not exist.
@@ -127,6 +131,9 @@ class DriverConfig:
     lc_patience: float = 3.0         # longest wait for a lane-change target cell (s)
     min_reeval_ratio: float = 0.5    # a wake-up within this share of tau is skipped
     blockage_scan_mult: int = 3      # blockages are seen this many look_aheads away
+    # a vehicle outside its exit lane stops ahead of its off-ramp and waits for a gap,
+    # where it would otherwise drive past (D-2026-10-03-6)
+    stops_for_offramp: bool = False
     min_creep_speed: float = 0.1     # speed behind a moving leader when Newell gives 0 (cells/s)
     slowdown_min_speed: float = 0.5  # a random slowdown never goes below this (cells/s)
 

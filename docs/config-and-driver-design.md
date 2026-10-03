@@ -77,6 +77,6 @@ code reads `vehicle.kind`.
 
 ## Not now
 
-- Controllers per road segment (BACKLOG B5): a roadside-unit model feature. Not a speed-up: SimPy
+- Controllers per road segment (BACKLOG B5, dropped 2026-10-03): a roadside-unit model feature. Not a speed-up: SimPy
   runs on one thread, and the work is one decision per AV per tick however it is split.
-- Own event loop instead of SimPy (BACKLOG B6, a v2 option).
+- Own event loop instead of SimPy (BACKLOG B6, a v2 option, dropped 2026-10-03).

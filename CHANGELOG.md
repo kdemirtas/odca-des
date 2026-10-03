@@ -12,6 +12,9 @@
 - PR #32: Make the lane-change rate rule selectable (D-2026-10-03-4) (2026-10-03)
 - PR #31: Pick the human driver class from the lane-change config; add MOBIL and Gipps runs to the paper-lc-logistic golden (D-2026-10-03-3) (2026-10-03)
 - PR #30: Log lane changes with their reason; add the paper-lc-logistic golden (D-2026-10-03-1, D-2026-10-03-2) (2026-10-03)
+- PR #29: Spell the author's name Demirtaş (2026-10-03)
+
+## 0.1.0 (tag `v0.1.0` at `23bbe99`, 2026-10-03)
 - PR #28: Release a cell after tau, hold the follower's arrival instead (D-2026-10-02-6) (2026-10-03)
 - PR #27: Count vehicle ids per run in VehicleFactory; fix two stale lines of text (2026-10-02)
 - PR #26: One YAML conversion in params; edie_fd_points takes a SpaceTimeRegion (D-2026-10-02-5) (2026-10-02)

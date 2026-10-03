@@ -7,6 +7,8 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-03-8 | 2026-10-03 | A vehicle has a length in cells (`VehicleConfig.length`, default 1) and holds every cell from its front to its rear. The front takes the next cell as today and the rear cell is given up behind it, so the body follows the path the front took, through a lane change too: a long vehicle changing lanes needs one free target cell and holds cells in both lanes until its rear has crossed. The length sits on the two existing vehicle configs; a mixed fleet is BACKLOG B16. Off by default: at length 1 every golden is unchanged | Kerem, 2026-10-03 (ideas I1 and I3; chose "Body follows the front" and "Length on the two configs only") | none |
+| D-2026-10-03-7 | 2026-10-03 | One `main`. A core change is built on `main` behind a default that leaves every paper's golden unchanged; there is no second long-lived line. A paper that must not move installs a tag (`v0.1.0`), and a change that cannot keep the goldens is a new release under its own decision | Kerem, 2026-10-03 ("Agreed, 1 main") | none |
 | D-2026-10-03-6 | 2026-10-03 | `stops_for_offramp` on a driver config (off by default): a vehicle outside its exit lane brakes for a stop line beside its off-ramp, one cell further back per extra lane to cross, waits there for a gap, and its mandatory change is certain while it is held at the line. A vehicle whose way to the exit lane is closed is not held. The end of the segment is not a stop line | Kerem, in the paper-lc-logistic session ("Fix both") | nothing |
 | D-2026-10-03-5 | 2026-10-03 | `dlc_keeps_destination` on the logistic lane-change config (off by default): a discretionary change into a lane further from the destination lane is drawn with its probability times 1 - P_MLC(r, n + 1) | Kerem, in the paper-lc-logistic session ("Fix both") | nothing |
 | D-2026-10-03-4 | 2026-10-03 | The logistic lane-change config has a `rate_rule`: `distance` (the default and the model's rule: MLC per 5.2 cells driven, DLC per second), `second` (both per second) or `evaluation` (both per evaluation). The two others exist so a paper can measure what the rule changes; they are not removed | paper-lc-logistic:D-2026-10-03-5 (Kerem: the rate rule is a contribution with its own experiment) | none; extends D-2026-09-19-22 |
@@ -71,6 +73,28 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-03-8: a vehicle holds as many cells as its length
+
+**What.** `VehicleConfig` gains `length`, in cells, default 1. A vehicle holds every cell from its front to its rear. Moving is what it is today at the front: the front asks for the next cell and takes it. The cell given up is the rear one, so the body follows the path the front took. A lane change is the same move sideways: the front takes the diagonal cell in the next lane, which is the only cell that has to be free, and the vehicle holds cells in both lanes until its rear has crossed. Example: a 3-cell bus with its front in lane 1 cell 50 (body in 48, 49, 50) takes lane 2 cell 51, then holds lane 1 cells 49, 50 and lane 2 cell 51, then lane 1 cell 50 and lane 2 cells 51, 52, then lane 2 cells 51 to 53. The length is one value for all human-driven vehicles and one for all autonomous ones; cars and buses in one run is BACKLOG B16.
+
+**Evidence.** Kerem, 2026-10-03: idea I1 ("add vehicle lengths and let a single vehicle hold multiple cells at the same time ... both the rear and front position") and idea I3 ("a vehicle's front seizes a cell but its rear releases it with delay"), recorded during the paper-lc-logistic rerun after 66% of refused gap checks were traced to a cell still locked by the vehicle that had just left it. At the design gate he chose "Body follows the front" over a whole-body shift needing `length` free cells and over no lane changes for long vehicles, and "Length on the two configs only" over vehicle classes with shares in the same task. The code as read on `a22ce6f`: a length-1 vehicle already takes the next cell at its front and releases the cell behind tau later (`_advance_to`, `_delayed_release`), so length 1 is the present rule.
+
+**What moved.** Nothing yet: docs only. The implementation (HANDOVER N1, T1) must leave every golden unchanged at length 1.
+
+**Replaces.** nothing.
+
+**Cited by.** `HANDOVER.md` NEXT (N1), `BACKLOG.md` (B16), `IDEAS.md` (I1, I3).
+
+## D-2026-10-03-7: one main
+
+**What.** A core change is built on `main`, behind a default that leaves every paper's golden unchanged. There is no second long-lived line of development. A paper that must not move installs a tag: `v0.1.0` at `23bbe99` is what paper-odca-des cites. A change that cannot keep the goldens is a new release, with the goldens re-recorded under a decision of its own.
+
+**Evidence.** Kerem, 2026-10-03, on promoting idea I1: "Next but this can lead to two mains. One main in this direction since this is a core change", then, after the worked case (one bug fixed once on one `main`, twice on two lines that have drifted apart): "Agreed, 1 main".
+
+**Replaces.** nothing; it applies the off-by-default rule of paper-odca-des:D-2026-09-19-6 to core changes.
+
+**Cited by.** `HANDOVER.md` NEXT (N1).
 
 ## D-2026-10-03-6: a stop line ahead of the off-ramp
 

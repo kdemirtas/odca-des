@@ -90,7 +90,7 @@ to move only that number.
 What does not fit in two pages lives under `docs/` and is linked from the row or section it
 supports; a doc no row links is a candidate for deletion.
 
-`docs/code-review-2026-09-19.md`: the Opus principal-engineer review; its neutral items shipped in PR #9, the rest are BACKLOG B7 to B9.
+`docs/code-review-2026-09-19.md`: the Opus principal-engineer review; its neutral items shipped in PR #9, the rest were BACKLOG B7 to B9, dropped 2026-10-03.
 `docs/config-and-driver-design.md`: the ConfigMixin pattern and the Driver split, with examples (D-2026-09-19-23, -24).
 `docs/cell-overlap.md`: two vehicles in one cell at crawl speed, the release rules measured (D-2026-10-02-4, replaced by D-2026-10-02-6).
 `docs/lane-change-rate.md`: lane-change probability per distance and per second (D-2026-09-19-22).

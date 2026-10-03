@@ -3,6 +3,13 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
+> **2026-10-03 (later): docs caught up, backlog trimmed, multi-cell vehicles designed. Shipped as PR #38.**
+> Docs only, no code. Drift repaired: the tag `v0.1.0` is at `23bbe99` with Zenodo DOI 10.5281/zenodo.23117204, the release rule is D-2026-10-02-6, PR #28 and #29 have their entry below, CHANGELOG gains PR #29 and a `0.1.0` heading.
+> Backlog: Kerem dropped B5 to B9 and B14 (marker rows kept); B1, B2, B3, B12, B13, B15 stay, B3 (PyPI) last; every row has a T id.
+> Design: one `main` (D-2026-10-03-7). A vehicle holds as many cells as its length, the body follows the front through a lane change, length on the two vehicle configs (D-2026-10-03-8, ideas I1 and I3). My own calls are open: A-2026-10-03-3 to -5. Mixed fleet parked as B16.
+> `uv run pytest -n 12` on `a22ce6f`: 120 passed.
+> ⏳ N1 (T1): build it, every golden unchanged at length 1. B15's 1,350 veh/h was measured under the replaced rule D-2026-10-02-4 and is not remeasured.
+
 > **2026-10-03: two destination rules, off by default. Shipped as PR #34.**
 > For paper-lc-logistic (Kerem: "Fix both"). `dlc_keeps_destination` (D-2026-10-03-5): a discretionary change away from the destination lane is weighed by 1 - P_MLC(r, n + 1). `stops_for_offramp` (D-2026-10-03-6): a vehicle outside its exit lane stops ahead of its off-ramp and waits for a gap. Short runs of that paper, seed 42: off-ramp vehicles that missed their ramp 9.3% to 0.0% (human fleet), 16.7% to 0.0% (automated).
 > The paper-lc-logistic golden is re-recorded with both on; paper-odca-des's golden is unchanged, so that paper needs no rerun.
@@ -28,17 +35,36 @@
 Shared ODCA simulator, extracted from paper-odca-des 2026-09-19, public since 2026-09-22. Refactor
 N2 to N8 shipped 2026-09-19 and every assumption row is closed (D-2026-09-20-6 to -19).
 paper-odca-des runs with `dlc_requires_advantage` on (D-2026-09-22-1, -3). On 2026-10-02 the
-contract was retrofitted to the code (PR #24) and a cell stopped being released while its vehicle
-is still in it (D-2026-10-02-4), which moved the golden: paper-odca-des has to rerun its 124 jobs
-before it quotes a number again. The retrofit list is empty; open work is BACKLOG.
+contract was retrofitted to the code (PR #24). The cell release rule changed twice: D-2026-10-02-4
+(PR #25) was replaced by D-2026-10-02-6 (PR #28, merged 2026-10-03), under which a cell unlocks tau
+after its vehicle takes the next one and the follower's arrival waits until that vehicle has left.
+paper-odca-des reran its 124 jobs under that rule (0 failed) and cites the result as `v0.1.0`, tagged
+at `23bbe99`, Zenodo DOI 10.5281/zenodo.23117204. paper-lc-logistic's logistic runs switched over
+on 2026-10-03 (PR #30 to #34). The retrofit list is empty; open work is BACKLOG.
 
 ## Current numbers
 Goldens: paper_odca_des 24 quick runs (S1-S4 and bottleneck, seeds 1-3). Last re-recorded
-2026-10-02 under D-2026-10-02-4, 348 of 504 values moved; before that on 2026-09-22 for
-`num_never_entered` (D-2026-09-22-2) and for `dlc_requires_advantage` on (D-2026-09-22-3).
-`uv run pytest` on 2026-10-02: 99 passed, 3 skipped (the viewer tests, in a venv without the
-`[viewer]` extra).
+under D-2026-10-02-6 (PR #28), 350 of 508 values moved; before that on 2026-10-02 under
+D-2026-10-02-4, 348 of 504, and on 2026-09-22 for `num_never_entered` (D-2026-09-22-2) and for
+`dlc_requires_advantage` on (D-2026-09-22-3). paper_lc_logistic 4 runs (PR #30, #31), re-recorded
+with both destination rules on (PR #34).
+`uv run pytest -n 12` on 2026-10-03, on `a22ce6f`: 120 passed.
 
+
+## 2026-10-03: the arrival-wait rule, the tag and the name. Shipped as PR #28 and PR #29
+- PR #28 (D-2026-10-02-6, replaces D-2026-10-02-4): the lock opens tau after the next cell is
+  taken, and `_wait_until_left` holds a vehicle at the boundary of a cell it has locked while
+  another is still in it (in `_advance_to` and at origin placement). At equal speeds the wait is
+  zero, so tau + d / v holds at every speed.
+- Why D-2026-10-02-4 went: it lengthened every steady headway below 1/tau and lowered the ring
+  road's congested branch by about 19%. Ring road at 100 veh/km: 0.99 of the triangle against 0.81.
+- Golden re-recorded: 350 of 508 values move. 0 overlaps in 12 quick golden runs (3.6 million
+  passages). 105 tests pass, one new (two vehicles at 0.2 cells/s keep tau + d / v exactly).
+- Tag `v0.1.0` moved to `23bbe99`, the merge of PR #28: the version the ODCA-DES manuscript cites
+  at revision 4. Zenodo DOI 10.5281/zenodo.23117204 (recorded in paper-odca-des's HANDOVER).
+- PR #29: `LICENSE` and `pyproject.toml` spell the name Demirtaş (paper-odca-des:D-2026-10-03-3).
+  Metadata only; no code or golden moves.
+- paper-odca-des reran its 124 jobs under the rule, 0 failed (its session 40).
 
 ## 2026-10-02 (last of the day): vehicle ids per run, two text fixes; the retrofit list is empty. Shipped as PR #27
 - `VehicleFactory` numbers its vehicles from 0; the class-level `Vehicle._id_counter` and its

@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-10-03 (later): docs caught up, backlog trimmed, multi-cell vehicles designed. Shipped as PR #?.**
+> **2026-10-03 (later): docs caught up, backlog trimmed, multi-cell vehicles designed. Shipped as PR #38.**
 > Docs only, no code. Drift repaired: the tag `v0.1.0` is at `23bbe99` with Zenodo DOI 10.5281/zenodo.23117204, the release rule is D-2026-10-02-6, PR #28 and #29 have their entry below, CHANGELOG gains PR #29 and a `0.1.0` heading.
 > Backlog: Kerem dropped B5 to B9 and B14 (marker rows kept); B1, B2, B3, B12, B13, B15 stay, B3 (PyPI) last; every row has a T id.
 > Design: one `main` (D-2026-10-03-7). A vehicle holds as many cells as its length, the body follows the front through a lane change, length on the two vehicle configs (D-2026-10-03-8, ideas I1 and I3). My own calls are open: A-2026-10-03-3 to -5. Mixed fleet parked as B16.

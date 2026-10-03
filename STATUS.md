@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-10-03 (last): a vehicle holds as many cells as its length (N1, T1). Shipped as PR #?.**
+> **2026-10-03 (last): a vehicle holds as many cells as its length (N1, T1). Shipped as PR #39.**
 > `VehicleConfig.length`, whole cells, default 1 (D-2026-10-03-8). The front takes the next cell, the rear cell is the one given up, the body follows the front through a lane change. Car following and the front gap of a lane change are measured to the leader's rearmost cell in the follower's lane (`Vehicle.cells_behind_front_in`).
 > Kerem accepted A-2026-10-03-6 as D-2026-10-03-9: no second lane change while the body is in two lanes; at the exit the body drives out behind the front.
 > Review found a deadlock: a long vehicle held at its off-ramp stop line with its body in two lanes. Kerem chose to refuse length above 1 with `stops_for_offramp` on (D-2026-10-03-10, BACKLOG B17).

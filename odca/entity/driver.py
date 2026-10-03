@@ -208,9 +208,46 @@ class Driver:
         return -(1.0 + self.env.now - self._blockage_wait_since)
 
     def sees_blockage(self) -> bool:
-        """Whether a blockage is in view ahead in the current lane."""
+        """Whether a blockage, or the stop line ahead of a missed off-ramp, is in view."""
         cell = self.vehicle.cell
-        return cell is not None and cell.find_blockage(self.blockage_scan) is not None
+        return cell is not None and (cell.find_blockage(self.blockage_scan) is not None
+                                     or self.offramp_stop_distance() is not None)
+
+    def held_at_offramp(self) -> bool:
+        """Whether the vehicle is at the stop line of its off-ramp, with a lane to move into.
+
+        A vehicle whose way toward the exit lane is closed or does not exist is not held:
+        it drives on and takes the next ramp, as without the rule (D-2026-10-03-6).
+        """
+        distance = self.offramp_stop_distance()
+        if distance is None or distance > 1:
+            return False
+        cell = self.vehicle.cell
+        target = (cell.right_next if self._direction_toward_destination() is Direction.RIGHT
+                  else cell.left_next)
+        return target is not None and not target.blocked
+
+    def offramp_stop_distance(self) -> Optional[int]:
+        """Cells to the vehicle's off-ramp while it is outside the exit lane, else None.
+
+        With `stops_for_offramp` on, the cell beside the off-ramp is a stop line for a
+        vehicle that has not reached the exit lane: it brakes for it as for a blocked cell
+        and waits there for a gap (D-2026-10-03-6). The end of the segment is not a stop line.
+        """
+        vehicle = self.vehicle
+        cell = vehicle.cell
+        if (not self.cfg.stops_for_offramp or cell is None
+                or vehicle.destination_lane in (None, cell.lane.idx)
+                or vehicle.destination_cell_idx is None
+                or vehicle.destination_cell_idx >= cell.lane.num_cells):
+            return None
+        if cell.idx > vehicle.destination_cell_idx:
+            return None  # past the ramp: the vehicle takes the next one
+        # a lane change moves one cell forward, so each lane still to cross sets the line
+        # one cell further back
+        lanes_after_first = abs(cell.lane.idx - vehicle.destination_lane) - 1
+        distance = max(0, vehicle.destination_cell_idx - lanes_after_first - cell.idx)
+        return distance if distance <= self.blockage_scan else None
 
     def accepts_gap(self, target: Cell) -> bool:
         """Whether the front and rear gaps at `target` are safe to change lanes into.
@@ -282,14 +319,18 @@ class Driver:
 
         v_max = vehicle.effective_v_max()
         blockage_dist = cell.find_blockage(self.blockage_scan)
-        leader = cell.find_leader(self.look_ahead)
-
-        # Track when vehicle first sees a blockage (for merge priority)
-        if blockage_dist is not None:
+        # Track when vehicle first sees a blockage, or is first held at the stop line of its
+        # off-ramp (for merge priority)
+        if blockage_dist is not None or self.held_at_offramp():
             if self._blockage_wait_since is None:
                 self._blockage_wait_since = self.env.now
         else:
             self._blockage_wait_since = None
+
+        stop_line = self.offramp_stop_distance()
+        if stop_line is not None:
+            blockage_dist = stop_line if blockage_dist is None else min(blockage_dist, stop_line)
+        leader = cell.find_leader(self.look_ahead)
 
         if blockage_dist is not None and leader is not None and leader.cell is not None:
             leader_dist = leader.fractional_position - vehicle.fractional_position
@@ -422,6 +463,8 @@ class Driver:
             r = self._remaining_distance_ratio()
             p = probability_over(mlc_probability(r, num_lc_needed, lc.mlc_k, lc.mlc_r0),
                                  mlc_exposure)
+            if self.held_at_offramp():
+                p = 1.0  # waiting at the stop line of its off-ramp: the change is certain
             if self.streams.mlc.random() < p:
                 vehicle.request_direction(self._direction_toward_destination(),
                                           LaneChangeReason.MLC_DESTINATION)
@@ -457,9 +500,32 @@ class Driver:
                     continue
                 p = probability_over(
                     dlc_probability(side_speed, current_speed, lc.dlc_k, lc.dlc_v0), exposure)
+                if lc.dlc_keeps_destination:
+                    p *= self._keeps_destination_weight(side)
                 if self.streams.dlc.random() < p:
                     return direction
         return Direction.FORWARD
+
+    def _keeps_destination_weight(self, side: Cell) -> float:
+        """What is left of a discretionary probability when the lane leads away from the exit.
+
+        Moving into `side` would leave n + 1 mandatory changes to make; the weight is
+        1 - P_MLC(r, n + 1), so the change is free far from the destination and ruled out
+        where the mandatory change back would be near certain (D-2026-10-03-5).
+
+        Args:
+            side: the cell beside the vehicle in the lane considered.
+        """
+        vehicle = self.vehicle
+        if vehicle.destination_lane is None:
+            return 1.0
+        needed = self._lane_changes_to_destination()
+        after = abs(side.lane.idx - vehicle.destination_lane)
+        if after <= needed:
+            return 1.0
+        lc = self.lane_change
+        return 1.0 - mlc_probability(self._remaining_distance_ratio(), after,
+                                     lc.mlc_k, lc.mlc_r0)
 
     def _lane_changes_to_destination(self) -> int:
         """Number of lane changes needed to reach destination lane."""

@@ -53,3 +53,24 @@ def observe(cell, driver) -> NeighbourState:
         v_follower=follower.speed if follower else 0.0,
         has_follower=follower is not None,
     )
+
+
+def leads_away_too_late(driver, side, urgency_r0: float) -> bool:
+    """Whether a discretionary change into `side` would at once call for a forced change back.
+
+    Moving away from the destination lane leaves n + 1 mandatory changes; the baselines force
+    a mandatory change once r <= urgency_r0 * n, so a discretionary change that lands inside
+    that zone is not made (paper-lc-logistic:D-2026-10-03-13).
+
+    Args:
+        driver: the deciding driver.
+        side: the cell beside the vehicle in the lane considered.
+        urgency_r0: the baseline's forced-change threshold per lane.
+    """
+    vehicle = driver.vehicle
+    if vehicle.destination_lane is None:
+        return False
+    after = abs(side.lane.idx - vehicle.destination_lane)
+    if after <= abs(vehicle.cell.lane.idx - vehicle.destination_lane):
+        return False
+    return driver._remaining_distance_ratio() <= min(1.0, urgency_r0 * after)

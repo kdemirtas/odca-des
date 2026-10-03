@@ -356,6 +356,9 @@ class Vehicle:
             )
             return None
 
+        if target is self.cell.next and self.driver.held_at_offramp():
+            return None  # at the stop line of its off-ramp: wait for a gap (D-2026-10-03-6)
+
         return target
 
     def _try_lateral_escape(self) -> Optional[Cell]:

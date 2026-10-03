@@ -3,6 +3,10 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
+> **2026-10-03: two destination rules, off by default. Shipped as PR #34.**
+> For paper-lc-logistic (Kerem: "Fix both"). `dlc_keeps_destination` (D-2026-10-03-5): a discretionary change away from the destination lane is weighed by 1 - P_MLC(r, n + 1). `stops_for_offramp` (D-2026-10-03-6): a vehicle outside its exit lane stops ahead of its off-ramp and waits for a gap. Short runs of that paper, seed 42: off-ramp vehicles that missed their ramp 9.3% to 0.0% (human fleet), 16.7% to 0.0% (automated).
+> The paper-lc-logistic golden is re-recorded with both on; paper-odca-des's golden is unchanged, so that paper needs no rerun.
+
 > **2026-10-03: golden copy of paper-lc-logistic's `scenarios.py` synced. Shipped as PR #33.**
 > That paper's runner work changed `scenarios.py` (`model_config` accepts a human-driver override for any model); the copy here follows. No fingerprint moved: its 4 golden runs passed.
 

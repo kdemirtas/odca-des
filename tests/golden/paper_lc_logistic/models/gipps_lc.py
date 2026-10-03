@@ -15,7 +15,7 @@ from odca.entity.driver import HumanDriver
 from odca.entity.vehicle import Direction, LaneChangeReason
 from odca.params import CELL_LENGTH_M, BaseLaneChangeConfig, family_member
 
-from models.neighbours import NeighbourState, observe
+from models.neighbours import leads_away_too_late, NeighbourState, observe
 
 
 @family_member("gipps")
@@ -109,6 +109,7 @@ class GippsDriver(HumanDriver):
             if decision is LaneChangeReason.MLC_DESTINATION:
                 chosen, reason = direction, decision
                 break
-            if decision is LaneChangeReason.DLC and not no_dlc:
+            if (decision is LaneChangeReason.DLC and not no_dlc
+                    and not leads_away_too_late(self, side, lc.mlc_urgency_r0)):
                 chosen, reason = direction, decision
         vehicle.request_direction(chosen, reason)

@@ -54,3 +54,10 @@ between two vehicles is exactly tau + d / v_max = 1.692 s, but the lane saturate
 The mean gap at saturation is about 2.66 s. Why was not traced.
 A vehicle is placed in its origin cell rather than crossing into it, so at cell 0 the smallest
 gap is tau alone, 1.5 s.
+
+## Replaced the same day (D-2026-10-02-6)
+The rule adopted above also lengthened steady headways below 1/tau (two crossing times instead of
+tau plus one) and lowered the ring road's congested branch by about 19%. Now the lock opens tau
+after the next cell is taken, whatever the crossing time, and the vehicle that takes the lock waits
+at the cell boundary until the one ahead has left. Overlaps stay at 0; two vehicles at the same
+speed keep tau + d / v at every speed. Measurements in the decision entry.

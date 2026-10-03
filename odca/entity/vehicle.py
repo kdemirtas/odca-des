@@ -2,8 +2,9 @@
 
 A vehicle is a SimPy process that moves cell by cell through the freeway with the
 request-wait-seize-delay-release protocol: it takes the next cell, crosses its current cell at
-its speed, and releases that cell tau seconds after taking the next one, or when it has left it
-if the crossing takes longer (D-2026-10-02-4). Its driver (`odca.entity.driver`)
+its speed, and releases that cell tau seconds after taking the next one. It arrives in a cell
+only once the vehicle ahead has left it, waiting at the boundary if it has to (D-2026-10-02-6).
+Its driver (`odca.entity.driver`)
 decides the speed and the direction; the vehicle carries them out.
 
 The link contract: the driver reads the vehicle's state and its neighbours through cells, and
@@ -82,7 +83,7 @@ class Vehicle:
         # State
         self.cell: Optional[Cell] = None
         self._cell_entry_time: float = 0.0  # when current cell was entered
-        self._cell_left: Optional[simpy.Event] = None  # a release waiting for the next cell change
+        self._cell_left: Optional[simpy.Event] = None  # a follower waiting for this vehicle to leave its cell
         self.speed: float = 0.0
         self.desired_direction: Direction = Direction.FORWARD
         self.active: bool = False
@@ -158,23 +159,31 @@ class Vehicle:
                 return
         raise RuntimeError(f"Vehicle {self.id} does not hold {cell}")
 
-    def _delayed_release(self, cell: Cell):
-        """Release a cell's resource tau seconds after the next cell is taken (headway), and
-        never while this vehicle is still in the cell (D-2026-10-02-4).
+    def _wait_until_left(self, cell: Cell):
+        """Wait until no other vehicle is in `cell`, so two vehicles are never in one cell
+        (D-2026-10-02-6). Between two vehicles at the same speed the wait is zero.
 
-        A vehicle that needs longer than tau to cross keeps the lock until it has left, so no
-        other vehicle arrives in a cell that still holds one. Releases the lock only; the cell's
-        position label changes in _on_cell_change.
+        Args:
+            cell: a cell this vehicle has locked and is about to arrive in.
+        """
+        while cell.vehicle is not None and cell.vehicle is not self:
+            ahead = cell.vehicle
+            if ahead._cell_left is None:
+                ahead._cell_left = self.env.event()
+            yield ahead._cell_left
+
+    def _delayed_release(self, cell: Cell):
+        """Release a cell's resource tau seconds after the next cell is taken (headway).
+
+        Releases the lock only; the cell's position label changes in _on_cell_change, and a
+        vehicle that takes the lock while this one is still crossing out waits for it in
+        _wait_until_left (D-2026-10-02-6).
 
         Args:
             cell: the cell to release.
         """
         def _release_process():
             yield self.env.timeout(self.driver.tau)
-            while self.cell is cell:
-                if self._cell_left is None:
-                    self._cell_left = self.env.event()
-                yield self._cell_left
             self._release(cell)
             self._notify_neighbors_on_release(cell)
         self.env.process(_release_process())
@@ -230,6 +239,7 @@ class Vehicle:
         req._acquired = self.env.now
         if metered:
             self._delayed_release(meter)
+        yield from self._wait_until_left(self.origin_cell)
         self.speed = self.cfg.v_max
         self.active = True
         self.time_entered = self.env.now
@@ -397,6 +407,8 @@ class Vehicle:
                     break
                 yield self.env.timeout(step)
                 distance_remaining -= v * step
+
+        yield from self._wait_until_left(target)
 
         old_limit = old_cell.speed_limit if old_cell else float("inf")
 

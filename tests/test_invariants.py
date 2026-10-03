@@ -57,7 +57,7 @@ class CrawlingDriver(FixedSpeedDriver):
     fixed_speed = 0.2
 
 
-def test_a_cell_is_kept_until_a_crawling_vehicle_has_left_it():
+def test_no_vehicle_arrives_behind_a_crawling_vehicle_before_it_has_left():
     env = simpy.Environment()
     freeway = Freeway(env, NetworkConfig.corridor(1, 12, 5.2))
     streams = DriverStreams.spawn(RNGRegistry(master_seed=1))
@@ -96,3 +96,22 @@ def test_headway_on_the_road_is_never_below_tau_plus_the_crossing_time():
         arrivals = sorted(arrived for arrived, _ in spans)
         smallest = min([smallest] + [b - a for a, b in zip(arrivals, arrivals[1:])])
     assert smallest == pytest.approx(floor, abs=1e-9)
+
+
+def test_two_crawling_vehicles_keep_the_newell_headway():
+    env = simpy.Environment()
+    freeway = Freeway(env, NetworkConfig.corridor(1, 12, 5.2))
+    streams = DriverStreams.spawn(RNGRegistry(master_seed=1))
+    traits = DriverTraits.exact(HDV_DRIVER)
+    end = freeway.destination("end_lane_1")
+    pair = [Vehicle(env, HDV_VEHICLE, CrawlingDriver(HDV_DRIVER, streams, traits),
+                    freeway.cell(1, 0), end) for _ in range(2)]
+    for vehicle in pair:
+        env.process(vehicle.start())
+    env.run(until=200)
+    leader = {record.cell_idx: record.time for record in pair[0].trajectory}
+    follower = {record.cell_idx: record.time for record in pair[1].trajectory}
+    newell = traits.tau + 1 / CrawlingDriver.fixed_speed
+    assert 1 / CrawlingDriver.fixed_speed > traits.tau
+    for cell_idx in range(2, 10):
+        assert follower[cell_idx] - leader[cell_idx] == pytest.approx(newell, abs=1e-9)

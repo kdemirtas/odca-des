@@ -66,7 +66,7 @@ fields.
 ## Invariants
 What must hold after every run, each with the check that proves it.
 
-1. **One vehicle per cell.** `Cell.resource` has capacity 1, and a cell is not released while its vehicle is still in it, so no vehicle arrives in a cell another has not left (D-2026-10-02-4, `docs/cell-overlap.md`). Checked by `tests/test_invariants.py`.
+1. **One vehicle per cell.** `Cell.resource` has capacity 1, and a vehicle that has locked a cell another is still crossing out of waits at the boundary until that one has left, so no vehicle arrives in a cell another has not left (D-2026-10-02-6, `docs/cell-overlap.md`). Checked by `tests/test_invariants.py`.
 2. **Headway by delayed release.** A cell is released tau seconds after its vehicle takes the next one (`_delayed_release`, `_exit`), so two vehicles pass a road cell no closer than tau + d / v_max = 1.692 s at HDV defaults, a floor of 2127 veh/h. Checked by `tests/test_invariants.py`. The floor is not the flow a lane carries: a saturated single lane measured about 1,350 veh/h (BACKLOG B15).
 3. **Same config and seed, same numbers.** `Simulation` spawns its streams in a fixed order: three decision streams (`DriverStreams`), three trait streams (`TraitSampler`), then one per OD pair in demand-table order, then `initial_vehicle_type`. A new stream goes last, or every number moves. Checked by `tests/test_golden.py`.
 4. **One driver-heterogeneity rule.** tau LogNormal clipped to [tau_min, tau_max] (0.5, 3.0), action_interval LogNormal clipped to [0.3, 3.0], slowdown_prob Normal clipped to [0, 1], drawn in that order from their own streams, only when the spread is above 0: `odca.entity.driver.TraitSampler`, the only copy. Checked by `tests/test_driver_traits.py` and the golden.
@@ -88,7 +88,7 @@ supports; a doc no row links is a candidate for deletion.
 
 `docs/code-review-2026-09-19.md`: the Opus principal-engineer review; its neutral items shipped in PR #9, the rest are BACKLOG B7 to B9.
 `docs/config-and-driver-design.md`: the ConfigMixin pattern and the Driver split, with examples (D-2026-09-19-23, -24).
-`docs/cell-overlap.md`: two vehicles in one cell at crawl speed, the two release rules measured (D-2026-10-02-4).
+`docs/cell-overlap.md`: two vehicles in one cell at crawl speed, the release rules measured (D-2026-10-02-4, replaced by D-2026-10-02-6).
 `docs/lane-change-rate.md`: lane-change probability per distance and per second (D-2026-09-19-22).
 
 ## Change protocol

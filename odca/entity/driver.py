@@ -274,7 +274,8 @@ class Driver:
         front_gap = float("inf")
         req_front = d  # no leader: standstill spacing suffices
         if leader and leader.cell is not None:
-            front_gap = abs(leader.cell.idx - target.idx)
+            front_gap = (abs(leader.cell.idx - target.idx)
+                         - leader.cells_behind_front_in(target.lane))
             ratio = max(0.0, vehicle.speed - leader.speed) / self._v_max
             req_front = d + (self.lane_change.safety_gap_front - d) * ratio
 
@@ -333,9 +334,11 @@ class Driver:
         leader = cell.find_leader(self.look_ahead)
 
         if blockage_dist is not None and leader is not None and leader.cell is not None:
-            leader_dist = leader.fractional_position - vehicle.fractional_position
+            behind_front = leader.cells_behind_front_in(cell.lane)
+            leader_dist = (leader.fractional_position - behind_front
+                           - vehicle.fractional_position)
             if leader_dist < 0:
-                leader_dist = (leader.cell.idx - cell.idx) % cell.lane.num_cells
+                leader_dist = (leader.cell.idx - behind_front - cell.idx) % cell.lane.num_cells
             if leader_dist < blockage_dist:
                 # Leader is closer than blockage: follow the queue
                 self._speed_for_leader(leader, v_max)
@@ -380,10 +383,14 @@ class Driver:
             v_max: the top speed here.
         """
         vehicle = self.vehicle
-        spacing = leader.fractional_position - vehicle.fractional_position
+        # to the leader's rearmost cell in this lane, which is its front for a one-cell
+        # leader (D-2026-10-03-8)
+        behind_front = leader.cells_behind_front_in(vehicle.cell.lane)
+        spacing = leader.fractional_position - behind_front - vehicle.fractional_position
         if spacing < 0:
             # Wrap-around (ring road)
-            spacing = (leader.cell.idx - vehicle.cell.idx) % vehicle.cell.lane.num_cells
+            spacing = ((leader.cell.idx - behind_front - vehicle.cell.idx)
+                       % vehicle.cell.lane.num_cells)
 
         speed = newell.desired_speed(
             current_spacing=spacing, leader_speed=leader.speed,

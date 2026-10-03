@@ -48,7 +48,7 @@ class Cell:
         self.left_prev: Optional[Cell] = None
         self.right_next: Optional[Cell] = None
         self.right_prev: Optional[Cell] = None
-        self.vehicle = None  # the vehicle whose position this cell is
+        self.vehicle = None  # the vehicle that is in this cell: its front, body or rear
         self._blocked: bool = False
         self.speed_limit: float = speed_limit  # cell-level speed limit (cells/s)
         self.exits: list = []  # DestinationCells a vehicle leaves into from here (set by Freeway)

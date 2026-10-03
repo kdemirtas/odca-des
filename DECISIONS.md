@@ -7,6 +7,8 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-03-10 | 2026-10-03 | A vehicle longer than one cell is refused with `stops_for_offramp` on: building it raises an error. Held at the stop line with its body in two lanes, it could neither drive on nor change lanes. Lifting the refusal is BACKLOG B17 | Kerem, 2026-10-03 (chose "Refuse the combination for now" at the review of N1) | none |
+| D-2026-10-03-9 | 2026-10-03 | A vehicle whose body is still in two lanes does not start another lane change. At the exit the front is counted as exited when it reaches the destination, and the body cells are then left one crossing time apart (at the vehicle's speed, no slower than `escape_speed`), each cell's lock opening tau later | accepted A-2026-10-03-6 (Kerem, 2026-10-03: "assumption accepted") | none |
 | D-2026-10-03-8 | 2026-10-03 | A vehicle has a length in cells (`VehicleConfig.length`, default 1) and holds every cell from its front to its rear. The front takes the next cell as today and the rear cell is given up behind it, so the body follows the path the front took, through a lane change too: a long vehicle changing lanes needs one free target cell and holds cells in both lanes until its rear has crossed. The length sits on the two existing vehicle configs; a mixed fleet is BACKLOG B16. Off by default: at length 1 every golden is unchanged | Kerem, 2026-10-03 (ideas I1 and I3; chose "Body follows the front" and "Length on the two configs only") | none |
 | D-2026-10-03-7 | 2026-10-03 | One `main`. A core change is built on `main` behind a default that leaves every paper's golden unchanged; there is no second long-lived line. A paper that must not move installs a tag (`v0.1.0`), and a change that cannot keep the goldens is a new release under its own decision | Kerem, 2026-10-03 ("Agreed, 1 main") | none |
 | D-2026-10-03-6 | 2026-10-03 | `stops_for_offramp` on a driver config (off by default): a vehicle outside its exit lane brakes for a stop line beside its off-ramp, one cell further back per extra lane to cross, waits there for a gap, and its mandatory change is certain while it is held at the line. A vehicle whose way to the exit lane is closed is not held. The end of the segment is not a stop line | Kerem, in the paper-lc-logistic session ("Fix both") | nothing |
@@ -73,6 +75,26 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-03-10: no long vehicle with the off-ramp stop line, for now
+
+**What.** `Vehicle` refuses a config of length above 1 whose driver has `stops_for_offramp` on, with an error that names both. The two rules block each other: a long vehicle whose front lands on the stop line right after a lane change has its body in two lanes, the stop line forbids the forward move and D-2026-10-03-9 forbids the next lane change, and neither lifts. BACKLOG B17 holds the work of letting them run together.
+
+**Evidence.** The correctness review of N1, 2026-10-03: length 3, three lanes, exit in lane 1, the vehicle changes from lane 3 to lane 2 onto the stop line and waits forever with its cells locked. Kerem chose "Refuse the combination for now" over exempting the held vehicle from D-2026-10-03-9 and over letting the body finish past the stop line. No paper runs both: paper-lc-logistic has `stops_for_offramp` on at length 1.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/entity/vehicle.py` (`Vehicle.__init__`), `tests/test_vehicle_length.py`, `BACKLOG.md` (B17).
+
+## D-2026-10-03-9: one lane change at a time, and the body drives out behind the front
+
+**What.** Two rules for a vehicle longer than one cell. It does not start another lane change while its body is still in two lanes, so the body stays on one path and the gap check never has to look past the vehicle's own cells. At the exit its travel time ends when the front reaches the destination, as for a one-cell vehicle; the body cells are then left one crossing time apart, at the vehicle's speed and no slower than `escape_speed`, and each cell's lock opens tau later.
+
+**Evidence.** Kerem, 2026-10-03, on the row as reported at the end of N1: "assumption accepted". `tests/test_vehicle_length.py`: the change back to lane 1, asked for at once, waits until the front is at least 3 cells into lane 2; after the 3-cell vehicle has driven out no cell is marked or locked.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/entity/vehicle.py` (`_target_cell`, `_drive_body_out`).
 
 ## D-2026-10-03-8: a vehicle holds as many cells as its length
 

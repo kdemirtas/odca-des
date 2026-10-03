@@ -41,6 +41,16 @@ class VehicleConfig:
     progressive_speed_threshold: float = 1.0
     traversal_dt: float = 0.25
     escape_speed: float = 1.0  # speed of a stopped vehicle moving sideways (cells/s)
+    length: int = 1  # cells the vehicle holds, from its front to its rear (D-2026-10-03-8)
+
+    def __post_init__(self):
+        """Refuse a length that is not a whole number of cells.
+
+        Raises:
+            ValueError: `length` is not an integer of 1 or more.
+        """
+        if isinstance(self.length, bool) or not isinstance(self.length, int) or self.length < 1:
+            raise ValueError(f"length {self.length!r} is not a whole number of cells, 1 or more")
 
 
 class ConfigFamily:

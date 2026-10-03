@@ -3,6 +3,13 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
+> **2026-10-03 (last): a vehicle holds as many cells as its length (N1, T1). Shipped as PR #?.**
+> `VehicleConfig.length`, whole cells, default 1 (D-2026-10-03-8). The front takes the next cell, the rear cell is the one given up, the body follows the front through a lane change. Car following and the front gap of a lane change are measured to the leader's rearmost cell in the follower's lane (`Vehicle.cells_behind_front_in`).
+> Kerem accepted A-2026-10-03-6 as D-2026-10-03-9: no second lane change while the body is in two lanes; at the exit the body drives out behind the front.
+> Review found a deadlock: a long vehicle held at its off-ramp stop line with its body in two lanes. Kerem chose to refuse length above 1 with `stops_for_offramp` on (D-2026-10-03-10, BACKLOG B17).
+> Proof: no number moved. `tests/test_golden.py` 29 passed, both papers' fingerprints exact at length 1; the rest 97 passed, 3 skipped (viewer extra absent in the worktree venv); `tests/test_vehicle_length.py` 9 tests.
+> ⏳ A-2026-10-03-3 to -5 open. Untested at length above 1: ring road, lane-change patience failure, lateral escape, autonomous drivers, a vehicle that reaches its destination before its full length is on the road.
+
 > **2026-10-03 (later): docs caught up, backlog trimmed, multi-cell vehicles designed. Shipped as PR #38.**
 > Docs only, no code. Drift repaired: the tag `v0.1.0` is at `23bbe99` with Zenodo DOI 10.5281/zenodo.23117204, the release rule is D-2026-10-02-6, PR #28 and #29 have their entry below, CHANGELOG gains PR #29 and a `0.1.0` heading.
 > Backlog: Kerem dropped B5 to B9 and B14 (marker rows kept); B1, B2, B3, B12, B13, B15 stay, B3 (PyPI) last; every row has a T id.

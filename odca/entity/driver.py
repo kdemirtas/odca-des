@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, ClassVar, Optional
 import numpy as np
 import simpy
 
-from odca.entity.vehicle import Direction
+from odca.entity.vehicle import Direction, LaneChangeReason
 from odca.infrastructure.cell import Cell
 from odca.models.car_following import newell
 from odca.models.lane_changing.discretionary import dlc_probability
@@ -409,7 +409,8 @@ class Driver:
             r = blockage_dist / scan  # 1.0 = far, 0.0 = imminent
             p = probability_over(mlc_probability(r, num_lc, lc.mlc_k, lc.mlc_r0), mlc_exposure)
             if self.streams.mlc.random() < p:
-                vehicle.request_direction(self._direction_away_from_blockage())
+                vehicle.request_direction(self._direction_away_from_blockage(),
+                                          LaneChangeReason.MLC_BLOCKAGE)
                 return
 
         # MLC: do we need to reach the exit lane?
@@ -419,13 +420,16 @@ class Driver:
             p = probability_over(mlc_probability(r, num_lc_needed, lc.mlc_k, lc.mlc_r0),
                                  mlc_exposure)
             if self.streams.mlc.random() < p:
-                vehicle.request_direction(self._direction_toward_destination())
+                vehicle.request_direction(self._direction_toward_destination(),
+                                          LaneChangeReason.MLC_DESTINATION)
                 return
 
         # DLC: speed incentive (off for centrally controlled vehicles); the cooldown
         # applies to discretionary changes only (manuscript tex:352, D-2026-09-19-18)
         if self.dlc_enabled and self.env.now - vehicle.last_lc_time >= lc.dlc_cooldown:
-            vehicle.request_direction(self._dlc_direction(elapsed))
+            direction = self._dlc_direction(elapsed)
+            vehicle.request_direction(
+                direction, None if direction is Direction.FORWARD else LaneChangeReason.DLC)
         else:
             vehicle.request_direction(Direction.FORWARD)
 

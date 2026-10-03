@@ -8,7 +8,7 @@ at `/pickup`, which lists the entries whose trigger is now true.
 | # | what | why | trigger | parked |
 |---|---|---|---|---|
 | B1 | Engine support for density-initialised and ring-road starts, so paper scripts stop building simulations below the engine | paper-odca-des BACKLOG B1 | the engine next gains an initial-condition feature | 2026-09-19 |
-| B2 | Bring the other papers' additions in (`lc_events`, `platoon/`), off by default, with their goldens | paper-odca-des:D-2026-09-19-6, BACKLOG B6 | each paper's switch-over | 2026-09-19 |
+| B2 | Bring the other papers' additions in (`platoon/`; `lc_events` is done, D-2026-10-03-1), off by default, with their goldens | paper-odca-des:D-2026-09-19-6, BACKLOG B6 | each paper's switch-over | 2026-09-19 |
 | B3 | Publish to PyPI (name `odca-des` free on 2026-09-19) | paper-odca-des:D-2026-09-19-6: published with the first paper | paper-odca-des is submitted | 2026-09-19 |
 | B4 | (promoted 2026-09-19 into D-2026-09-19-23/-24 and HANDOVER N2 to N4) | | | 2026-09-19 |
 | B5 | Several `AutonomousController`s, one per road segment, with AV handover between them (roadside-unit model) | Kerem, 2026-09-19; a model feature, not a speed-up (D-2026-09-19-24) | a platoon paper needs limited-range control | 2026-09-19 |

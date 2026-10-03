@@ -2,7 +2,10 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: the retrofit list is empty (2026-10-02)
+## CURRENT: paper-lc-logistic is switching over (2026-10-03)
+- Lane changes are logged with their reason (D-2026-10-03-1, A-2026-10-03-1 open) and
+  paper-lc-logistic has its golden (D-2026-10-03-2). Still to come from that paper: driver-class
+  selection for its MOBIL and Gipps drivers, and the rate-rule options.
 - Every item `/architect` ranked on 2026-10-02 is shipped (PR #25 to #27). The last two: vehicle
   ids are counted per run by `VehicleFactory`, a hand-built vehicle has id `None`, and two stale
   lines of text are corrected.
@@ -26,5 +29,5 @@ None ranked. A capability a paper needs is added here, off by default, with its 
 ## Infra
 - Repo: `kdemirtas/odca-des` (kdemirtas, public since 2026-09-22); push with `GH_TOKEN=$(gh auth token --user kdemirtas)`.
 - Python: `uv`, `.venv/`; `uv run pytest`.
-- Users: `~/Papers/paper-odca-des` (switched), `paper-lc-logistic`, `paper-odca-platoon`, `paper-odca-adaptive-platoon` (frozen copies until they switch, paper-odca-des BACKLOG B6).
+- Users: `~/Papers/paper-odca-des` (switched), `paper-lc-logistic` (logistic runs switched 2026-10-03), `paper-odca-platoon`, `paper-odca-adaptive-platoon` (frozen copies until they switch, paper-odca-des BACKLOG B6).
 - License: MIT (paper-odca-des:D-2026-09-19-10).

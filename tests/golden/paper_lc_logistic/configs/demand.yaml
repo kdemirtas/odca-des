@@ -1,0 +1,31 @@
+# Demand, veh/h per (origin, destination) pair. Mainline 6000 veh/h (1500 per lane), two
+# on-ramps at 500 veh/h. Off-ramps at cells 300, 550, 750 leave from lane 1 (the rightmost).
+# Traffic bound for the end of the segment leaves from the lane it entered on, so a through
+# vehicle that changed lanes for speed has to come back (paper-lc-logistic:D-2026-10-03-10).
+mainline_lane_1:
+  offramp_1: 300.0
+  offramp_2: 375.0
+  offramp_3: 225.0
+  end_lane_1: 600.0
+mainline_lane_2:
+  offramp_1: 150.0
+  offramp_2: 225.0
+  offramp_3: 150.0
+  end_lane_2: 975.0
+mainline_lane_3:
+  offramp_1: 75.0
+  offramp_2: 150.0
+  offramp_3: 75.0
+  end_lane_3: 1200.0
+mainline_lane_4:
+  offramp_1: 30.0
+  offramp_2: 75.0
+  offramp_3: 45.0
+  end_lane_4: 1350.0
+onramp_1:
+  offramp_2: 250.0
+  offramp_3: 100.0
+  end_lane_1: 150.0
+onramp_2:
+  offramp_3: 150.0
+  end_lane_1: 350.0

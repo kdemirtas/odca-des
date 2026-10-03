@@ -42,11 +42,12 @@ def model_config(model: str, **overrides) -> SimConfig:
     """
     if model == "logistic":
         return sim_config(**overrides)
-    default = HDV_DRIVER.lane_change
+    driver = overrides.pop("hdv_driver", HDV_DRIVER)
+    default = driver.lane_change
     lane_change = COMPARED_MODELS[model](
         safety_gap_front=default.safety_gap_front, safety_gap_rear=default.safety_gap_rear,
         dlc_cooldown=default.dlc_cooldown)
-    return sim_config(hdv_driver=replace(HDV_DRIVER, lane_change=lane_change), **overrides)
+    return sim_config(hdv_driver=replace(driver, lane_change=lane_change), **overrides)
 
 
 def lane_change_totals(vehicles, warmup: float) -> dict:

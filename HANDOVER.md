@@ -5,8 +5,8 @@ Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in 
 ## CURRENT: paper-lc-logistic is switching over (2026-10-03)
 - Lane changes are logged with their reason (D-2026-10-03-1, A-2026-10-03-1 open) and
   paper-lc-logistic has its golden (D-2026-10-03-2). Its MOBIL and Gipps drivers are
-  picked through the lane-change config (D-2026-10-03-3, A-2026-10-03-2 open). Still to come from
-  that paper: the rate-rule options.
+  picked through the lane-change config (D-2026-10-03-3, A-2026-10-03-2 open). The rate rule is
+  selectable for its experiment (D-2026-10-03-4). Nothing more is expected from that paper.
 - Every item `/architect` ranked on 2026-10-02 is shipped (PR #25 to #27). The last two: vehicle
   ids are counted per run by `VehicleFactory`, a hand-built vehicle has id `None`, and two stale
   lines of text are corrected.

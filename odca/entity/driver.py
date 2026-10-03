@@ -27,7 +27,7 @@ from odca.infrastructure.cell import Cell
 from odca.models.car_following import newell
 from odca.models.lane_changing.discretionary import dlc_probability
 from odca.models.lane_changing.mandatory import MLC_REFERENCE_CELLS, mlc_probability
-from odca.models.lane_changing.rate import probability_over
+from odca.models.lane_changing.rate import exposures, probability_over
 from odca.params import (
     AutonomousDriverConfig, DriverConfig, HumanDriverConfig, LogisticLaneChangeConfig,
 )
@@ -398,8 +398,9 @@ class Driver:
         if vehicle.cell is None:
             return
         elapsed, driven = self._direction_exposure()
-        mlc_exposure = driven / MLC_REFERENCE_CELLS
         lc = self.lane_change
+        mlc_exposure, dlc_exposure = exposures(lc.rate_rule, elapsed,
+                                               driven / MLC_REFERENCE_CELLS)
 
         # Blockage ahead: forced MLC (bypasses the cooldown), seen from further away
         scan = self.blockage_scan
@@ -429,20 +430,21 @@ class Driver:
         # DLC: speed incentive (off for centrally controlled vehicles); the cooldown
         # applies to discretionary changes only (manuscript tex:352, D-2026-09-19-18)
         if self.dlc_enabled and self.env.now - vehicle.last_lc_time >= lc.dlc_cooldown:
-            direction = self._dlc_direction(elapsed)
+            direction = self._dlc_direction(dlc_exposure)
             vehicle.request_direction(
                 direction, None if direction is Direction.FORWARD else LaneChangeReason.DLC)
         else:
             vehicle.request_direction(Direction.FORWARD)
 
-    def _dlc_direction(self, elapsed: float) -> Direction:
+    def _dlc_direction(self, exposure: float) -> Direction:
         """Left or right if a discretionary lane change there is drawn, else forward.
 
         A lane with a blockage ahead is never chosen: vehicles should not move into a lane
         that feeds an incident.
 
         Args:
-            elapsed: seconds since the previous direction evaluation (DLC exposure).
+            exposure: the DLC exposure since the previous direction evaluation (seconds under
+                the default rate rule).
         """
         cell = self.vehicle.cell
         current_speed = self.vehicle.speed
@@ -454,7 +456,7 @@ class Driver:
                 if lc.dlc_requires_advantage and side_speed <= current_speed:
                     continue
                 p = probability_over(
-                    dlc_probability(side_speed, current_speed, lc.dlc_k, lc.dlc_v0), elapsed)
+                    dlc_probability(side_speed, current_speed, lc.dlc_k, lc.dlc_v0), exposure)
                 if self.streams.dlc.random() < p:
                     return direction
         return Direction.FORWARD

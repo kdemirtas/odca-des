@@ -23,6 +23,8 @@ PACKAGE_CONFIGS = Path(__file__).parent / "configs"  # the published defaults, `
 _PACKAGE_PREFIX = "odca://"
 _BASE_KEY = "_base_"  # in a mapping: the file it starts from; its other keys override
 
+RATE_RULES = ("distance", "second", "evaluation")  # see odca.models.lane_changing.rate
+
 _FROZEN = dict(frozen=True, slots=True)
 # keyword-only for the config families, so a subclass can add required fields
 _FROZEN_FAMILY = dict(frozen=True, slots=True, kw_only=True)
@@ -97,6 +99,18 @@ class LogisticLaneChangeConfig(BaseLaneChangeConfig):
     mlc_r0: float              # MLC midpoint (remaining-distance ratio)
     dlc_k: float               # DLC steepness
     dlc_v0: float              # DLC speed-advantage midpoint (cells/s)
+    # what the curves are a probability per: `distance` (MLC per 5.2 cells, DLC per second),
+    # `second` (both per second) or `evaluation` (both per evaluation) (D-2026-10-03-4)
+    rate_rule: str = "distance"
+
+    def __post_init__(self):
+        """Refuse a rate rule that does not exist.
+
+        Raises:
+            ValueError: `rate_rule` is not one of `RATE_RULES`.
+        """
+        if self.rate_rule not in RATE_RULES:
+            raise ValueError(f"rate_rule {self.rate_rule!r} is not one of {RATE_RULES}")
 
 
 @dataclass(**_FROZEN_FAMILY)

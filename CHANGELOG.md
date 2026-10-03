@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #35: Record idea I1: vehicles that hold several cells (2026-10-03)
 - PR #34: Add two destination rules, off by default (D-2026-10-03-5, D-2026-10-03-6) (2026-10-03)
 - PR #33: Sync the golden copy of paper-lc-logistic scenarios.py (2026-10-03)
 - PR #32: Make the lane-change rate rule selectable (D-2026-10-03-4) (2026-10-03)

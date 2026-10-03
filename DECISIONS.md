@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-02-6 | 2026-10-02 | A cell's lock opens tau after its vehicle takes the next cell, whatever the crossing time, and a vehicle that holds the lock of a cell another vehicle is still in waits at the boundary until that one has left (`Vehicle._wait_until_left`, at arrival and at placement in the origin cell). Two vehicles are never in one cell, and two vehicles at the same speed keep tau + d / v at every speed. The golden is re-recorded, 350 of 508 values move | Kerem, 2026-10-02 (paper-odca-des: "Option 2, with the full run at night time not now"; its D-2026-10-02-4) | D-2026-10-02-4 |
 | D-2026-10-02-5 | 2026-10-02 | `edie_fd_points(vehicles, region, interval)` takes one `SpaceTimeRegion` (first cell, end cell, start time, end time, lanes) in place of five separate values; the function had 7 parameters against a limit of 6. Same arithmetic, same output | Kerem, 2026-10-02 (chose "One SpaceTimeRegion") | none |
 | D-2026-10-02-4 | 2026-10-02 | A cell's lock opens tau after its vehicle takes the next cell, and never while the vehicle is still in the cell: a vehicle that needs longer than tau to cross keeps the lock until it has left. Two vehicles are never in one cell. The golden is re-recorded, 348 of 504 values move | Kerem, 2026-10-02 ("agree with your narrower idea") | none |
 | D-2026-10-02-3 | 2026-10-02 | The per-seed JSON reader is strict: `label`, `av_penetration`, `seed`, `hdv_action_interval`, `av_action_interval`, `stats` and `counters` are all required, and a file missing one is refused with its path and the key, where today a missing `hdv_action_interval` is read as 1.0 | Kerem, 2026-10-02 (`/architect` retrofit) | none |
@@ -64,6 +65,18 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-02-6: the lock opens after tau; the follower's arrival is what waits
+
+**What.** D-2026-10-02-4 kept a cell locked for the later of tau and the crossing time. That removed two vehicles in one cell and also made every headway below 1/tau equal to two crossing times instead of tau plus one, in steady traffic too, where no overlap ever happened. Now `_delayed_release` opens the lock tau after the next cell is taken, as before 2026-10-02, and `_wait_until_left` holds a vehicle at the boundary of a cell it has locked while another vehicle is still in it, in `_advance_to` and at placement in the origin cell. Between two vehicles at the same speed the wait is zero.
+
+**Evidence.** Kerem, 2026-10-02, in paper-odca-des after the worked case (two human drivers at 0.25 cells/s: 5.5 s by Newell, 8 s under D-2026-10-02-4): "Option 2, with the full run at night time not now." Ring road, median flow over the triangle, deterministic drivers, D-2026-10-02-4 against this rule: 0.81 against 0.88 at 19 veh/km, 0.82 against 0.91 at 67, 0.81 against 0.99 at 100, 0.41 against 1.00 at 120. Overlaps: 0 in 12 quick golden runs (S1, S4, BN_0av, BN_30av, seeds 1 to 3, 3.6 million passages). `tests/test_invariants.py`: four tests pass, one new (two vehicles at 0.2 cells/s keep tau + d / v exactly).
+
+**What moved.** `fingerprint.json` re-recorded, 24 runs: 350 of 508 values. Means over three seeds, before to after: S1 throughput 3,107 to 3,204 veh/h, delay 23.6 to 22.8 s; S2 3,467 to 3,498, 19.8 to 18.3; S3 3,836 to 3,836, 12.5 to 12.8; S4 4,111 to 4,133, 7.1 to 7.4; BN_0av 2,462 to 2,511, 73.0 to 70.6; BN_30av 2,998 to 3,016, 41.3 to 39.2; BN_50av 3,480 to 3,462, 11.5 to 12.5; BN_70av 3,516 to 3,516, 4.6 to 4.5. paper-odca-des reruns its 124 jobs under this rule before it quotes any number.
+
+**Replaces.** D-2026-10-02-4.
+
+**Cited by.** `odca/entity/vehicle.py` (`_delayed_release`, `_wait_until_left`), `odca/analysis/metrics.py` (`cells_locked`), `tests/test_invariants.py`, `ARCHITECTURE.md` (Invariant 1).
 
 ## D-2026-10-02-5: `edie_fd_points` takes one `SpaceTimeRegion`
 

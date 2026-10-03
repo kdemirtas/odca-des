@@ -4,6 +4,9 @@ A vehicle is a SimPy process that moves cell by cell through the freeway with th
 request-wait-seize-delay-release protocol: it takes the next cell, crosses its current cell at
 its speed, and releases that cell tau seconds after taking the next one. It arrives in a cell
 only once the vehicle ahead has left it, waiting at the boundary if it has to (D-2026-10-02-6).
+A vehicle longer than one cell holds every cell from its front to its rear: the front takes
+the next cell and the rear cell is the one given up, so the body follows the path the front
+took (D-2026-10-03-8).
 Its driver (`odca.entity.driver`)
 decides the speed and the direction; the vehicle carries them out.
 
@@ -16,9 +19,10 @@ blockage, and reads its tau, action interval, lane-change patience and merge pri
 from __future__ import annotations
 
 import logging
+from collections import deque
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Deque, List, Optional
 
 import simpy
 
@@ -84,7 +88,15 @@ class Vehicle:
             destination: where it leaves; None drives on until the road ends (a ring never ends).
             vehicle_id: its number within the run, given by `VehicleFactory`; None for a
                 vehicle built by hand.
+
+        Raises:
+            ValueError: a vehicle longer than one cell whose driver stops for its off-ramp
+                (D-2026-10-03-10).
         """
+        if cfg.length > 1 and getattr(driver.cfg, "stops_for_offramp", False):
+            raise ValueError(
+                "a vehicle longer than one cell cannot run with stops_for_offramp on: held at "
+                "the stop line with its body in two lanes it could not move (D-2026-10-03-10)")
         self.id = vehicle_id
         self.env = env
         self.cfg = cfg
@@ -100,7 +112,8 @@ class Vehicle:
         self.route_start_idx: int = origin_cell.idx
 
         # State
-        self.cell: Optional[Cell] = None
+        self.cell: Optional[Cell] = None  # the cell its front is in
+        self._body: Deque[Cell] = deque()  # the cells behind the front it is still in, rear first
         self._cell_entry_time: float = 0.0  # when current cell was entered
         self._cell_left: Optional[simpy.Event] = None  # a follower waiting for this vehicle to leave its cell
         self.speed: float = 0.0
@@ -217,12 +230,46 @@ class Vehicle:
             self._notify_neighbors_on_release(cell)
         self.env.process(_release_process())
 
+    def _cell_given_up(self) -> Optional[Cell]:
+        """The cell the next move leaves: the rear one, or None while the vehicle is still
+        coming onto the road and holds fewer cells than its length (D-2026-10-03-8)."""
+        if len(self._body) + 1 < self.cfg.length:
+            return None
+        return self._body[0] if self._body else self.cell
+
+    def cells_behind_front_in(self, lane) -> int:
+        """How many cells behind its front the vehicle reaches in `lane`: the distance from
+        its front to its rearmost cell there. 0 for a one-cell vehicle, and for a vehicle
+        whose front has entered `lane` while its body is still in the lane it came from.
+
+        Args:
+            lane: the lane a follower or a lane changer sees the vehicle in.
+        """
+        for position, cell in enumerate(self._body):
+            if cell.lane is lane:
+                return len(self._body) - position
+        return 0
+
+    def _leave(self, cell: Cell):
+        """Stop being in `cell`, and let a follower waiting at its boundary arrive.
+
+        Args:
+            cell: a cell this vehicle is in.
+        """
+        if cell.vehicle is self:
+            cell.vehicle = None
+        if self._cell_left is not None:
+            waiting, self._cell_left = self._cell_left, None
+            waiting.succeed()
+
     def _on_cell_change(self, new_cell: Optional[Cell], limit_changed: bool = False):
         """The one place a vehicle's position changes (D-2026-09-19-12).
 
-        `self.cell` and `cell.vehicle` are both position: they change together, at arrival in
-        a cell, or at leaving the network (new_cell None). The resource lock is separate
-        (`cell.is_occupied`) and follows delayed release.
+        `self.cell` is the front and `cell.vehicle` marks every cell the vehicle is in: they
+        change together, at arrival in a cell, or at leaving the network (new_cell None). The
+        front's old cell joins the body of a vehicle longer than one cell, and the rear cell is
+        left (D-2026-10-03-8). The resource lock is separate (`cell.is_occupied`) and follows
+        delayed release.
 
         Args:
             new_cell: the cell just arrived in, or None when the vehicle leaves the network.
@@ -230,10 +277,15 @@ class Vehicle:
                 speed again before this cell is crossed (D-2026-09-20-4).
         """
         old_cell = self.cell
-        if old_cell is not None and old_cell.vehicle is self:
-            old_cell.vehicle = None
+        left = old_cell if new_cell is None else self._cell_given_up()
+        if self.cfg.length > 1 and new_cell is not None and old_cell is not None:
+            self._body.append(old_cell)
+            if left is not None:
+                self._body.popleft()
         self.cell = new_cell
-        if self._cell_left is not None:
+        if left is not None:
+            self._leave(left)
+        elif self._cell_left is not None:
             waiting, self._cell_left = self._cell_left, None
             waiting.succeed()
         if new_cell is None:
@@ -427,7 +479,9 @@ class Vehicle:
             self.desired_direction = Direction.FORWARD
 
         old_cell = self.cell
-        self._delayed_release(old_cell)
+        given_up = self._cell_given_up()
+        if given_up is not None:
+            self._delayed_release(given_up)
 
         if self.speed >= self.cfg.progressive_speed_threshold:
             # Fast path: single timeout for the whole cell
@@ -513,8 +567,14 @@ class Vehicle:
                     v.driver.wake()
 
     def _target_cell(self) -> Optional[Cell]:
-        """The next cell for the requested direction; forward when the gap is refused."""
+        """The next cell for the requested direction; forward when the gap is refused.
+
+        A vehicle whose body is still in two lanes finishes that lane change before it
+        starts another (D-2026-10-03-9).
+        """
         if self.desired_direction == Direction.FORWARD:
+            return self.cell.next
+        if any(cell.lane is not self.cell.lane for cell in self._body):
             return self.cell.next
         target = (self.cell.left_next if self.desired_direction == Direction.LEFT
                   else self.cell.right_next)
@@ -552,10 +612,22 @@ class Vehicle:
         )
         self.time_exited = self.env.now
         self.active = False
+        yield from self._drive_body_out()
         # Hold cell for tau seconds: enforces outflow capacity at boundary
         yield self.env.timeout(self.driver.tau)
         self._release(self.cell)
         self._on_cell_change(None)
+
+    def _drive_body_out(self):
+        """Leave the cells behind the front one by one, rear first, a crossing time apart,
+        as the vehicle drives out of the network (D-2026-10-03-9). Nothing for a one-cell
+        vehicle."""
+        crossing_time = 1.0 / max(self.speed, self.cfg.escape_speed)
+        while self._body:
+            yield self.env.timeout(crossing_time)
+            rear = self._body.popleft()
+            self._delayed_release(rear)
+            self._leave(rear)
 
     def _exit_through(self, exit_cell):
         """Leave through a throttled destination cell.
@@ -567,11 +639,18 @@ class Vehicle:
         yield req
         req._vehicle = self
         req._acquired = self.env.now
-        self._delayed_release(self.cell)
         speed = min(self.speed, exit_cell.speed_limit) if self.speed > 0 else exit_cell.speed_limit
-        yield self.env.timeout(1.0 / speed)
-        self.time_exited = self.env.now
-        self.active = False
+        if self._body:
+            yield self.env.timeout(1.0 / speed)
+            self.time_exited = self.env.now
+            self.active = False
+            yield from self._drive_body_out()
+            self._delayed_release(self.cell)
+        else:
+            self._delayed_release(self.cell)
+            yield self.env.timeout(1.0 / speed)
+            self.time_exited = self.env.now
+            self.active = False
         self._on_cell_change(None)
         yield self.env.timeout(self.driver.tau)
         self._release(exit_cell)

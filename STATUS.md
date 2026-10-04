@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-10-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-10-04: two open assumptions accepted. Shipped as PR #?.**
+> **2026-10-04: two open assumptions accepted. Shipped as PR #40.**
 > Kerem, in the paper-lc-logistic session: "all assumptions ok". A-2026-10-03-1 (the lane-change log is always written, a lateral request needs a reason) and A-2026-10-03-2 (the driver class follows the lane-change config type) leave `ASSUMPTIONS.md`; D-2026-10-04-1 records it. Docs only. A-2026-10-03-3 to -5 (vehicle length) belong to another session and stay open.
 
 > **2026-10-03 (last): a vehicle holds as many cells as its length (N1, T1). Shipped as PR #39.**

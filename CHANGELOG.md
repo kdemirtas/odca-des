@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #40: Accept two assumptions of 2026-10-03 (D-2026-10-04-1) (2026-10-04)
 - PR #39: Let a vehicle hold as many cells as its length (D-2026-10-03-8) (2026-10-03, closes T1)
 - PR #38: Docs: tag and DOI state, backlog trimmed, design of multi-cell vehicles (D-2026-10-03-7, -8) (2026-10-03)
 - PR #37: Record idea I3: front seizes, rear releases with delay (2026-10-03)

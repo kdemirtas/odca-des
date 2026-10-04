@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-10-04-1 | 2026-10-04 | Two calls made without Kerem on 2026-10-03 stand as made: the lane-change log is always written and a lateral request needs a reason; the human driver class of a run follows the type of its lane-change config | accepted A-2026-10-03-1 and A-2026-10-03-2 (Kerem, in the paper-lc-logistic session: "all assumptions ok") | nothing |
 | D-2026-10-03-10 | 2026-10-03 | A vehicle longer than one cell is refused with `stops_for_offramp` on: building it raises an error. Held at the stop line with its body in two lanes, it could neither drive on nor change lanes. Lifting the refusal is BACKLOG B17 | Kerem, 2026-10-03 (chose "Refuse the combination for now" at the review of N1) | none |
 | D-2026-10-03-9 | 2026-10-03 | A vehicle whose body is still in two lanes does not start another lane change. At the exit the front is counted as exited when it reaches the destination, and the body cells are then left one crossing time apart (at the vehicle's speed, no slower than `escape_speed`), each cell's lock opening tau later | accepted A-2026-10-03-6 (Kerem, 2026-10-03: "assumption accepted") | none |
 | D-2026-10-03-8 | 2026-10-03 | A vehicle has a length in cells (`VehicleConfig.length`, default 1) and holds every cell from its front to its rear. The front takes the next cell as today and the rear cell is given up behind it, so the body follows the path the front took, through a lane change too: a long vehicle changing lanes needs one free target cell and holds cells in both lanes until its rear has crossed. The length sits on the two existing vehicle configs; a mixed fleet is BACKLOG B16. Off by default: at length 1 every golden is unchanged | Kerem, 2026-10-03 (ideas I1 and I3; chose "Body follows the front" and "Length on the two configs only") | none |
@@ -75,6 +76,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-10-04-1: two unattended calls of 2026-10-03 stand
+
+**What.** Accepted as made: A-2026-10-03-1 (The lane-change log (`Vehicle.lane_changes`) is always written, with no config switch, and a lane-change request without a reason is an error); A-2026-10-03-2 (The human driver class of a run is chosen by the type of its `lane_change` config: a `HumanDriver` subclass registers itself for a lane-change family member (`lane_change).
+
+**Evidence.** Kerem, 2026-10-04, in the paper-lc-logistic session: "all assumptions ok", "accepted". The entries they back keep standing: D-2026-10-03-1 and D-2026-10-03-3.
+
+**Replaces.** nothing.
+
+**Cited by.** `odca/entity/vehicle.py`, `odca/entity/driver.py`.
 
 ## D-2026-10-03-10: no long vehicle with the off-ramp stop line, for now
 

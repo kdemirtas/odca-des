@@ -4,9 +4,9 @@
 > **Current wave:** extraction and refactor, since 2026-09-19
 
 > **2026-11-03: release 0.2.0 prepared, not yet tagged.**
-> Kerem (via Claudine): both papers run current `main`, so they cite 0.2.0, not 0.1.0. `pyproject.toml` and `uv.lock` say 0.2.0; CHANGELOG has the 0.2.0 section; D-2026-11-03-1.
+> Kerem (via Claudine): both papers run current `main`, so they cite 0.2.0, not 0.1.0. `pyproject.toml`, `uv.lock` and the new `.zenodo.json` (the 0.1.0 record's hand-edited metadata) say 0.2.0; CHANGELOG has the 0.2.0 section; D-2026-11-03-1.
 > Proof: no number moved. `uv run pytest -n 12` on the bumped tree: 126 passed, 3 skipped (viewer extra absent), including all 29 golden runs (25 paper-odca-des, 4 paper-lc-logistic) exact. The paper-odca-des fingerprint file is byte-identical to `v0.1.0`.
-> ⏳ Kerem's OK, then: merge, tag `v0.2.0`, publish the GitHub release; the Zenodo webhook (on `release` events) should mint the new version under 23117204's concept record. Both papers then cite the 0.2.0 version DOI.
+> ⏳ Kerem's OK, then: merge, tag `v0.2.0`, publish the GitHub release; the Zenodo GitHub link (confirmed by Kerem as what minted 0.1.0) adds the new version under concept 23117203. Both papers then cite the 0.2.0 version DOI.
 
 > **2026-10-04: two open assumptions accepted. Shipped as PR #40.**
 > Kerem, in the paper-lc-logistic session: "all assumptions ok". A-2026-10-03-1 (the lane-change log is always written, a lateral request needs a reason) and A-2026-10-03-2 (the driver class follows the lane-change config type) leave `ASSUMPTIONS.md`; D-2026-10-04-1 records it. Docs only. A-2026-10-03-3 to -5 (vehicle length) belong to another session and stay open.

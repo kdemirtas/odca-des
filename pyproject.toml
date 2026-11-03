@@ -1,6 +1,6 @@
 [project]
 name = "odca-des"
-version = "0.1.0"
+version = "0.2.0"
 description = "ODCA-DES: discrete-event traffic simulation on object-driven cellular automata"
 readme = "README.md"
 license = "MIT"

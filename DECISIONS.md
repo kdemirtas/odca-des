@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-11-03-1 | 2026-11-03 | Release 0.2.0 from `main` as it stands (35 commits past `v0.1.0`), so paper-lc-logistic and paper-odca-des cite the version their results come from. No golden moves: every change since 0.1.0 is off by default or a log. The release step is a `v0.2.0` tag and a published GitHub release, made only after Kerem has seen this change | Kerem, 2026-11-03 (relayed by Claudine: "Prepare odca-des release 0.2.0") | none; a new release under D-2026-10-03-7 |
 | D-2026-10-04-1 | 2026-10-04 | Two calls made without Kerem on 2026-10-03 stand as made: the lane-change log is always written and a lateral request needs a reason; the human driver class of a run follows the type of its lane-change config | accepted A-2026-10-03-1 and A-2026-10-03-2 (Kerem, in the paper-lc-logistic session: "all assumptions ok") | nothing |
 | D-2026-10-03-10 | 2026-10-03 | A vehicle longer than one cell is refused with `stops_for_offramp` on: building it raises an error. Held at the stop line with its body in two lanes, it could neither drive on nor change lanes. Lifting the refusal is BACKLOG B17 | Kerem, 2026-10-03 (chose "Refuse the combination for now" at the review of N1) | none |
 | D-2026-10-03-9 | 2026-10-03 | A vehicle whose body is still in two lanes does not start another lane change. At the exit the front is counted as exited when it reaches the destination, and the body cells are then left one crossing time apart (at the vehicle's speed, no slower than `escape_speed`), each cell's lock opening tau later | accepted A-2026-10-03-6 (Kerem, 2026-10-03: "assumption accepted") | none |
@@ -76,6 +77,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-11-03-1: release 0.2.0
+
+**What.** odca-des 0.2.0 is `main` as of `4f599cd` plus the version bump: `pyproject.toml` says `0.2.0` and `CHANGELOG.md` lists what changed since 0.1.0 (lane-change log with reason, selectable rate rule, driver class from the lane-change config for MOBIL and Gipps runs, two destination rules, vehicles holding several cells, the paper-lc-logistic golden). Both papers that install this folder editable cite 0.2.0, the version their results come from. The release step, after Kerem's OK on this change: merge it, tag `v0.2.0` on the merge commit, publish a GitHub release named `odca-des 0.2.0` from that tag. Zenodo is not touched by hand.
+
+**Evidence.** Kerem, 2026-11-03, relayed by Claudine: "Prepare odca-des release 0.2.0", because the ODCA-DES data statement calls 0.1.0 "the version used here" while both papers run current `main`. The paper-odca-des golden (`tests/golden/paper_odca_des/fingerprint.json`) is byte-identical between `v0.1.0` and `main`, and the full suite passes on the bumped tree. How 0.1.0 reached Zenodo, read from GitHub on 2026-11-03: the repo has one webhook, to `zenodo.org/api/hooks/receivers/github/events/`, on `release` events, created 2026-10-03 07:25:19 UTC, and the `v0.1.0` release was published 19 s later (07:25:38). That is the Zenodo GitHub integration being switched on and then the release being published, the sequence that mints a record. Not confirmed: the hook's `last_response` reads `unused` and GitHub no longer lists its deliveries, and the Zenodo record itself could not be read from this session. If the integration did mint 10.5281/zenodo.23117204, publishing the `v0.2.0` release mints a new version DOI under the same concept record without further steps; if 0.1.0 was uploaded by hand, the release mints a separate record and 0.2.0 must instead be added as a new version of 23117204 on Zenodo.
+
+**Replaces.** nothing; it is the new release D-2026-10-03-7 provides for, without re-recorded goldens.
+
+**Cited by.** `pyproject.toml` (`version`), `CHANGELOG.md` (0.2.0).
 
 ## D-2026-10-04-1: two unattended calls of 2026-10-03 stand
 

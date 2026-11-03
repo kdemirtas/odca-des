@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-11-03-1 | 2026-11-03 | Release 0.2.0 from `main` as it stands (35 commits past `v0.1.0`), so paper-lc-logistic and paper-odca-des cite the version their results come from. No golden moves: every change since 0.1.0 is off by default or a log. The release step is a `v0.2.0` tag and a published GitHub release, made only after Kerem has seen this change; the Zenodo GitHub link then adds the 0.2.0 version under concept 23117203, with its metadata from `.zenodo.json` | Kerem, 2026-11-03 (relayed by Claudine: "Prepare odca-des release 0.2.0", and the Zenodo record as he read it) | none; a new release under D-2026-10-03-7 |
 | D-2026-10-04-1 | 2026-10-04 | Two calls made without Kerem on 2026-10-03 stand as made: the lane-change log is always written and a lateral request needs a reason; the human driver class of a run follows the type of its lane-change config | accepted A-2026-10-03-1 and A-2026-10-03-2 (Kerem, in the paper-lc-logistic session: "all assumptions ok") | nothing |
 | D-2026-10-03-10 | 2026-10-03 | A vehicle longer than one cell is refused with `stops_for_offramp` on: building it raises an error. Held at the stop line with its body in two lanes, it could neither drive on nor change lanes. Lifting the refusal is BACKLOG B17 | Kerem, 2026-10-03 (chose "Refuse the combination for now" at the review of N1) | none |
 | D-2026-10-03-9 | 2026-10-03 | A vehicle whose body is still in two lanes does not start another lane change. At the exit the front is counted as exited when it reaches the destination, and the body cells are then left one crossing time apart (at the vehicle's speed, no slower than `escape_speed`), each cell's lock opening tau later | accepted A-2026-10-03-6 (Kerem, 2026-10-03: "assumption accepted") | none |
@@ -76,6 +77,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-11-03-1: release 0.2.0
+
+**What.** odca-des 0.2.0 is `main` as of `4f599cd` plus the version bump: `pyproject.toml` says `0.2.0` and `CHANGELOG.md` lists what changed since 0.1.0 (lane-change log with reason, selectable rate rule, driver class from the lane-change config for MOBIL and Gipps runs, two destination rules, vehicles holding several cells, the paper-lc-logistic golden). Both papers that install this folder editable cite 0.2.0, the version their results come from. The release step, after Kerem's OK on this change: merge it, tag `v0.2.0` on the merge commit, publish a GitHub release named `odca-des 0.2.0` from that tag. The Zenodo GitHub link then adds the 0.2.0 version under the concept record 23117203 (the parent of 23117204) with its own version DOI; Zenodo is not touched by hand. The link takes a version's metadata from GitHub unless the repo carries it, so `.zenodo.json` at the repo root holds what Kerem set by hand on the 0.1.0 record: the title, the creator with affiliation and ORCID, MIT, the description naming both manuscripts, and five keywords. Its `version` is bumped with `pyproject.toml` at every release.
+
+**Evidence.** Kerem, 2026-11-03, relayed by Claudine: "Prepare odca-des release 0.2.0", because the ODCA-DES data statement calls 0.1.0 "the version used here" while both papers run current `main`. The paper-odca-des golden (`tests/golden/paper_odca_des/fingerprint.json`) is byte-identical between `v0.1.0` and `main`, and the full suite passes on the bumped tree. How 0.1.0 reached Zenodo: the repo has one webhook, to `zenodo.org/api/hooks/receivers/github/events/`, on `release` events, created 2026-10-03 07:25:19 UTC, and the `v0.1.0` release was published 19 s later (07:25:38), read from GitHub on 2026-11-03. Kerem confirmed it on Zenodo the same day: record 23117204 (concept 23117203) holds the file `kdemirtas/odca-des-v0.1.0.zip` and the related identifier "is supplement to https://github.com/kdemirtas/odca-des/tree/v0.1.0", so the GitHub link minted it, at 07:25 UTC; its metadata was edited by hand at 08:24 UTC, which is why the repo now carries that metadata in `.zenodo.json`.
+
+**Replaces.** nothing; it is the new release D-2026-10-03-7 provides for, without re-recorded goldens.
+
+**Cited by.** `pyproject.toml` (`version`), `.zenodo.json`, `CHANGELOG.md` (0.2.0).
 
 ## D-2026-10-04-1: two unattended calls of 2026-10-03 stand
 

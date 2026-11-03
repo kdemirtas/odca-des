@@ -3,24 +3,7 @@
 > title and number. A version is a tagged odca-des release (a paper records the tag it ran on at submission). Unreleased work sits under `## Unreleased`
 > until a version is cut.
 
-## Unreleased
-
-## 0.2.0 (tag `v0.2.0` to be made at the release step, D-2026-11-03-1)
-What changed since 0.1.0, as a user of the package sees it. Every new capability is off by
-default, and the paper-odca-des golden recorded under 0.1.0 still passes unchanged.
-- Lane changes are logged: every vehicle keeps a `LaneChangeRecord` per change (time, cell, from
-  lane, to lane, reason), and a lateral request without a `LaneChangeReason` is an error
-  (D-2026-10-03-1, D-2026-10-04-1).
-- The human driver class follows the run's lane-change config (`HumanDriver.class_for`), which
-  lets a paper run MOBIL and Gipps beside the logistic model (D-2026-10-03-3, D-2026-10-04-1).
-- The logistic lane-change rate rule is selectable: `rate_rule` is `distance` (default, the 0.1.0
-  rule), `second` or `evaluation` (D-2026-10-03-4).
-- Two destination rules, both off by default: `dlc_keeps_destination` on the logistic config and
-  `stops_for_offramp` on the driver config (D-2026-10-03-5, D-2026-10-03-6).
-- A vehicle can hold several cells: `VehicleConfig.length`, default 1 (D-2026-10-03-8 to -10).
-- A second golden, `tests/golden/paper_lc_logistic/`, guards paper-lc-logistic (D-2026-10-03-2).
-- The author's name is spelled Demirtaş in `pyproject.toml` and `LICENSE`.
-
+## 0.2.0 (tag `v0.2.0` on the merge of the release PR, D-2026-11-03-1)
 - PR #40: Accept two assumptions of 2026-10-03 (D-2026-10-04-1) (2026-10-04)
 - PR #39: Let a vehicle hold as many cells as its length (D-2026-10-03-8) (2026-10-03, closes T1)
 - PR #38: Docs: tag and DOI state, backlog trimmed, design of multi-cell vehicles (D-2026-10-03-7, -8) (2026-10-03)
@@ -33,6 +16,22 @@ default, and the paper-odca-des golden recorded under 0.1.0 still passes unchang
 - PR #31: Pick the human driver class from the lane-change config; add MOBIL and Gipps runs to the paper-lc-logistic golden (D-2026-10-03-3) (2026-10-03)
 - PR #30: Log lane changes with their reason; add the paper-lc-logistic golden (D-2026-10-03-1, D-2026-10-03-2) (2026-10-03)
 - PR #29: Spell the author's name Demirtaş (2026-10-03)
+
+### What changed since 0.1.0
+As a user of the package sees it. Every new capability is off by default, and the
+paper-odca-des golden recorded under 0.1.0 still passes unchanged.
+- Lane changes are logged: every vehicle keeps a `LaneChangeRecord` per change (time, cell, from
+  lane, to lane, reason), and a lateral request without a `LaneChangeReason` is an error
+  (D-2026-10-03-1, D-2026-10-04-1).
+- The human driver class follows the run's lane-change config (`HumanDriver.class_for`), which
+  lets a paper run MOBIL and Gipps beside the logistic model (D-2026-10-03-3, D-2026-10-04-1).
+- The logistic lane-change rate rule is selectable: `rate_rule` is `distance` (default, the 0.1.0
+  rule), `second` or `evaluation` (D-2026-10-03-4).
+- Two destination rules, both off by default: `dlc_keeps_destination` on the logistic config and
+  `stops_for_offramp` on the driver config (D-2026-10-03-5, D-2026-10-03-6).
+- A vehicle can hold several cells: `VehicleConfig.length`, default 1 (D-2026-10-03-8 to -10).
+- A second golden, `tests/golden/paper_lc_logistic/`, guards paper-lc-logistic (D-2026-10-03-2).
+- The author's name is spelled Demirtaş in `pyproject.toml` and `LICENSE`.
 
 ## 0.1.0 (tag `v0.1.0` at `23bbe99`, 2026-10-03)
 - PR #28: Release a cell after tau, hold the follower's arrival instead (D-2026-10-02-6) (2026-10-03)

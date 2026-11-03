@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## 0.2.0 (tag `v0.2.0` on the merge of the release PR, D-2026-11-03-1)
+- PR #41: Release 0.2.0: version bump, CHANGELOG, .zenodo.json (D-2026-11-03-1) (2026-11-03)
 - PR #40: Accept two assumptions of 2026-10-03 (D-2026-10-04-1) (2026-10-04)
 - PR #39: Let a vehicle hold as many cells as its length (D-2026-10-03-8) (2026-10-03, closes T1)
 - PR #38: Docs: tag and DOI state, backlog trimmed, design of multi-cell vehicles (D-2026-10-03-7, -8) (2026-10-03)

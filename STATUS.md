@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-03**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-11-03: release 0.2.0 prepared, not yet tagged. Shipped as PR #?**
+> **2026-11-03: release 0.2.0 prepared, not yet tagged. Shipped as PR #41**
 > Kerem (via Claudine): both papers run current `main`, so they cite 0.2.0, not 0.1.0. `pyproject.toml`, `uv.lock` and the new `.zenodo.json` (the 0.1.0 record's hand-edited metadata) say 0.2.0; CHANGELOG has the 0.2.0 section; D-2026-11-03-1.
 > Proof: no number moved. `uv run pytest -n 12` on the bumped tree: 126 passed, 3 skipped (viewer extra absent), including all 29 golden runs (25 paper-odca-des, 4 paper-lc-logistic) exact. The paper-odca-des fingerprint file is byte-identical to `v0.1.0`.
 > Kerem said OK; merged. ⏳ Tag `v0.2.0` on the merge commit and publish the GitHub release (not done in this session); the Zenodo GitHub link (confirmed by Kerem as what minted 0.1.0) adds the new version under concept 23117203. Both papers then cite the 0.2.0 version DOI.

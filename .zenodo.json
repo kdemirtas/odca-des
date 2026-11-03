@@ -2,7 +2,7 @@
   "title": "odca-des: Object-Driven Cellular Automata discrete event traffic simulator",
   "upload_type": "software",
   "version": "0.2.0",
-  "license": "MIT",
+  "license": "mit",
   "creators": [
     {
       "name": "Demirtaş, Kerem",

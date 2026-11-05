@@ -24,11 +24,13 @@ PLATOON = PlatoonConfig(strategy="dcp", dt=1.0, max_platoon_size=10, formation_g
 
 
 def _config(strategy="dcp", num_lanes=2, **platoon):
+    destinations = {"offramp": DestinationConfig(cell=300, lane=1),
+                    "end": DestinationConfig(cell=400)}
+    if num_lanes >= 2:
+        destinations["end_lane_2"] = DestinationConfig(cell=400, lane=2)
     network = NetworkConfig(
         num_lanes=num_lanes, num_cells=400, speed_limit=5.2,
-        origins={"start": OriginConfig(lane=1)},
-        destinations={"offramp": DestinationConfig(cell=300, lane=1),
-                      "end": DestinationConfig(cell=400)})
+        origins={"start": OriginConfig(lane=1)}, destinations=destinations)
     base = {"network": network, "demand": {},
             "hdv_vehicle": "odca://hdv_vehicle.yaml", "hdv_driver": "odca://hdv_driver.yaml",
             "av_vehicle": "odca://av_vehicle.yaml", "av_driver": "odca://av_driver.yaml",
@@ -159,7 +161,11 @@ def test_a_refused_leader_stays_in_lane_with_its_train(monkeypatch, train_lane_c
     leader.driver.evaluate_direction()
     assert leader.desired_direction is Direction.FORWARD
     assert follower.desired_direction is Direction.FORWARD
-    assert sim.controller.statistics().lane_changes_blocked == 1
+    stats = sim.controller.statistics()
+    if train_lane_changes:
+        assert (stats.train_lc_refused_room, stats.lane_changes_blocked) == (1, 0)
+    else:
+        assert (stats.lane_changes_blocked, stats.train_lc_refused_room) == (1, 0)
 
 
 def test_lane_changes_of_the_train_are_off_by_default():
@@ -393,3 +399,47 @@ def test_formations_are_logged_by_size_and_destinations():
     sim.controller.form(first)
     sim.controller.form(second)
     assert sim.controller.statistics().formations_by_size_destinations == {"2,1": 1, "3,2": 1}
+
+
+def _leader_wants(monkeypatch, direction):
+    monkeypatch.setattr(
+        AutonomousDriver, "evaluate_direction",
+        lambda self: self.vehicle.request_direction(direction,
+                                                    LaneChangeReason.MLC_DESTINATION))
+
+
+def test_a_mixed_exit_platoon_refuses_the_leaders_mandatory_change(monkeypatch):
+    sim = Simulation(_config("naive", train_lane_changes=True))
+    leader, follower = _place(sim, [(True, 2, 101, "offramp"), (True, 2, 100, "end_lane_2")])
+    sim.controller.form([leader, follower])
+    _leader_wants(monkeypatch, Direction.RIGHT)
+    leader.driver.evaluate_direction()
+    stats = sim.controller.statistics()
+    assert leader.desired_direction is Direction.FORWARD
+    assert follower.desired_direction is Direction.FORWARD
+    assert (stats.train_lc_refused_exit_side, stats.train_lc_refused_room,
+            stats.train_lane_changes) == (1, 0, 0)
+    assert stats.train_lc_attempts_by_size == {}
+
+
+def test_an_emp_platoon_changes_lanes_toward_its_exit(monkeypatch):
+    sim = Simulation(_config("emp", train_lane_changes=True))
+    leader, follower = _place(sim, [(True, 2, 101, "offramp"), (True, 2, 100, "offramp")])
+    sim.controller.form([leader, follower])
+    _leader_wants(monkeypatch, Direction.RIGHT)
+    leader.driver.evaluate_direction()
+    stats = sim.controller.statistics()
+    assert leader.desired_direction is Direction.RIGHT
+    assert follower.desired_direction is Direction.RIGHT
+    assert (stats.train_lc_refused_exit_side, stats.train_lane_changes) == (0, 1)
+
+
+def test_no_member_is_moved_away_from_its_exit_lane():
+    sim = Simulation(_config(num_lanes=3))
+    vehicles = _place(sim, [(True, 2, 101, "end"), (True, 2, 100, "end_lane_2")])
+    platoon = sim.controller.form(vehicles)
+    assert not platoon.toward_every_exit(Direction.LEFT)
+    assert not platoon.toward_every_exit(Direction.RIGHT)
+    vehicles[1].destination_lane = 1
+    assert platoon.toward_every_exit(Direction.RIGHT)
+    assert not platoon.toward_every_exit(Direction.LEFT)

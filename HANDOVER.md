@@ -3,7 +3,7 @@ Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
 ## CURRENT: train platooning added on branch `claudine/2026-11-05-platoon-loop` (2026-11-05)
-- `odca.platoon`, off by default (D-2026-11-05-1, -3 to -5); paper-odca-platoon switched over with
+- `odca.platoon`, off by default (D-2026-11-05-1, -3 to -6; option B of the paper's M3-2 is D-2026-11-05-6); paper-odca-platoon switched over with
   its golden (D-2026-11-05-2). Every earlier golden unchanged. Open calls: A-2026-11-05-1, -2.
 - Untested: platooning on a ring road (`make_periodic`), with incidents (a platoon facing a blocked
   lane with `train_lane_changes` off cannot leave it as a unit), with vehicles longer than one cell.

@@ -3,7 +3,8 @@
 Solo, it decides exactly as `AutonomousDriver`. As the leader of a platoon it decides as a solo
 driver too, but no member changes lanes alone: with `train_lane_changes` off (the default) a
 lane change the leader draws is refused, and with it on the change happens only for the whole
-train, when the target lane is free over the train's length (D-2026-11-05-4). A member that has
+train, when it moves no member away from its exit lane (D-2026-11-05-6) and the target lane is
+free over the train's length (D-2026-11-05-4). A member that has
 to reach another lane leaves the platoon first (the controller's split phase). As a follower it takes the leader's speed, closing up on the member ahead until the train is
 contiguous, and keeps to the leader's lane, with no direction decision of its own. Every member but the tail releases a cell at once (`release_tau` 0).
 """
@@ -140,7 +141,9 @@ class PlatoonDriver(AutonomousDriver):
     def evaluate_direction(self):
         """A follower keeps to its leader's lane; a leader changes lanes only with the train,
         and only with `train_lane_changes` on (D-2026-11-05-4); off, a leader's lane change
-        is refused and the platoon stays in its lane.
+        is refused and the platoon stays in its lane. On, the change is refused unless it moves
+        no member away from its exit lane (D-2026-11-05-6) and the target lane is free over the
+        train.
 
         A follower in the leader's lane asks for what the leader asked for; one left behind in
         another lane asks to move toward the leader's lane, for the reason of the leader's last
@@ -158,16 +161,21 @@ class PlatoonDriver(AutonomousDriver):
         direction = vehicle.desired_direction
         if not self.is_leader or direction is Direction.FORWARD:
             return
-        size = self.platoon.size
-        if self.controller.platoon_cfg.train_lane_changes:
-            self.controller.train_lc_attempts[size] += 1
-        if self.controller.platoon_cfg.train_lane_changes and self.platoon.target_lane_free(
-                direction):
-            self.controller.count_train_lc_requests += 1
-            self.controller.train_lc_granted[size] += 1
-        else:
+        controller, size = self.controller, self.platoon.size
+        if not controller.platoon_cfg.train_lane_changes:
             vehicle.request_direction(Direction.FORWARD)
-            self.controller.count_train_lc_refusals += 1
+            controller.count_lc_blocked += 1
+        elif not self.platoon.toward_every_exit(direction):
+            vehicle.request_direction(Direction.FORWARD)
+            controller.count_train_lc_refused_exit_side += 1
+        else:
+            controller.train_lc_attempts[size] += 1
+            if self.platoon.target_lane_free(direction):
+                controller.count_train_lc_requests += 1
+                controller.train_lc_granted[size] += 1
+            else:
+                vehicle.request_direction(Direction.FORWARD)
+                controller.count_train_lc_refused_room += 1
         for member in self.platoon.members[1:]:
             member.driver._follow_leader_direction()
 

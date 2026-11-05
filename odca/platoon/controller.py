@@ -68,12 +68,14 @@ class PlatoonStatistics:
     end_of_trip_dissolutions: int # platoons ended with no member bound elsewhere
     size_one_dissolutions: int    # platoons left with one vehicle by a split or a cut
     chain_breaks: int             # cuts where a member left the lane or a vehicle cut in
-    lane_changes_blocked: int     # leader lane changes refused (train_lane_changes off, or
-                                  # no room for the train)
+    lane_changes_blocked: int     # leader lane changes refused with train_lane_changes off
     train_lane_changes: int       # leader lane changes granted to the whole train
+    train_lc_refused_exit_side: int  # refused: it would move a member away from its exit lane
+    train_lc_refused_room: int    # refused: the target lane had no room for the train
     # with train_lane_changes on: per platoon size m (as a string, for JSON), the leader's
-    # lane-change decisions (attempts) and those the target lane had room for (granted); their
-    # ratio estimates the contiguous-gap probability per decision
+    # lane-change decisions that passed the exit-side rule (attempts: the room was checked) and
+    # those the target lane had room for (granted); their ratio estimates the contiguous-gap
+    # probability per decision
     train_lc_attempts_by_size: Dict[str, int] = field(default_factory=dict)
     train_lc_granted_by_size: Dict[str, int] = field(default_factory=dict)
     # formations by "m,D": platoon size and number of distinct destination cells at formation
@@ -114,7 +116,9 @@ class PlatoonController(AutonomousController):
         self.count_size_one_dissolutions = 0
         self.count_chain_breaks = 0
         self.count_train_lc_requests = 0
-        self.count_train_lc_refusals = 0
+        self.count_lc_blocked = 0
+        self.count_train_lc_refused_exit_side = 0
+        self.count_train_lc_refused_room = 0
         self.train_lc_attempts: Counter = Counter()
         self.formations_by_size_destinations: Counter = Counter()
         self.train_lc_granted: Counter = Counter()
@@ -480,8 +484,10 @@ class PlatoonController(AutonomousController):
             end_of_trip_dissolutions=self.count_end_of_trip_dissolutions,
             size_one_dissolutions=self.count_size_one_dissolutions,
             chain_breaks=self.count_chain_breaks,
-            lane_changes_blocked=self.count_train_lc_refusals,
+            lane_changes_blocked=self.count_lc_blocked,
             train_lane_changes=self.count_train_lc_requests,
+            train_lc_refused_exit_side=self.count_train_lc_refused_exit_side,
+            train_lc_refused_room=self.count_train_lc_refused_room,
             train_lc_attempts_by_size={str(m): n for m, n in sorted(self.train_lc_attempts.items())},
             train_lc_granted_by_size={str(m): n for m, n in sorted(self.train_lc_granted.items())},
             formations_by_size_destinations=dict(sorted(

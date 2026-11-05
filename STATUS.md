@@ -8,6 +8,7 @@
 > Measures (D-2026-11-05-5): m-bar and alpha as section counts per lane (`section_counts`, `pooled`); formations logged by size and destinations; train lane-change attempts and grants per size.
 > New golden `tests/golden/paper_odca_platoon/` (S3_dcp_70av seed 42 quick, D-2026-11-05-2); `tests/test_platoon.py` 34 tests.
 > Proof of neutrality: `uv run pytest -n 10`: 161 passed, 3 skipped (viewer extra absent); the paper_odca_des and paper_lc_logistic fingerprint files are untouched and their 29 runs match exactly.
+> Kerem chose option B of critic item M3-2 ("B, but leave the run for sometime else"): a whole-train lane change must move no member away from its exit lane, refusals counted by reason (D-2026-11-05-6). The paper_odca_platoon golden is re-recorded (throughput 6,100 to 6,160 veh/h, delay 5.62 to 6.14 s, m-bar 1.440 to 1.477); the other two goldens stay exact. `tests/test_platoon.py` 37 tests.
 > ⏳ My calls A-2026-11-05-1 (gap closing by the leader easing off by Δv) and -2 (only the tail keeps tau) are open for Kerem.
 
 > **2026-11-03: release 0.2.0 prepared, not yet tagged. Shipped as PR #41**

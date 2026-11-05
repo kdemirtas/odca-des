@@ -176,6 +176,26 @@ class Platoon:
             return None
         return cells[first:last + 1]
 
+    def toward_every_exit(self, direction: Direction) -> bool:
+        """Whether a lane change toward `direction` moves no member away from its exit lane.
+
+        A member bound for a lane on that side, or with no exit lane (any lane), allows it; a
+        member already in its exit lane, or bound for a lane on the other side, forbids it
+        (D-2026-11-05-6). Lane numbers grow to the left.
+
+        Args:
+            direction: LEFT or RIGHT.
+        """
+        step = 1 if direction is Direction.LEFT else -1
+        for member in self._members:
+            exit_lane = member.destination_lane
+            if exit_lane is None or member.cell is None:
+                continue
+            lane = member.cell.lane.idx
+            if abs(lane + step - exit_lane) >= abs(lane - exit_lane):
+                return False
+        return True
+
     def target_lane_free(self, direction: Direction) -> bool:
         """Whether every cell of `target_cells(direction)` is open, empty and unlocked.
 

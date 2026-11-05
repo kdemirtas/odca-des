@@ -7,5 +7,7 @@ formation_speed_diff: 1.0     # cells/s (27 km/h)
 dest_cluster_threshold: 100   # cells (750 m), dcp only
 min_shared_path: 100          # cells (750 m)
 split_lookahead: 150          # cells (1,125 m)
-train_lane_changes: true      # a leader's lane change moves the whole train when the
-                              # target lane has room over its length (odca-des:D-2026-11-05-4)
+train_lane_changes: true      # a leader's lane change moves the whole train when it moves no
+                              # member away from its exit lane (odca-des:D-2026-11-05-6, option
+                              # B of M3-2) and the target lane has room over its length
+                              # (odca-des:D-2026-11-05-4)

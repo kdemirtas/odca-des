@@ -1,0 +1,11 @@
+# Platoon controller parameters (Table 4 of the paper); a scenario sets the strategy.
+strategy: dcp
+dt: 1.0                       # platoon management interval (s)
+max_platoon_size: 10
+formation_gap: 5              # cells (37.5 m)
+formation_speed_diff: 1.0     # cells/s (27 km/h)
+dest_cluster_threshold: 100   # cells (750 m), dcp only
+min_shared_path: 100          # cells (750 m)
+split_lookahead: 150          # cells (1,125 m)
+train_lane_changes: true      # a leader's lane change moves the whole train when the
+                              # target lane has room over its length (odca-des:D-2026-11-05-4)

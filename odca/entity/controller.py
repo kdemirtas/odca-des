@@ -8,14 +8,12 @@ cycle instead of one per vehicle. Each vehicle still moves in its own process.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List
+from typing import List
 
 import simpy
 
-from odca.params import ConfigMixin, ControllerConfig
-
-if TYPE_CHECKING:
-    from odca.entity.driver import AutonomousDriver
+from odca.entity.driver import AutonomousDriver, DriverStreams
+from odca.params import AutonomousDriverConfig, ConfigMixin, ControllerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +34,16 @@ class AutonomousController(ConfigMixin):
         self.env = env
         self._drivers: List[AutonomousDriver] = []
         self.num_updates = 0
+
+    def driver_for(self, cfg: AutonomousDriverConfig,
+                   streams: DriverStreams) -> AutonomousDriver:
+        """A new driver this controller decides for (`VehicleFactory` builds through this).
+
+        Args:
+            cfg: the autonomous driver config.
+            streams: the shared decision streams.
+        """
+        return AutonomousDriver(cfg, streams, self)
 
     def register(self, driver: AutonomousDriver):
         """Decide for `driver` from the next cycle on.

@@ -17,6 +17,7 @@ from odca.entity.vehicle import Vehicle
 from odca.entity.controller import AutonomousController
 from odca.entity.driver import DriverStreams, TraitSampler
 from odca.params import ConfigMixin, SimConfig
+from odca.platoon.controller import PlatoonController
 from odca.rng import RNGRegistry
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,11 @@ class Simulation(ConfigMixin):
         net = config.network
         self.freeway = Freeway(self.env, net)
 
-        self.controller = AutonomousController(config.controller, self.env)
+        # platooning only when the controller config asks for it (D-2026-11-05-1)
+        if config.controller.platoon is None:
+            self.controller = AutonomousController(config.controller, self.env)
+        else:
+            self.controller = PlatoonController(config.controller, self.env, config.warmup)
 
         # RNG streams, one per source of randomness, spawned in this fixed order: the
         # decision streams, the trait streams, one per OD pair, then initial_vehicle_type
@@ -129,6 +134,39 @@ class Simulation(ConfigMixin):
             f"(spacing={spacing} cells, {num_lanes} lanes)"
         )
 
+    def seed_platoons(self, platoon_size: int, gap: int, destination: str):
+        """Place autonomous platoons on every lane at t=0, for a fundamental diagram.
+
+        Each lane is filled from cell 0 with blocks of `platoon_size` vehicles in consecutive
+        cells followed by `gap` empty cells; a block is placed whole or not at all. Needs a
+        platoon config; draws no random number.
+
+        Args:
+            platoon_size: vehicles per platoon (m); 1 places solo vehicles.
+            gap: empty cells between two platoons.
+            destination: destination name for every placed vehicle.
+
+        Raises:
+            ValueError: the run has no platoon config.
+        """
+        if not isinstance(self.controller, PlatoonController):
+            raise ValueError("seed_platoons needs controller.platoon to be set")
+        exit_to = self.freeway.destination(destination)
+        num_cells = self.cfg.network.num_cells
+        for lane_idx in range(1, self.cfg.network.num_lanes + 1):
+            cells = self.freeway.lane(lane_idx).cells
+            start = 0
+            while start + platoon_size <= num_cells:
+                block = cells[start:start + platoon_size]
+                start += platoon_size + gap
+                if any(cell.blocked for cell in block):
+                    continue
+                members = [self.factory.build(True, cell, exit_to) for cell in reversed(block)]
+                self.controller.placed_platoon(members)
+                for vehicle in members:
+                    self._seeded_vehicles.append(vehicle)
+                    self.env.process(vehicle.start())
+
     def run(self) -> SimulationResult:
         """Run the simulation and return its result."""
         self.env.process(self.controller.run())
@@ -149,8 +187,11 @@ class Simulation(ConfigMixin):
             vehicles.extend(gen.vehicles)
         counters = RunCounters.of(vehicles, self.controller.num_updates,
                                   self.env.events_processed)
+        platoons = (self.controller.statistics()
+                     if isinstance(self.controller, PlatoonController) else None)
         result = SimulationResult(self.cfg, vehicles,
-                                  sum(g.num_generated for g in self.generators), counters)
+                                  sum(g.num_generated for g in self.generators), counters,
+                                  platoons)
         logger.info(
             f"Results: {result.num_generated} generated, "
             f"{result.num_completed} completed, {result.num_active_at_end} still active"

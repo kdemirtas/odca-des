@@ -194,6 +194,14 @@ class Driver:
     # Calls from the vehicle
     # ------------------------------------------------------------------
 
+    @property
+    def release_tau(self) -> float:
+        """Seconds the vehicle keeps a cell locked after taking the next one: tau.
+
+        A platoon member's driver answers otherwise (`odca.platoon`, D-2026-11-05-1).
+        """
+        return self.tau
+
     def start(self):
         """The vehicle has entered the road."""
 

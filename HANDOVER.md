@@ -2,7 +2,13 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: release 0.2.0 merged, not yet tagged (2026-11-03)
+## CURRENT: train platooning added on branch `claudine/2026-11-05-platoon-loop` (2026-11-05)
+- `odca.platoon`, off by default (D-2026-11-05-1, -3 to -5); paper-odca-platoon switched over with
+  its golden (D-2026-11-05-2). Every earlier golden unchanged. Open calls: A-2026-11-05-1, -2.
+- Untested: platooning on a ring road (`make_periodic`), with incidents (a platoon facing a blocked
+  lane with `train_lane_changes` off cannot leave it as a unit), with vehicles longer than one cell.
+
+## Before that: release 0.2.0 merged, not yet tagged (2026-11-03)
 - `main` is 0.2.0 (`pyproject.toml`, `uv.lock`, `.zenodo.json`; D-2026-11-03-1). No number moved
   since 0.1.0. The tag and GitHub release are not made yet. Publishing the release makes the
   Zenodo GitHub link add 0.2.0 under concept 23117203, metadata from `.zenodo.json`.
@@ -24,7 +30,7 @@ Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in 
 **RESUME:** tag `v0.2.0` on the release PR's merge commit and publish the GitHub release
 `odca-des 0.2.0`; then both papers cite the new version DOI. Kerem closes A-2026-10-03-3 to -5. BACKLOG:
 B15 (saturation flow, remeasure first), B12, B1; B16 (mixed fleet) and B17 are ready to promote;
-B3 (PyPI) last. B2 and B13 wait on the platoon papers.
+B3 (PyPI) last. B2 and B13 wait on the platoon papers (paper-odca-platoon switched 2026-11-05; adaptive-platoon still frozen).
 
 ## NEXT STEPS (pick up here)
 None ranked. A capability a paper needs is added here, off by default, with its golden
@@ -33,5 +39,5 @@ None ranked. A capability a paper needs is added here, off by default, with its 
 ## Infra
 - Repo: `kdemirtas/odca-des` (kdemirtas, public since 2026-09-22); push with `GH_TOKEN=$(gh auth token --user kdemirtas)`.
 - Python: `uv`, `.venv/`; `uv run pytest`.
-- Users: `~/Papers/paper-odca-des` (switched), `paper-lc-logistic` (logistic runs switched 2026-10-03), `paper-odca-platoon`, `paper-odca-adaptive-platoon` (frozen copies until they switch, paper-odca-des BACKLOG B6).
+- Users: `~/Papers/paper-odca-des` (switched), `paper-lc-logistic` (logistic runs switched 2026-10-03), `paper-odca-platoon` (switched 2026-11-05), `paper-odca-adaptive-platoon` (frozen copy until it switches, paper-odca-des BACKLOG B6).
 - License: MIT (paper-odca-des:D-2026-09-19-10).

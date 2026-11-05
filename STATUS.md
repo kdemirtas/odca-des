@@ -1,7 +1,14 @@
 # odca-des: status
 > Read `PROJECT.md` first (the spec). This file = where things stand and what to do next. Entries
-> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-03**.
+> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-05**.
 > **Current wave:** extraction and refactor, since 2026-09-19
+
+> **2026-11-05: train platooning added, off by default; paper-odca-platoon switched over. Branch `claudine/2026-11-05-platoon-loop`, not yet shipped.**
+> `odca.platoon` (D-2026-11-05-1): `PlatoonConfig` on `ControllerConfig.platoon` (None by default), `PlatoonDriver`, `PlatoonController`, `PlatoonStatistics`, section-count m-bar (D-2026-11-05-5). Ported from paper-odca-platoon's frozen copy with the critic's bug fixes against the paper's Section 4 (D-2026-11-05-3): front leader, no vehicle inside a train, close-up to adjacent cells, release 0 for every member but the tail, a member leaves at its own destination, three departure counters, time-averaged sizes. Whole-train lane changes behind `train_lane_changes`, off by default, on in the paper (D-2026-11-05-4). Core hooks: `Driver.release_tau`, `AutonomousController.driver_for`, `Vehicle.direction_reason`, `Simulation.seed_platoons`, `SimulationResult.platoons`.
+> Measures (D-2026-11-05-5): m-bar and alpha as section counts per lane (`section_counts`, `pooled`); formations logged by size and destinations; train lane-change attempts and grants per size.
+> New golden `tests/golden/paper_odca_platoon/` (S3_dcp_70av seed 42 quick, D-2026-11-05-2); `tests/test_platoon.py` 34 tests.
+> Proof of neutrality: `uv run pytest -n 10`: 161 passed, 3 skipped (viewer extra absent); the paper_odca_des and paper_lc_logistic fingerprint files are untouched and their 29 runs match exactly.
+> ⏳ My calls A-2026-11-05-1 (gap closing by the leader easing off by Δv) and -2 (only the tail keeps tau) are open for Kerem.
 
 > **2026-11-03: release 0.2.0 prepared, not yet tagged. Shipped as PR #41**
 > Kerem (via Claudine): both papers run current `main`, so they cite 0.2.0, not 0.1.0. `pyproject.toml`, `uv.lock` and the new `.zenodo.json` (the 0.1.0 record's hand-edited metadata) say 0.2.0; CHANGELOG has the 0.2.0 section; D-2026-11-03-1.

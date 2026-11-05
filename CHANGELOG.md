@@ -4,7 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
-- Add train platooning, off by default, and the paper-odca-platoon golden (D-2026-11-05-1 to -6) (2026-11-05, draft PR #42)
+- Add train platooning, off by default, and the paper-odca-platoon golden (D-2026-11-05-1 to -6) (2026-11-05, PR #42)
 
 ## 0.2.0 (tag `v0.2.0` on the merge of the release PR, D-2026-11-03-1)
 - PR #41: Release 0.2.0: version bump, CHANGELOG, .zenodo.json (D-2026-11-03-1) (2026-11-03)

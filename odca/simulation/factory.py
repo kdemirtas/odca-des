@@ -10,7 +10,7 @@ from typing import Optional
 import simpy
 
 from odca.entity.controller import AutonomousController
-from odca.entity.driver import AutonomousDriver, DriverStreams, HumanDriver, TraitSampler
+from odca.entity.driver import DriverStreams, HumanDriver, TraitSampler
 from odca.entity.vehicle import Vehicle
 from odca.infrastructure.cell import Cell
 from odca.infrastructure.freeway import Destination
@@ -50,7 +50,7 @@ class VehicleFactory:
         sim = self.sim
         vehicle_id, self.num_built = self.num_built, self.num_built + 1
         if autonomous:
-            driver = AutonomousDriver(sim.av_driver, self.streams, self.controller)
+            driver = self.controller.driver_for(sim.av_driver, self.streams)
             return Vehicle(self.env, sim.av_vehicle, driver, origin_cell, destination,
                            vehicle_id)
         driver_class = HumanDriver.class_for(sim.hdv_driver)

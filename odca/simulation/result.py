@@ -6,10 +6,13 @@ D-2026-09-19-32.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
+from typing import TYPE_CHECKING, List, Optional
 
 from odca.entity.vehicle import Vehicle
 from odca.params import SimConfig, to_yaml
+
+if TYPE_CHECKING:
+    from odca.platoon.controller import PlatoonStatistics
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +64,7 @@ class SimulationResult:
     vehicles: List[Vehicle]   # placed at t=0 first, then generated, in order
     num_generated: int        # by the generators (vehicles placed at t=0 not counted)
     counters: RunCounters
+    platoons: Optional[PlatoonStatistics] = None  # set when the run platooned (D-2026-11-05-1)
 
     @property
     def completed_vehicles(self) -> List[Vehicle]:

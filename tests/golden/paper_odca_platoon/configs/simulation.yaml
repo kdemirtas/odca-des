@@ -1,0 +1,18 @@
+# The default run (B1 at 0% AV). Vehicle and driver values are the odca package defaults; the
+# human drivers change lanes for speed only toward a faster lane and the autonomous drivers make
+# no discretionary change, as in the companion ODCA-DES paper (A-2026-11-05-1). Lane-change
+# probabilities follow the package's rate rule (MLC per 5.2 cells, DLC per second).
+network: network.yaml
+demand: demand.yaml
+hdv_vehicle: odca://hdv_vehicle.yaml
+hdv_driver:
+  _base_: odca://hdv_driver.yaml
+  lane_change:
+    dlc_requires_advantage: true   # DLC only toward a faster lane (odca-des:D-2026-10-02-1)
+av_vehicle: odca://av_vehicle.yaml
+av_driver: odca://av_driver.yaml
+controller: odca://controller.yaml   # 0.1 s; no platooning until a scenario sets one
+av_penetration: 0.0
+sim_duration: 3600.0    # s
+warmup: 300.0           # s
+seed: 42

@@ -142,6 +142,11 @@ class Vehicle:
         driver.attach(self)
 
     @property
+    def direction_reason(self) -> Optional[LaneChangeReason]:
+        """Why the requested lane change was asked for; None while the request is FORWARD."""
+        return self._direction_reason
+
+    @property
     def kind(self) -> str:
         """What drives this vehicle: `human` or `autonomous`."""
         return self.driver.kind
@@ -217,6 +222,8 @@ class Vehicle:
     def _delayed_release(self, cell: Cell):
         """Release a cell's resource tau seconds after the next cell is taken (headway).
 
+        The wait is the driver's `release_tau`: its tau, except inside a platoon (D-2026-11-05-1).
+
         Releases the lock only; the cell's position label changes in _on_cell_change, and a
         vehicle that takes the lock while this one is still crossing out waits for it in
         _wait_until_left (D-2026-10-02-6).
@@ -225,7 +232,7 @@ class Vehicle:
             cell: the cell to release.
         """
         def _release_process():
-            yield self.env.timeout(self.driver.tau)
+            yield self.env.timeout(self.driver.release_tau)
             self._release(cell)
             self._notify_neighbors_on_release(cell)
         self.env.process(_release_process())
@@ -614,7 +621,7 @@ class Vehicle:
         self.active = False
         yield from self._drive_body_out()
         # Hold cell for tau seconds: enforces outflow capacity at boundary
-        yield self.env.timeout(self.driver.tau)
+        yield self.env.timeout(self.driver.release_tau)
         self._release(self.cell)
         self._on_cell_change(None)
 
@@ -652,7 +659,7 @@ class Vehicle:
             self.time_exited = self.env.now
             self.active = False
         self._on_cell_change(None)
-        yield self.env.timeout(self.driver.tau)
+        yield self.env.timeout(self.driver.release_tau)
         self._release(exit_cell)
 
     # ------------------------------------------------------------------

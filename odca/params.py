@@ -166,11 +166,48 @@ class AutonomousDriverConfig(DriverConfig):
     """An autonomous driver: every value is exact."""
 
 
+PLATOON_STRATEGIES = ("naive", "emp", "dcp")  # see odca.platoon.controller.PlatoonStrategy
+
+
+@dataclass(**_FROZEN)
+class PlatoonConfig:
+    """Train platooning of autonomous vehicles by the central controller (D-2026-11-05-1).
+
+    Every value is the paper's: there are no generic defaults. Distances in cells, speeds in
+    cells/s, times in seconds.
+    """
+
+    strategy: str                 # which vehicles may form a platoon: naive, emp or dcp
+    dt: float                     # platoon management interval (s)
+    max_platoon_size: int         # vehicles in one platoon at most
+    formation_gap: int            # longest gap between two consecutive members (cells)
+    formation_speed_diff: float   # largest speed difference to the leader (cells/s)
+    dest_cluster_threshold: int   # dcp: destinations at most this far apart (cells)
+    min_shared_path: int          # cells two vehicles still drive together, at least
+    split_lookahead: int          # a member this close to its destination, outside its
+                                  # destination lane, leaves the platoon (cells)
+    # a leader's lane change moves the whole train when the target lane has room; off: no
+    # platoon member changes lanes (D-2026-11-05-4)
+    train_lane_changes: bool = False
+
+    def __post_init__(self):
+        """Refuse a strategy the controller does not know.
+
+        Raises:
+            ValueError: `strategy` is not one of `PLATOON_STRATEGIES`.
+        """
+        if self.strategy not in PLATOON_STRATEGIES:
+            raise ValueError(
+                f"platoon strategy {self.strategy!r} is not one of {PLATOON_STRATEGIES}")
+
+
 @dataclass(**_FROZEN)
 class ControllerConfig:
     """The central controller that makes the autonomous drivers' decisions."""
 
     dt: float = 0.1            # decision interval (s)
+    # platooning: None (the default) runs no platoons at all (D-2026-11-05-1)
+    platoon: Optional[PlatoonConfig] = None
 
 
 @dataclass(**_FROZEN)

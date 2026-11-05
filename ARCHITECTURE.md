@@ -1,5 +1,5 @@
 # ARCHITECTURE: odca-des
-> **Owned by `/architect`. Two pages max. Last updated 2026-10-03.** Code follows this file; when
+> **Owned by `/architect`. Two pages max. Last updated 2026-11-05.** Code follows this file; when
 > they disagree, either the code is wrong or this file is, and a `DECISIONS.md` entry says which.
 
 ## Purpose
@@ -19,7 +19,8 @@ Modules, what each owns, and what it may import. A module not listed here does n
 | `odca/models/` | Newell, MLC and DLC probabilities; pure functions | stdlib | simpy, any `odca` module |
 | `odca/infrastructure/` | `Cell` and its endpoint subclasses `OriginCell`, `DestinationCell`; `Lane`; `Freeway` with its named `Origin`s and `Destination`s; `Incident` (D-2026-09-19-26 to -28) | simpy, params | entity, simulation |
 | `odca/entity/` | `Vehicle` (physical: cell label, lock, movement, trajectory), `Driver`, `HumanDriver`, `AutonomousDriver`, `DriverStreams`, `DriverTraits` and `TraitSampler` (`driver.py`), `AutonomousController` (`controller.py`), `TrajectoryRecord` (D-2026-09-19-24, -30) | infrastructure, models, params, rng (`DriverStreams.spawn`, `TraitSampler.spawn`) | simulation, analysis, experiment |
-| `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver), `SimulationResult` and `RunCounters` (`result.py`, D-2026-09-19-32), RNG stream order | entity, infrastructure, rng, params | analysis, experiment, viewer |
+| `odca/platoon/` | train platooning, off unless `ControllerConfig.platoon` is set: `Platoon`, `PlatoonDriver` (an `AutonomousDriver` that leads or follows), `PlatoonController` (an `AutonomousController` with the management loop and the naive, emp, dcp strategies), `PlatoonStatistics`, the section count of m-bar (`measures.py`) (D-2026-11-05-1, -3 to -6) | entity, infrastructure, params | simulation, analysis, experiment, viewer |
+| `odca/simulation/` | `Simulation`, `VehicleGenerator`, `VehicleFactory` (the one place a vehicle is built with its driver; an autonomous driver comes from `controller.driver_for`), `SimulationResult` and `RunCounters` (`result.py`, D-2026-09-19-32), RNG stream order, `seed_platoons` | entity, infrastructure, rng, params, platoon (D-2026-11-05-1) | analysis, experiment, viewer |
 | `odca/analysis/` | Edie FD, passage-time flow, `summary_statistics`; `mean_ci95` in `intervals.py`, the only interval code (D-2026-09-19-33) | entity (read-only), params | simulation, experiment |
 | `odca/baselines/` | NaSch | numpy | the rest of `odca` |
 | `odca/experiment/` | `RunRecord`, `run_once` (simulate, time, measure), per-seed JSON writer and strict reader (`records.py`), aggregation into the CSV schema below (`tables.py`) (D-2026-09-19-33) | simulation, analysis, params | viewer, any paper |
@@ -31,7 +32,7 @@ Papers keep: parameter values (`config.py`), scenario definitions, figure script
 ## Layout
 
     odca/            the package (import name odca)
-    tests/           unit tests; tests/golden/<paper>/ = config.py, configs/*.yaml, scenarios.py, fingerprint.json per paper (paper_lc_logistic also models/)
+    tests/           unit tests; tests/golden/<paper>/ = config.py, configs/*.yaml, scenarios.py, fingerprint.json per paper (paper_lc_logistic also models/; paper_odca_des, paper_lc_logistic, paper_odca_platoon)
     docs/            longer reference docs ARCHITECTURE.md links
     pyproject.toml   distribution odca-des, extra [viewer], dev group pytest
 
@@ -65,6 +66,8 @@ fields.
 | lane-change model of a run | the type of the human `lane_change` config picks the driver class: a `HumanDriver` subclass registers for a family member through `lane_change_config`, `HumanDriver.class_for` looks it up: `HumanDriver` for the logistic model, an error for an unregistered one (D-2026-10-03-3) | `odca/entity/driver.py`; used by `odca/simulation/factory.py` |
 | `LaneChangeRecord`, `LaneChangeReason` | one lane change that happened: time, cell left, from lane, to lane, and why (blockage, destination, discretionary); kept on `Vehicle.lane_changes`, always written (D-2026-10-03-1) | `odca/entity/vehicle.py` |
 | `SpaceTimeRegion` | the cells, lanes and time span Edie's definitions are taken over; `edie_fd_points` takes it whole (D-2026-10-02-5) | `odca/analysis/metrics.py` |
+| `PlatoonConfig`, `Platoon`, `PlatoonStatistics` | the platoon controller's parameters (strategy, management dt, size cap, formation gap and speed difference, cluster threshold, shared path, split look-ahead, `train_lane_changes`), on `ControllerConfig.platoon`, None by default; one train, front first: the leader decides, followers take its speed and close up, every member but the tail releases at once; what the management did in a run, with three departure counters (destination splits, once per destination separated from a platoon line; end-of-trip dissolutions; size-one dissolutions) train lane-change attempts and grants per size, and refusals by reason (exit side, room) (D-2026-11-05-1, -3, -4, -6) | `odca/params.py`, `odca/platoon/` |
+| release wait | `Driver.release_tau`: how long a vehicle keeps a cell locked after taking the next one and at the exit; tau, except a platoon member that is not the tail (0) | `odca/entity/driver.py`, `odca/platoon/driver.py` (D-2026-11-05-1) |
 | `SimulationResult`, `RunCounters` | one run: the validated config it ran with (`config_yaml()` reruns it), every vehicle, the generated count, the event counters; completed and still-active vehicles are derived. The counters keep the split: the vehicle's moves (`lane_changes`, `lc_patience_failures`, `missed_exits`) and the driver's decisions (`gap_rejections`, `slowdowns`, `cf_evaluations`, `speed_evaluations`), plus the controller's and SimPy's. `lc_failures` is a derived property, not a stored key (D-2026-09-20-12) | `odca/simulation/result.py` (D-2026-09-19-32) |
 
 ## Invariants
@@ -77,12 +80,13 @@ What must hold after every run, each with the check that proves it.
 5. **Units stay inside.** Cells, cells/s and seconds everywhere in `odca/`; km/h, veh/h and veh/km appear only at the reporting edge, through `CELL_LENGTH_M`.
 6. **Driver and vehicle keep to the link contract** (D-2026-09-19-24, -30). The driver reads its vehicle's state and neighbours through cells, and changes the vehicle only through `set_target_speed` and `request_direction` (a lane change carries its reason, D-2026-10-03-1); the vehicle calls its driver to wake it (`wake`), to pick the speed again where the limit changes (`evaluate_speed`, D-2026-09-20-4), to judge a gap or a blockage (`accepts_gap`, `sees_blockage`, `evaluate_direction` when stopped), and reads its tau, action interval, lane-change patience and merge priority. Checked by review; a driver writing a vehicle field is a finding.
 7. **A new capability is off by default,** and every paper's golden matches with it off. Checked by `tests/test_golden.py`.
+8. **A platoon is a train.** Its members are in one lane, front first, with no other vehicle between two members; the leader is the front member; no member changes lanes alone, and a whole-train change moves no member away from its exit lane (D-2026-11-05-3, -4, -6). The controller cuts a platoon at its next management cycle where this stops holding. Checked by `tests/test_platoon.py`.
 
 ## Proof strategy
 How a change is shown to be neutral, and how a change that is meant to move a number is shown
 to move only that number.
 
-- **Goldens.** `uv run pytest`: every paper's fingerprint (quick mode; paper_odca_des seeds 1-3, paper_lc_logistic seed 42, D-2026-10-03-2, with one MOBIL and one Gipps run, D-2026-10-03-3; stats and counters) matches exactly. During the code-quality refactor a golden may change: re-record it and state which values moved and why (Kerem, 2026-09-19).
+- **Goldens.** `uv run pytest`: every paper's fingerprint (quick mode; paper_odca_des seeds 1-3, paper_lc_logistic seed 42, D-2026-10-03-2, with one MOBIL and one Gipps run, D-2026-10-03-3; paper_odca_platoon S3_dcp_70av seed 42, D-2026-11-05-2; stats and counters) matches exactly. During the code-quality refactor a golden may change: re-record it and state which values moved and why (Kerem, 2026-09-19).
 - **A change that moves a paper's numbers** gets its own `D-` id here and is noted in that paper's STATUS, whose quoted numbers are rechecked there.
 - Only quick goldens run per change; full paper reruns belong to the papers.
 

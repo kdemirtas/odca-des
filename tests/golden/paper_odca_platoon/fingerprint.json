@@ -1,0 +1,158 @@
+{
+ "runs": {
+  "S3_dcp_70av_seed42": {
+   "stats": {
+    "av_share": 0.6992647058823529,
+    "av_share_by_lane": {
+     "1": 0.7203579418344519,
+     "2": 0.6616989567809239,
+     "3": 0.6838602329450915,
+     "4": 0.7274368231046932
+    },
+    "av_unit_size_by_lane": {
+     "1": 1.3333333333333333,
+     "2": 1.515358361774744,
+     "3": 1.5992217898832686,
+     "4": 1.580392156862745
+    },
+    "avg_av_unit_size": 1.4767080745341614,
+    "avg_cells_held": 4.957939667776232,
+    "avg_delay": 6.137832540007469,
+    "avg_lc_per_km": 0.40984539330699976,
+    "avg_origin_wait": 0.4853726947379501,
+    "avg_travel_time": 136.28830706547564,
+    "num_completed": 924,
+    "num_never_entered": 2,
+    "pct_delayed_20s": 2.5974025974025974,
+    "platoon_avg_av_unit_size_on_road": 1.4296416336162168,
+    "platoon_avg_platoon_size": 2.5021122210625713,
+    "platoon_chain_breaks": 7,
+    "platoon_destination_splits": 140,
+    "platoon_end_of_trip_dissolutions": 147,
+    "platoon_formations_by_size_destinations": {
+     "2,1": 198,
+     "2,2": 152,
+     "3,1": 16,
+     "3,2": 15,
+     "4,2": 11
+    },
+    "platoon_lane_changes_blocked": 0,
+    "platoon_max_platoon_size": 8,
+    "platoon_num_active_platoons": 39,
+    "platoon_num_platooned_vehicles": 96,
+    "platoon_size_one_dissolutions": 167,
+    "platoon_total_formations": 392,
+    "platoon_total_merges": 77,
+    "platoon_train_lane_changes": 3,
+    "platoon_train_lc_attempts_by_size": {
+     "2": 79,
+     "3": 2
+    },
+    "platoon_train_lc_granted_by_size": {
+     "2": 2,
+     "3": 1
+    },
+    "platoon_train_lc_refused_exit_side": 1376,
+    "platoon_train_lc_refused_room": 78,
+    "section_counts": [
+     {
+      "cell_idx": 200,
+      "lane_idx": 1,
+      "vehicles": 311,
+      "avs": 238,
+      "units": 203
+     },
+     {
+      "cell_idx": 200,
+      "lane_idx": 2,
+      "vehicles": 264,
+      "avs": 179,
+      "units": 134
+     },
+     {
+      "cell_idx": 200,
+      "lane_idx": 3,
+      "vehicles": 228,
+      "avs": 150,
+      "units": 101
+     },
+     {
+      "cell_idx": 200,
+      "lane_idx": 4,
+      "vehicles": 202,
+      "avs": 145,
+      "units": 102
+     },
+     {
+      "cell_idx": 475,
+      "lane_idx": 1,
+      "vehicles": 356,
+      "avs": 255,
+      "units": 187
+     },
+     {
+      "cell_idx": 475,
+      "lane_idx": 2,
+      "vehicles": 225,
+      "avs": 141,
+      "units": 87
+     },
+     {
+      "cell_idx": 475,
+      "lane_idx": 3,
+      "vehicles": 197,
+      "avs": 135,
+      "units": 81
+     },
+     {
+      "cell_idx": 475,
+      "lane_idx": 4,
+      "vehicles": 185,
+      "avs": 135,
+      "units": 82
+     },
+     {
+      "cell_idx": 650,
+      "lane_idx": 1,
+      "vehicles": 227,
+      "avs": 151,
+      "units": 93
+     },
+     {
+      "cell_idx": 650,
+      "lane_idx": 2,
+      "vehicles": 182,
+      "avs": 124,
+      "units": 72
+     },
+     {
+      "cell_idx": 650,
+      "lane_idx": 3,
+      "vehicles": 176,
+      "avs": 126,
+      "units": 75
+     },
+     {
+      "cell_idx": 650,
+      "lane_idx": 4,
+      "vehicles": 167,
+      "avs": 123,
+      "units": 71
+     }
+    ],
+    "throughput_per_hour": 6160.0
+   },
+   "counters": {
+    "av_controller_updates": 5999,
+    "cf_evaluations": 501589,
+    "gap_rejections": 12435,
+    "lane_changes": 2137,
+    "lc_patience_failures": 0,
+    "missed_exits": 52,
+    "simpy_events": 5989223,
+    "slowdowns": 4408,
+    "speed_evaluations": 1080527
+   }
+  }
+ }
+}

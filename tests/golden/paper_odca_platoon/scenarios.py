@@ -32,12 +32,19 @@ for _strategy, _prefix in STRATEGY_LABELS.items():
 # on-ramp 1 (100) to off-ramp 1 (300), on-ramp 2 (400) to off-ramp 2 (550), off-ramp 2 to 3 (750)
 MBAR_SECTIONS = [200, 475, 650]
 
+# the demand sweep (D-2026-11-06-1): every OD pair times these factors, so 1,800, 2,100 and
+# 2,400 veh/h per mainline lane; B2 and the platooning scenarios only
+BASE_LANE_DEMAND = 1500.0   # veh/h per mainline lane in configs/demand.yaml
+DEMAND_SCALES = [1.2, 1.4, 1.6]
+DEMAND_SWEEP_SCENARIOS = [s for s in SCENARIOS if s[1] > 0]
+
 GOLDEN_SCENARIO = "S3_dcp_70av"
 GOLDEN_SEED = 42
 
 
 def scenario_config(av_penetration: float, strategy: Optional[str], seed: int,
-                    quick: bool = False, **platoon_overrides) -> SimConfig:
+                    quick: bool = False, demand_scale: float = 1.0,
+                    **platoon_overrides) -> SimConfig:
     """The run config of one scenario replication.
 
     Args:
@@ -45,9 +52,14 @@ def scenario_config(av_penetration: float, strategy: Optional[str], seed: int,
         strategy: naive, emp or dcp; None runs no platooning.
         seed: the run's master seed.
         quick: the short run (QUICK_DURATION, QUICK_WARMUP).
+        demand_scale: every OD pair of the demand times this factor (D-2026-11-06-1).
         **platoon_overrides: new values for `PlatoonConfig` fields (sensitivity sweeps).
     """
     config = sim_config(av_penetration=av_penetration, seed=seed)
+    if demand_scale != 1.0:
+        demand = {origin: {dest: rate * demand_scale for dest, rate in pairs.items()}
+                  for origin, pairs in config.demand.items()}
+        config = replace(config, demand=demand)
     if strategy is not None:
         controller = replace(config.controller,
                              platoon=platoon_config(strategy, **platoon_overrides))
@@ -83,7 +95,8 @@ def measure(result: SimulationResult) -> dict:
 
 
 def run_scenario(label: str, av_penetration: float, strategy: Optional[str], seed: int,
-                 quick: bool = False, **platoon_overrides) -> dict:
+                 quick: bool = False, demand_scale: float = 1.0,
+                 **platoon_overrides) -> dict:
     """Run one scenario replication and return its result row.
 
     Args:
@@ -92,9 +105,11 @@ def run_scenario(label: str, av_penetration: float, strategy: Optional[str], see
         strategy: naive, emp or dcp; None runs no platooning.
         seed: the run's master seed.
         quick: the short run.
+        demand_scale: every OD pair of the demand times this factor (D-2026-11-06-1).
         **platoon_overrides: new values for `PlatoonConfig` fields (sensitivity sweeps).
     """
-    config = scenario_config(av_penetration, strategy, seed, quick, **platoon_overrides)
+    config = scenario_config(av_penetration, strategy, seed, quick, demand_scale,
+                             **platoon_overrides)
     started = time.time()
     stats = measure(Simulation(config).run())
     stats["wall_time_s"] = round(time.time() - started, 2)
@@ -102,6 +117,8 @@ def run_scenario(label: str, av_penetration: float, strategy: Optional[str], see
     stats["strategy"] = strategy or "none"
     stats["seed"] = seed
     stats["label"] = label
+    stats["demand_scale"] = demand_scale
+    stats["lane_demand"] = BASE_LANE_DEMAND * demand_scale
     return stats
 
 

@@ -2,35 +2,24 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: train platooning added on branch `claudine/2026-11-05-platoon-loop` (2026-11-05)
-- `odca.platoon`, off by default (D-2026-11-05-1, -3 to -6; option B of the paper's M3-2 is D-2026-11-05-6); paper-odca-platoon switched over with
-  its golden (D-2026-11-05-2). Every earlier golden unchanged. Open calls: A-2026-11-05-1, -2.
-- Untested: platooning on a ring road (`make_periodic`), with incidents (a platoon facing a blocked
-  lane with `train_lane_changes` off cannot leave it as a unit), with vehicles longer than one cell.
-
-## Before that: release 0.2.0 merged, not yet tagged (2026-11-03)
-- `main` is 0.2.0 (`pyproject.toml`, `uv.lock`, `.zenodo.json`; D-2026-11-03-1). No number moved
-  since 0.1.0. The tag and GitHub release are not made yet. Publishing the release makes the
-  Zenodo GitHub link add 0.2.0 under concept 23117203, metadata from `.zenodo.json`.
-- CHANGELOG has no `## Unreleased` heading until the tag exists: add it back after tagging.
-- A vehicle holds as many cells as its length: `VehicleConfig.length`, default 1
-  (D-2026-10-03-8). The body follows the front through a lane change; no second lane change
-  while the body is in two lanes, and the body drives out behind the front at the exit
-  (D-2026-10-03-9). Length above 1 is refused with `stops_for_offramp` on (D-2026-10-03-10, B17).
-- Every golden is unchanged at length 1. Open calls of mine: A-2026-10-03-3 (whole cells), -4
-  (the rear cell's lock opens tau after the front takes its next cell), -5 (the front is the
-  position, metrics stay on the front).
-- Not tested at length above 1: ring road, lane-change patience failure, lateral escape,
-  autonomous drivers, a vehicle reaching its destination before its full length is on the road.
-- 0.1.0 is tagged at `23bbe99`, Zenodo 10.5281/zenodo.23117204. One `main` (D-2026-10-03-7).
-- paper-odca-des and paper-lc-logistic install this package as an editable path dependency, so
-  they follow `main`, not a tag. Their goldens in `tests/golden/` are what hold their numbers.
-- Backlog trimmed by Kerem on 2026-10-03: B5 to B9 and B14 dropped. `dlc_requires_advantage`
-  goes at the last paper's switch-over (D-2026-10-02-1, B13).
-**RESUME:** tag `v0.2.0` on the release PR's merge commit and publish the GitHub release
-`odca-des 0.2.0`; then both papers cite the new version DOI. Kerem closes A-2026-10-03-3 to -5. BACKLOG:
-B15 (saturation flow, remeasure first), B12, B1; B16 (mixed fleet) and B17 are ready to promote;
-B3 (PyPI) last. B2 and B13 wait on the platoon papers (paper-odca-platoon switched 2026-11-05; adaptive-platoon still frozen).
+## CURRENT: ring roads with exits, shipped (2026-11-08)
+- `NetworkConfig.ring`, off by default (D-2026-11-08-1), for paper-odca-platoon's ring runs with
+  exits. A missed ring exit: at most `missed_exit_laps` more laps (default 1), then the next
+  exit ahead (D-2026-11-08-2). `make_periodic` alone is unchanged (D-2026-11-08-3).
+- Proof: `uv run pytest -n 4` 177 passed, 3 skipped, goldens exact; `tests/output_digest.py`
+  (`--base <dir>` with main's `odca`, `--shard i/n`): 43 runs identical to main.
+- Untested on a ring: vehicles longer than one cell, incidents, `stops_for_offramp`, demand
+  through origins, `train_lane_changes` across cell 0.
+- Also unreleased: train platooning, off by default (D-2026-11-05-1 to -6). Every golden holds.
+- Releases: 0.1.0 tagged at `23bbe99` (Zenodo 10.5281/zenodo.23117204); `main` was 0.2.0 at PR #41
+  (D-2026-11-03-1), cited by two papers under review and must not move. Kerem picks the next number.
+- paper-odca-des and paper-lc-logistic install this package editable, so they follow `main`;
+  their goldens in `tests/golden/` hold their numbers. Vehicle length is `VehicleConfig.length`,
+  default 1 (D-2026-10-03-8 to -10).
+**RESUME:** paper-odca-platoon can now build its ring runs with `NetworkConfig.ring` (and
+`missed_exit_laps`). Kerem picks the release number for the ring and platoon work. Still open: tag
+`v0.2.0` if not yet done; A-2026-10-03-3 to -5 and A-2026-11-05-1, -2. BACKLOG: B15, B12, B1;
+B16 and B17 ready to promote; B3 (PyPI) last.
 
 ## NEXT STEPS (pick up here)
 None ranked. A capability a paper needs is added here, off by default, with its golden

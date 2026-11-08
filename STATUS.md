@@ -1,7 +1,12 @@
 # odca-des: status
 > Read `PROJECT.md` first (the spec). This file = where things stand and what to do next. Entries
-> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-05**.
+> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-08**.
 > **Current wave:** extraction and refactor, since 2026-09-19
+
+> **2026-11-08: ring roads with exits, off by default. Shipped as PR #44**
+> For paper-odca-platoon's ring runs with exits (paper-odca-platoon:D-2026-11-08-6); Kerem: "We shouldn't change the original main logic." `NetworkConfig.ring` (D-2026-11-08-1): lanes joined end to end, distances to an exit forward around the ring (`Lane.cells_ahead`, `Lane.spacing`, `Vehicle.cells_to_destination`), every ring exit an off-ramp; the platoon controller measures the same way, so a two-lane ring records destination splits. A missed ring exit: at most `missed_exit_laps` more laps (default 1), then the next exit ahead (D-2026-11-08-2, Kerem's correction of A-2026-11-08-1); A-2 and A-3 accepted (D-2026-11-08-3, D-2026-11-08-4).
+> Proof: `uv run pytest -n 4` 177 passed, 3 skipped, goldens exact; `tests/test_ring.py` 13. New `tests/output_digest.py` on main's code and the branch: 43 runs, 36,964 vehicles, 20,071,825 trajectory records, identical; only the config echo gains `ring: false` and `missed_exit_laps: 1`.
+> ⏳ Release number is Kerem's call (0.2.0 does not move).
 
 > **2026-11-05: train platooning added, off by default; paper-odca-platoon switched over. Branch `claudine/2026-11-05-platoon-loop`, not yet shipped.**
 > `odca.platoon` (D-2026-11-05-1): `PlatoonConfig` on `ControllerConfig.platoon` (None by default), `PlatoonDriver`, `PlatoonController`, `PlatoonStatistics`, section-count m-bar (D-2026-11-05-5). Ported from paper-odca-platoon's frozen copy with the critic's bug fixes against the paper's Section 4 (D-2026-11-05-3): front leader, no vehicle inside a train, close-up to adjacent cells, release 0 for every member but the tail, a member leaves at its own destination, three departure counters, time-averaged sizes. Whole-train lane changes behind `train_lane_changes`, off by default, on in the paper (D-2026-11-05-4). Core hooks: `Driver.release_tau`, `AutonomousController.driver_for`, `Vehicle.direction_reason`, `Simulation.seed_platoons`, `SimulationResult.platoons`.

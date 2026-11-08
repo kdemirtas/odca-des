@@ -55,11 +55,45 @@ class Lane:
         return self.cells[-1]
 
     def make_periodic(self):
-        """Join the last cell to the first: a ring road. Relinks the freeway's neighbours."""
+        """Join the last cell to the first. Relinks the freeway's neighbours.
+
+        Only the links change: distances and exits stay those of an open road. A ring road
+        with exits is `NetworkConfig.ring` (D-2026-11-08-1).
+        """
         self.cells[-1].next = self.cells[0]
         self.cells[0].previous = self.cells[-1]
         if self.freeway is not None:
             self.freeway.link_neighbours()
+
+    @property
+    def ring(self) -> bool:
+        """Whether this lane is part of a ring road (`NetworkConfig.ring`, D-2026-11-08-1)."""
+        return self.freeway is not None and self.freeway.ring
+
+    def cells_ahead(self, from_idx: int, to_idx: int) -> int:
+        """Cells from cell `from_idx` forward to cell `to_idx`: `to_idx - from_idx`, negative
+        when `to_idx` lies behind; on a ring, taken forward around the ring, 0 to
+        num_cells - 1 (D-2026-11-08-1).
+
+        Args:
+            from_idx: the cell counted from.
+            to_idx: the cell counted to.
+        """
+        if self.ring:
+            return (to_idx - from_idx) % self.num_cells
+        return to_idx - from_idx
+
+    def spacing(self, behind_idx: int, ahead_idx: int) -> int:
+        """Cells from a vehicle at `behind_idx` to one at `ahead_idx`: their index difference
+        in size on an open road, taken forward around the ring on a ring (D-2026-11-08-1).
+
+        Args:
+            behind_idx: the rear vehicle's cell.
+            ahead_idx: the front vehicle's cell.
+        """
+        if self.ring:
+            return (ahead_idx - behind_idx) % self.num_cells
+        return abs(ahead_idx - behind_idx)
 
     def __repr__(self):
         return f"Lane({self.idx}, cells={self.num_cells})"

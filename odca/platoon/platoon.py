@@ -172,6 +172,9 @@ class Platoon:
             return None
         cells = lead_target.lane.cells
         first, last = tail_cell.idx + 1, lead_target.idx
+        if lead_target.lane.ring and first > last:
+            # the train spans the ring's cell 0 (D-2026-11-08-1)
+            return cells[first:] + cells[:last + 1]
         if first > last or last >= len(cells):
             return None
         return cells[first:last + 1]

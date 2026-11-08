@@ -295,7 +295,8 @@ class PlatoonController(AutonomousController):
         if (destination is None or member.cell is None
                 or member.destination_lane in (None, member.cell.lane.idx)):
             return False
-        return 0 < destination - member.cell.idx <= self.platoon_cfg.split_lookahead
+        # around the ring on a ring road (D-2026-11-08-1)
+        return 0 < member.cells_to_destination() <= self.platoon_cfg.split_lookahead
 
     def _leave_for_destination(self, platoon: Platoon, leaving: List[Vehicle]):
         """Let `leaving` go for their destinations, counting what the departure is
@@ -359,6 +360,8 @@ class PlatoonController(AutonomousController):
                 solo_by_lane.setdefault(vehicle.cell.lane.idx, []).append(vehicle)
         for lane_idx in sorted(solo_by_lane):
             solos = sorted(solo_by_lane[lane_idx], key=lambda v: v.cell.idx, reverse=True)
+            if solos[0].cell.lane.ring:
+                solos = _front_first_on_ring(solos, lambda v: v.cell, lambda v: v.cell)
             self._form_in_lane(solos)
 
     def _form_in_lane(self, solos: List[Vehicle]):
@@ -382,7 +385,7 @@ class PlatoonController(AutonomousController):
                 if candidate.id in used:
                     continue
                 last = followers[-1] if followers else leader
-                if last.cell.idx - candidate.cell.idx > cfg.formation_gap:
+                if _cells_apart(candidate, last) > cfg.formation_gap:
                     break
                 if not _clear_between(last, candidate):
                     break
@@ -415,7 +418,11 @@ class PlatoonController(AutonomousController):
             return False
         if self.strategy is PlatoonStrategy.EMP:
             return d1 == d2
-        return abs(d1 - d2) <= self.platoon_cfg.dest_cluster_threshold
+        apart = abs(d1 - d2)
+        lane = first.cell.lane if first.cell is not None else None
+        if lane is not None and lane.ring:
+            apart = min(apart, lane.num_cells - apart)  # the shorter way round (D-2026-11-08-1)
+        return apart <= self.platoon_cfg.dest_cluster_threshold
 
     def _sufficient_shared_path(self, first: Vehicle, second: Vehicle) -> bool:
         """Whether the two still drive `min_shared_path` cells together.
@@ -432,6 +439,12 @@ class PlatoonController(AutonomousController):
         d1, d2 = first.destination_cell_idx, second.destination_cell_idx
         if d1 is None or d2 is None:
             return True
+        lane = second.cell.lane
+        if lane.ring:
+            # `second` is the one behind; the nearer exit is the one it reaches first
+            # (D-2026-11-08-1)
+            shared = min(lane.cells_ahead(second.cell.idx, d) for d in (d1, d2))
+            return shared >= self.platoon_cfg.min_shared_path
         shared = min(d1, d2) - min(first.cell.idx, second.cell.idx)
         return shared >= self.platoon_cfg.min_shared_path
 
@@ -450,10 +463,13 @@ class PlatoonController(AutonomousController):
                 by_lane.setdefault(lane, []).append(platoon)
         for lane_idx in sorted(by_lane):
             platoons = sorted(by_lane[lane_idx], key=lambda p: p.leader.cell.idx, reverse=True)
+            if platoons[0].leader.cell.lane.ring:
+                platoons = _front_first_on_ring(platoons, lambda p: p.leader.cell,
+                                                lambda p: p.tail.cell)
             i = 0
             while i < len(platoons) - 1:
                 ahead, behind = platoons[i], platoons[i + 1]
-                gap = ahead.tail.cell.idx - behind.leader.cell.idx
+                gap = _cells_apart(behind.leader, ahead.tail)
                 if (gap > cfg.formation_gap
                         or not _clear_between(ahead.tail, behind.leader)
                         or ahead.size + behind.size > cfg.max_platoon_size
@@ -516,4 +532,41 @@ def _clear_between(ahead: Vehicle, behind: Vehicle) -> bool:
         behind: a vehicle in the same lane, behind it.
     """
     cells = behind.cell.lane.cells
+    if behind.cell.lane.ring and behind.cell.idx > ahead.cell.idx:
+        # the stretch between them passes the ring's cell 0 (D-2026-11-08-1)
+        between = cells[behind.cell.idx + 1:] + cells[:ahead.cell.idx]
+        return all(c.vehicle is None for c in between)
     return all(c.vehicle is None for c in cells[behind.cell.idx + 1:ahead.cell.idx])
+
+
+def _cells_apart(behind: Vehicle, ahead: Vehicle) -> int:
+    """Cells from `behind` forward to `ahead`: their index difference, taken around the ring
+    on a ring road (D-2026-11-08-1).
+
+    Args:
+        behind: a vehicle on the road.
+        ahead: a vehicle in the same lane, ahead of it.
+    """
+    if behind.cell.lane.ring:
+        return behind.cell.lane.cells_ahead(behind.cell.idx, ahead.cell.idx)
+    return ahead.cell.idx - behind.cell.idx
+
+
+def _front_first_on_ring(units: List, front_cell, rear_cell) -> List:
+    """`units` of one ring lane, sorted by cell index from the highest, put front first: the
+    list starts with the unit that has the longest empty stretch ahead of it, so units that
+    follow each other across the ring's cell 0 are next to each other (D-2026-11-08-1).
+
+    Args:
+        units: vehicles or platoons of one lane, highest cell index first.
+        front_cell: a unit's front cell.
+        rear_cell: a unit's rear cell.
+    """
+    if len(units) < 2:
+        return units
+    lane = front_cell(units[0]).lane
+    # the unit ahead of units[k] is units[k - 1]; ahead of units[0] is the last, across cell 0
+    room = [lane.cells_ahead(front_cell(unit).idx, rear_cell(units[k - 1]).idx)
+            for k, unit in enumerate(units)]
+    start = max(range(len(units)), key=lambda k: room[k])
+    return units[start:] + units[:start]

@@ -2,7 +2,18 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: train platooning added on branch `claudine/2026-11-05-platoon-loop` (2026-11-05)
+## CURRENT: ring roads with exits on branch `claudine/2026-11-08-205548-odca-des` (2026-11-08)
+- `NetworkConfig.ring`, off by default (D-2026-11-08-1), for paper-odca-platoon's ring runs with
+  exits (its D-2026-11-08-6). Committed, not pushed: shipping waits for Kerem's OK.
+- Proof: `uv run pytest`: 173 passed, 3 skipped (viewer extra), all three goldens exact.
+  `tests/output_digest.py` on main's code (`--base`, a copy at `build/base`, git-ignored) and on
+  the branch: 43 runs (every golden run, the 13 platoon scenarios, a `make_periodic` ring),
+  36,964 vehicles, 20,071,825 trajectory records, identical. Only the config echo gains `ring: false`.
+- Open calls: A-2026-11-08-1 to -3. Kerem picks the release number; 0.2.0 does not move.
+- Untested on a ring: vehicles longer than one cell, incidents, `stops_for_offramp`, demand
+  entering through origins (the tests place vehicles), `train_lane_changes` across cell 0.
+
+## Before that: train platooning added on branch `claudine/2026-11-05-platoon-loop` (2026-11-05)
 - `odca.platoon`, off by default (D-2026-11-05-1, -3 to -6; option B of the paper's M3-2 is D-2026-11-05-6); paper-odca-platoon switched over with
   its golden (D-2026-11-05-2). Every earlier golden unchanged. Open calls: A-2026-11-05-1, -2.
 - Untested: platooning on a ring road (`make_periodic`), with incidents (a platoon facing a blocked

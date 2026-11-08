@@ -1,5 +1,5 @@
 # ARCHITECTURE: odca-des
-> **Owned by `/architect`. Two pages max. Last updated 2026-11-05.** Code follows this file; when
+> **Owned by `/architect`. Two pages max. Last updated 2026-11-08.** Code follows this file; when
 > they disagree, either the code is wrong or this file is, and a `DECISIONS.md` entry says which.
 
 ## Purpose
@@ -55,7 +55,8 @@ fields.
 | `VehicleConfig`, `HumanDriverConfig`, `AutonomousDriverConfig`, `ControllerConfig` | one class's parameters each, population values (means and spreads for humans); validated by omegaconf once per run, frozen dataclasses after | `odca/params.py`. Lane-change models are a family: `BaseLaneChangeConfig` (gaps, cooldown, and the one switch `dlc_requires_advantage`: off by default, on in paper-odca-des, deleted at the last paper's switch-over, D-2026-09-22-1, D-2026-10-02-1), `LogisticLaneChangeConfig`. `look_ahead` is the forward range and `look_behind` the rear one (D-2026-10-02-2). The movement resolution and escape speed are `VehicleConfig` fields, the decision constants (patience, re-evaluation ratio, blockage scan, creep and slowdown floors) `DriverConfig` fields (D-2026-09-19-30) |
 | `DriverTraits` | one driver's sampled values (tau, action interval, slowdown probability), drawn once at creation by `TraitSampler` | `odca/entity/driver.py` |
 | `SimConfig`, `NetworkConfig`, `ODFlow`, `Destination` | one run: geometry, demand, the two vehicle types, AV penetration, seed, duration, warm-up; values come from the paper's YAML | `odca/params.py` |
-| `Cell`, `Lane`, `Freeway` | the spatial resources; a cell's neighbour links are set when the road is built, reshaping a road relinks it (`Lane.make_periodic`, D-2026-09-19-35) | `odca/infrastructure/` |
+| `Cell`, `Lane`, `Freeway` | the spatial resources; a cell's neighbour links are set when the road is built, reshaping a road relinks it (`Lane.make_periodic`, links only, D-2026-09-19-35) | `odca/infrastructure/` |
+| ring road | `NetworkConfig.ring`, off by default: every lane joined end to end, every destination an off-ramp, and every distance along a lane taken by `Lane.cells_ahead` and `Lane.spacing`, forward around the ring on a ring and the plain index difference otherwise; `Vehicle.cells_to_destination` is the one distance to an exit (arrival, missed exit, MLC ratio, stop line, platoon split). A missed exit on a ring is a lap away (D-2026-11-08-1) | `odca/params.py`, `odca/infrastructure/lane.py`, `odca/entity/vehicle.py`; `tests/test_ring.py` |
 | `Origin`, `Destination` (with `OriginCell`, `DestinationCell`) | named places where trips start and end, declared in the network config; an endpoint cell is transparent unless given a speed limit, which meters inflow or throttles outflow | `odca/infrastructure/` (D-2026-09-19-26, -27) |
 | demand table, `IncidentConfig` | veh/h per (origin, destination) name pair, one generator per pair; incidents block or slow cells for a time, then restore them | `odca/params.py`, `odca/infrastructure/incident.py` (D-2026-09-19-26, -28) |
 | `Vehicle` | one vehicle's physical side: position label (`cell` is the front; a vehicle of `VehicleConfig.length` cells is in every cell from its front to its rear, the body following the path the front took, D-2026-10-03-8), cell lock with delayed release (reads tau from its driver), movement, exit, trajectory (the front's passages), move counters; `kind` names its driver's kind | `odca/entity/vehicle.py` |
@@ -87,6 +88,7 @@ How a change is shown to be neutral, and how a change that is meant to move a nu
 to move only that number.
 
 - **Goldens.** `uv run pytest`: every paper's fingerprint (quick mode; paper_odca_des seeds 1-3, paper_lc_logistic seed 42, D-2026-10-03-2, with one MOBIL and one Gipps run, D-2026-10-03-3; paper_odca_platoon S3_dcp_70av seed 42, D-2026-11-05-2; stats and counters) matches exactly. During the code-quality refactor a golden may change: re-record it and state which values moved and why (Kerem, 2026-09-19).
+- **Full outputs, for a change meant to touch no existing run** (D-2026-11-08-1): `uv run python tests/output_digest.py <file>` on the change and, with `--base <dir>` holding the base commit's `odca`, on the base (`--shard i/n` splits the runs over processes); the digests must be equal. It digests every vehicle's trajectory, lane changes and counters, the run counters, platoon statistics and config, for every golden run, the 13 paper-odca-platoon scenarios (quick, seed 42) and a `make_periodic` ring.
 - **A change that moves a paper's numbers** gets its own `D-` id here and is noted in that paper's STATUS, whose quoted numbers are rechecked there.
 - Only quick goldens run per change; full paper reruns belong to the papers.
 

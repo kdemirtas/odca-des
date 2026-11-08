@@ -1,7 +1,13 @@
 # odca-des: status
 > Read `PROJECT.md` first (the spec). This file = where things stand and what to do next. Entries
-> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-05**.
+> older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-08**.
 > **Current wave:** extraction and refactor, since 2026-09-19
+
+> **2026-11-08: ring roads with exits, off by default. Branch `claudine/2026-11-08-205548-odca-des`, committed, not pushed; waits for Kerem's OK.**
+> Kerem (via Claudine): paper-odca-platoon needs ring runs with exits to test its destination-split formula (its D-2026-11-08-6); "We can expand odca. We shouldn't change the original main logic." `NetworkConfig.ring` (False by default, D-2026-11-08-1): lanes joined end to end, distances to an exit forward around the ring (`Lane.cells_ahead`, `Lane.spacing`, `Vehicle.cells_to_destination`), every ring destination an off-ramp, a missed exit one more lap. The platoon controller measures the same way, so a two-lane ring records destination splits; formation and merges work across cell 0. `make_periodic` alone is unchanged.
+> Tests: `tests/test_ring.py`, 9 tests (a vehicle passing cell 0 drives on to its exit; distance around the ring; missed exit a lap away; a platoon formed across cell 0; a split counted on a two-lane ring, also in a full run). Unit suite: 143 passed, 3 skipped (viewer extra absent).
+> Proof of neutrality: `uv run pytest`: 173 passed, 3 skipped, the three goldens exact. Full-output digests (`tests/output_digest.py`, new: every vehicle's trajectory, lane changes and counters, run counters, platoon statistics, config) on main's code and on the branch: 43 runs, 36,964 vehicles, 20,071,825 trajectory records, identical. The config echo gains `ring: false`, nothing else moves.
+> ⏳ My calls A-2026-11-08-1 to -3 are open for Kerem. Release number for this work is his call (0.2.0 does not move).
 
 > **2026-11-05: train platooning added, off by default; paper-odca-platoon switched over. Branch `claudine/2026-11-05-platoon-loop`, not yet shipped.**
 > `odca.platoon` (D-2026-11-05-1): `PlatoonConfig` on `ControllerConfig.platoon` (None by default), `PlatoonDriver`, `PlatoonController`, `PlatoonStatistics`, section-count m-bar (D-2026-11-05-5). Ported from paper-odca-platoon's frozen copy with the critic's bug fixes against the paper's Section 4 (D-2026-11-05-3): front leader, no vehicle inside a train, close-up to adjacent cells, release 0 for every member but the tail, a member leaves at its own destination, three departure counters, time-averaged sizes. Whole-train lane changes behind `train_lane_changes`, off by default, on in the paper (D-2026-11-05-4). Core hooks: `Driver.release_tau`, `AutonomousController.driver_for`, `Vehicle.direction_reason`, `Simulation.seed_platoons`, `SimulationResult.platoons`.

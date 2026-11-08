@@ -1,7 +1,7 @@
 """PlatoonController: the autonomous controller with platoon management (D-2026-11-05-1).
 
 Besides deciding for every autonomous driver each `dt`, as `AutonomousController` does, it runs a
-platoon management loop every `PlatoonConfig.dt` with four phases in order:
+platoon management loop every `PlatoonConfig.dt` with five phases in order:
 
 0. the chain is checked: a member that left the road leaves its platoon, and the platoon is cut
    where a member is out of the leader's lane or another vehicle is between two members;
@@ -10,7 +10,12 @@ platoon management loop every `PlatoonConfig.dt` with four phases in order:
    platoon is dissolved;
 2. formation: solo autonomous vehicles in one lane, with no other vehicle between them, are
    grouped, front first;
-3. merges: a platoon just behind another in the same lane, with no vehicle between, joins it.
+3. joins: a solo vehicle just behind a platoon's tail or just ahead of its leader joins it
+   (D-2026-11-08-6);
+4. merges: a platoon just behind another in the same lane, with no vehicle between, joins it.
+
+Formation and joins leave out a vehicle the split phase would take out again: one within
+`split_lookahead` cells of its destination and outside its destination lane (D-2026-11-08-5).
 
 The strategy decides which vehicles are compatible: naive (any two), emp (the same destination)
 or dcp (destinations at most `dest_cluster_threshold` cells apart). Platooning draws no random
@@ -63,7 +68,8 @@ class PlatoonStatistics:
     max_platoon_size: int         # the largest platoon sampled after the warm-up
     total_formations: int
     total_merges: int
-    destination_splits: int       # cuts separating different destinations, once per
+    total_joins: int              # solo vehicles that joined a platoon (D-2026-11-08-6)
+    destination_splits: int      # cuts separating different destinations, once per
                                   # destination and platoon line (0 under emp)
     end_of_trip_dissolutions: int # platoons ended with no member bound elsewhere
     size_one_dissolutions: int    # platoons left with one vehicle by a split or a cut
@@ -111,6 +117,7 @@ class PlatoonController(AutonomousController):
         self._unit_av_sum = 0       # AVs on the road, summed
         self.count_formations = 0
         self.count_merges = 0
+        self.count_joins = 0
         self.count_destination_splits = 0
         self.count_end_of_trip_dissolutions = 0
         self.count_size_one_dissolutions = 0
@@ -151,6 +158,7 @@ class PlatoonController(AutonomousController):
                 self._check_chains()
                 self._evaluate_splits()
                 self._evaluate_formations(on_road)
+                self._evaluate_joins(on_road)
                 self._evaluate_merges()
             if self.env.now >= self.warmup:
                 self._sample_sizes(on_road)
@@ -355,14 +363,23 @@ class PlatoonController(AutonomousController):
             on_road: the autonomous vehicles on the road.
         """
         solo_by_lane: Dict[int, List[Vehicle]] = {}
-        for vehicle in on_road:
-            if vehicle.driver.platoon is None:
-                solo_by_lane.setdefault(vehicle.cell.lane.idx, []).append(vehicle)
+        for vehicle in self._groupable_solos(on_road):
+            solo_by_lane.setdefault(vehicle.cell.lane.idx, []).append(vehicle)
         for lane_idx in sorted(solo_by_lane):
             solos = sorted(solo_by_lane[lane_idx], key=lambda v: v.cell.idx, reverse=True)
             if solos[0].cell.lane.ring:
                 solos = _front_first_on_ring(solos, lambda v: v.cell, lambda v: v.cell)
             self._form_in_lane(solos)
+
+    def _groupable_solos(self, on_road: List[Vehicle]) -> List[Vehicle]:
+        """The solo vehicles on the road that may join a platoon: not one the split phase would
+        take out again, a vehicle near its exit and outside the exit lane (D-2026-11-08-5).
+
+        Args:
+            on_road: the autonomous vehicles on the road.
+        """
+        return [v for v in on_road
+                if v.driver.platoon is None and v.cell is not None and not self._must_leave(v)]
 
     def _form_in_lane(self, solos: List[Vehicle]):
         """Greedy formation in one lane, front first.
@@ -449,7 +466,80 @@ class PlatoonController(AutonomousController):
         return shared >= self.platoon_cfg.min_shared_path
 
     # ------------------------------------------------------------------
-    # Phase 3: merges
+    # Phase 3: joins
+    # ------------------------------------------------------------------
+
+    def _evaluate_joins(self, on_road: List[Vehicle]):
+        """A solo vehicle next to a platoon in its lane joins it under the formation rules
+        (D-2026-11-08-6): one just behind the tail joins as the new tail, one just ahead of the
+        leader becomes the new leader.
+
+        Next to each other means within `formation_gap` cells with no other vehicle between. The
+        platoon stays within `max_platoon_size`, and the solo vehicle and the platoon pass the
+        checks a leader and a follower pass at formation: speed difference, compatibility and
+        shared path, with the joining vehicle as the leader when it joins in front.
+
+        Args:
+            on_road: the autonomous vehicles on the road.
+        """
+        units_by_lane: Dict[int, List] = {}
+        for platoon in self.active_platoons():
+            lane = platoon.lane_idx()
+            if lane is not None:
+                units_by_lane.setdefault(lane, []).append(platoon)
+        for vehicle in self._groupable_solos(on_road):
+            units_by_lane.setdefault(vehicle.cell.lane.idx, []).append(vehicle)
+        for lane_idx in sorted(units_by_lane):
+            units = sorted(units_by_lane[lane_idx], key=lambda u: _front(u).cell.idx,
+                           reverse=True)
+            if _front(units[0]).cell.lane.ring:
+                units = _front_first_on_ring(units, lambda u: _front(u).cell,
+                                             lambda u: _rear(u).cell)
+            i = 0
+            while i < len(units) - 1:
+                ahead, behind = units[i], units[i + 1]
+                joined = self._join(ahead, behind)
+                if joined is None:
+                    i += 1
+                    continue
+                units[i:i + 2] = [joined]
+
+    def _join(self, ahead, behind) -> Optional[Platoon]:
+        """Join two neighbouring units of one lane when exactly one is a solo vehicle and the
+        formation rules allow it; the platoon they make, or None.
+
+        Args:
+            ahead: a platoon or a solo vehicle.
+            behind: the platoon or solo vehicle just behind it.
+        """
+        if isinstance(ahead, Platoon) == isinstance(behind, Platoon):
+            return None
+        cfg = self.platoon_cfg
+        if (_cells_apart(_front(behind), _rear(ahead)) > cfg.formation_gap
+                or not _clear_between(_rear(ahead), _front(behind))):
+            return None
+        platoon, solo = (ahead, behind) if isinstance(ahead, Platoon) else (behind, ahead)
+        if platoon.size + 1 > cfg.max_platoon_size:
+            return None
+        if platoon is ahead:
+            pairs = [(platoon.leader, solo)]
+        else:
+            pairs = [(solo, member) for member in platoon.members]
+        if not all(abs(follower.speed - leader.speed) <= cfg.formation_speed_diff
+                   and self.compatible(leader, follower)
+                   and self._sufficient_shared_path(leader, follower)
+                   for leader, follower in pairs):
+            return None
+        if platoon is ahead:
+            platoon.join_at_tail(solo)
+        else:
+            platoon.join_at_front(solo)
+        self.count_joins += 1
+        logger.debug("t=%.2f  %s joined %s", self.env.now, solo, platoon)
+        return platoon
+
+    # ------------------------------------------------------------------
+    # Phase 4: merges
     # ------------------------------------------------------------------
 
     def _evaluate_merges(self):
@@ -496,6 +586,7 @@ class PlatoonController(AutonomousController):
             max_platoon_size=self._size_max,
             total_formations=self.count_formations,
             total_merges=self.count_merges,
+            total_joins=self.count_joins,
             destination_splits=self.count_destination_splits,
             end_of_trip_dissolutions=self.count_end_of_trip_dissolutions,
             size_one_dissolutions=self.count_size_one_dissolutions,
@@ -522,6 +613,16 @@ class PlatoonController(AutonomousController):
         self._next_platoon_id += 1
         self.platoons.append(platoon)
         return platoon
+
+
+def _front(unit) -> Vehicle:
+    """The front vehicle of a platoon (its leader) or a solo vehicle itself."""
+    return unit.leader if isinstance(unit, Platoon) else unit
+
+
+def _rear(unit) -> Vehicle:
+    """The rear vehicle of a platoon (its tail) or a solo vehicle itself."""
+    return unit.tail if isinstance(unit, Platoon) else unit
 
 
 def _clear_between(ahead: Vehicle, behind: Vehicle) -> bool:

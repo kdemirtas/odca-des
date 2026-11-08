@@ -88,6 +88,22 @@
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
 
+## D-2026-11-08-4: ring distances in the platoon rules
+
+**What.** On a ring, dcp compares two destinations by the shorter way round, and the shared path is taken from the rear vehicle (the formation candidate) forward to the exit it reaches first.
+
+**Evidence.** Kerem, 2026-11-08, relayed by Claudine, accepting A-2026-11-08-3: "fine".
+
+**Replaces.** none. **Cited by.** `odca/platoon/controller.py`.
+
+## D-2026-11-08-3: `make_periodic` alone stays an open road with joined links
+
+**What.** `Lane.make_periodic` keeps its meaning: links only, open-road distances and exits. Ring distances and exits come only with `NetworkConfig.ring`, so the papers' fundamental-diagram rings do not move.
+
+**Evidence.** Kerem, 2026-11-08, relayed by Claudine, accepting A-2026-11-08-2: "fine".
+
+**Replaces.** none. **Cited by.** `odca/infrastructure/lane.py`, `tests/test_ring.py`.
+
 ## D-2026-11-08-2: a lap limit for a missed ring exit
 
 **What.** `NetworkConfig.missed_exit_laps: int = 1`, read only on a ring. Each time a vehicle moves on from its exit cell outside the exit lane it counts a miss of that exit (and one `missed_exits`); while its misses of that exit are at most `missed_exit_laps` it drives another lap to it, and at the next miss it heads for the nearest other exit ahead around the ring (ties by name), whose own count starts at 0. With the default 1: one more lap, then the next exit. With 0: the next exit at the first miss. A ring with a single exit keeps that exit. `Freeway` refuses a negative value. The run's config echo gains `missed_exit_laps: 1`.

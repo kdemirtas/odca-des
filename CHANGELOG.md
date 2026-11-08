@@ -4,7 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
-- Ring roads with exits, off by default: `NetworkConfig.ring` (D-2026-11-08-1) (2026-11-08, PR number at merge)
+- Ring roads with exits, off by default: `NetworkConfig.ring`, with `missed_exit_laps` (D-2026-11-08-1 to -4) (2026-11-08, PR number at merge)
 - PR #43: Golden: paper_odca_platoon scenarios.py with the demand-scale option (2026-11-07)
 - Add train platooning, off by default, and the paper-odca-platoon golden (D-2026-11-05-1 to -6) (2026-11-05, PR #42)
 

@@ -5,7 +5,8 @@ Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in 
 ## CURRENT: platoon formation fixes, committed, not shipped (2026-11-08 night)
 - Branch `claudine/2026-11-08-224321-odca-des` (55dc4b3): a member split off for its exit is not
   grouped again (D-2026-11-08-5); a solo vehicle joins a platoon next to it, `total_joins`
-  (D-2026-11-08-6). Waits for Kerem's OK, then `/putdown`.
+  (D-2026-11-08-6); the m-bar section count counts every lap on a ring, so an all-AV ring no
+  longer reads 0 (D-2026-11-08-7). Waits for Kerem's OK, then `/putdown`.
 - Every platooning output moves: the paper_odca_platoon golden is re-recorded (destination splits
   140 to 40, m-bar 1.477 to 1.555); the other papers' goldens and full-output digests are identical.
 - For paper-odca-platoon: its freeway and ring numbers made before this are of the old rule.
@@ -24,7 +25,7 @@ Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in 
 - paper-odca-des and paper-lc-logistic install this package editable, so they follow `main`;
   their goldens in `tests/golden/` hold their numbers. Vehicle length is `VehicleConfig.length`,
   default 1 (D-2026-10-03-8 to -10).
-**RESUME:** Kerem's OK on the formation fixes (D-2026-11-08-5, -6), then ship the branch with
+**RESUME:** Kerem's OK on the formation and count fixes (D-2026-11-08-5 to -7), then ship the branch with
 `/putdown` and tell paper-odca-platoon to rerun or cite. paper-odca-platoon can build its ring runs
 with `NetworkConfig.ring` (and `missed_exit_laps`). Kerem picks the release number for the ring and platoon work. Still open: tag
 `v0.2.0` if not yet done; A-2026-10-03-3 to -5 and A-2026-11-05-1, -2. BACKLOG: B15, B12, B1;

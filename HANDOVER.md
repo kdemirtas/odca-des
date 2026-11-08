@@ -2,7 +2,15 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: ring roads with exits, shipped (2026-11-08)
+## CURRENT: platoon formation fixes, committed, not shipped (2026-11-08 night)
+- Branch `claudine/2026-11-08-224321-odca-des` (55dc4b3): a member split off for its exit is not
+  grouped again (D-2026-11-08-5); a solo vehicle joins a platoon next to it, `total_joins`
+  (D-2026-11-08-6). Waits for Kerem's OK, then `/putdown`.
+- Every platooning output moves: the paper_odca_platoon golden is re-recorded (destination splits
+  140 to 40, m-bar 1.477 to 1.555); the other papers' goldens and full-output digests are identical.
+- For paper-odca-platoon: its freeway and ring numbers made before this are of the old rule.
+
+## Before: ring roads with exits, shipped (2026-11-08)
 - `NetworkConfig.ring`, off by default (D-2026-11-08-1), for paper-odca-platoon's ring runs with
   exits. A missed ring exit: at most `missed_exit_laps` more laps (default 1), then the next
   exit ahead (D-2026-11-08-2). `make_periodic` alone is unchanged (D-2026-11-08-3).
@@ -16,8 +24,9 @@ Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in 
 - paper-odca-des and paper-lc-logistic install this package editable, so they follow `main`;
   their goldens in `tests/golden/` hold their numbers. Vehicle length is `VehicleConfig.length`,
   default 1 (D-2026-10-03-8 to -10).
-**RESUME:** paper-odca-platoon can now build its ring runs with `NetworkConfig.ring` (and
-`missed_exit_laps`). Kerem picks the release number for the ring and platoon work. Still open: tag
+**RESUME:** Kerem's OK on the formation fixes (D-2026-11-08-5, -6), then ship the branch with
+`/putdown` and tell paper-odca-platoon to rerun or cite. paper-odca-platoon can build its ring runs
+with `NetworkConfig.ring` (and `missed_exit_laps`). Kerem picks the release number for the ring and platoon work. Still open: tag
 `v0.2.0` if not yet done; A-2026-10-03-3 to -5 and A-2026-11-05-1, -2. BACKLOG: B15, B12, B1;
 B16 and B17 ready to promote; B3 (PyPI) last.
 

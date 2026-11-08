@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-08**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-11-08: ring roads with exits, off by default. Shipped as PR #?**
+> **2026-11-08: ring roads with exits, off by default. Shipped as PR #44**
 > For paper-odca-platoon's ring runs with exits (paper-odca-platoon:D-2026-11-08-6); Kerem: "We shouldn't change the original main logic." `NetworkConfig.ring` (D-2026-11-08-1): lanes joined end to end, distances to an exit forward around the ring (`Lane.cells_ahead`, `Lane.spacing`, `Vehicle.cells_to_destination`), every ring exit an off-ramp; the platoon controller measures the same way, so a two-lane ring records destination splits. A missed ring exit: at most `missed_exit_laps` more laps (default 1), then the next exit ahead (D-2026-11-08-2, Kerem's correction of A-2026-11-08-1); A-2 and A-3 accepted (D-2026-11-08-3, D-2026-11-08-4).
 > Proof: `uv run pytest -n 4` 177 passed, 3 skipped, goldens exact; `tests/test_ring.py` 13. New `tests/output_digest.py` on main's code and the branch: 43 runs, 36,964 vehicles, 20,071,825 trajectory records, identical; only the config echo gains `ring: false` and `missed_exit_laps: 1`.
 > ⏳ Release number is Kerem's call (0.2.0 does not move).

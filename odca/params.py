@@ -239,6 +239,9 @@ class NetworkConfig:
     speed_limit: float             # cells/s
     origins: Dict[str, OriginConfig]
     destinations: Dict[str, DestinationConfig]
+    # a ring road: every lane's last cell leads to its first, distances to an exit are taken
+    # around the ring and every destination is an off-ramp; off by default (D-2026-11-08-1)
+    ring: bool = False
 
     @property
     def onramp_cells(self) -> List[int]:

@@ -334,7 +334,7 @@ class Vehicle:
         self._on_cell_change(self.origin_cell)
 
         if self.destination_cell_idx is not None:
-            self.initial_distance = float(self.destination_cell_idx - self.origin_cell.idx)
+            self.initial_distance = float(self.cells_to_destination())
 
         logger.debug(
             "t=%.2f  %s entered at %s, dest_cell=%s",
@@ -363,14 +363,42 @@ class Vehicle:
                 yield self.env.timeout(self.driver.action_interval)
                 continue
 
+            if self.cell.lane.ring:
+                yield from self._advance_on_ring(target)
+                continue
             yield self.env.process(self._advance_to(target))
 
+    def _advance_on_ring(self, target: Cell):
+        """Move to `target` on a ring road. A vehicle that moves on from the last cell its exit
+        can be taken from (its exit cell index, as on an open road) misses the exit and is a
+        lap away from it (D-2026-11-08-1).
+
+        Args:
+            target: the next cell.
+        """
+        missed = self.cells_to_destination() == 0  # not at its destination: outside the lane
+        yield self.env.process(self._advance_to(target))
+        if missed:
+            self.route_start_idx = self.cell.idx
+            self.count_missed_exits += 1
+
+    def cells_to_destination(self) -> Optional[int]:
+        """Cells from the front's cell to its destination's cell index: the vehicle leaves at
+        1 (or at 0, after a late lane change into the exit lane), and is past its exit below
+        0 on an open road. On a ring it is measured forward around the ring, 0 to
+        num_cells - 1, so an exit is never behind (D-2026-11-08-1). None without a
+        destination or off the road."""
+        if self.cell is None or self.destination_cell_idx is None:
+            return None
+        return self.cell.lane.cells_ahead(self.cell.idx, self.destination_cell_idx)
+
     def _passed_exit(self) -> bool:
-        """Whether the vehicle drove past its off-ramp without reaching the exit lane."""
+        """Whether the vehicle drove past its off-ramp without reaching the exit lane; never on
+        a ring, where the exit comes round again (D-2026-11-08-1)."""
         return (
             self.destination_lane is not None
             and self.destination_cell_idx is not None
-            and self.cell.idx > self.destination_cell_idx
+            and self.cells_to_destination() < 0
         )
 
     def _retarget_missed_exit(self):
@@ -391,7 +419,7 @@ class Vehicle:
         """Check if vehicle has reached its destination cell and lane."""
         return (
             self.destination_cell_idx is not None
-            and self.cell.idx >= self.destination_cell_idx - 1
+            and self.cells_to_destination() <= 1
             and (self.destination_lane is None or self.cell.lane.idx == self.destination_lane)
         )
 

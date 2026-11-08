@@ -240,21 +240,24 @@ class Driver:
 
         With `stops_for_offramp` on, the cell beside the off-ramp is a stop line for a
         vehicle that has not reached the exit lane: it brakes for it as for a blocked cell
-        and waits there for a gap (D-2026-10-03-6). The end of the segment is not a stop line.
+        and waits there for a gap (D-2026-10-03-6). The end of the segment is not a stop line;
+        every exit of a ring is (D-2026-11-08-1).
         """
         vehicle = self.vehicle
         cell = vehicle.cell
         if (not self.cfg.stops_for_offramp or cell is None
                 or vehicle.destination_lane in (None, cell.lane.idx)
                 or vehicle.destination_cell_idx is None
-                or vehicle.destination_cell_idx >= cell.lane.num_cells):
+                or (vehicle.destination_cell_idx >= cell.lane.num_cells
+                    and not cell.lane.ring)):
             return None
-        if cell.idx > vehicle.destination_cell_idx:
+        to_go = vehicle.cells_to_destination()
+        if to_go < 0:
             return None  # past the ramp: the vehicle takes the next one
         # a lane change moves one cell forward, so each lane still to cross sets the line
         # one cell further back
         lanes_after_first = abs(cell.lane.idx - vehicle.destination_lane) - 1
-        distance = max(0, vehicle.destination_cell_idx - lanes_after_first - cell.idx)
+        distance = max(0, to_go - lanes_after_first)
         return distance if distance <= self.blockage_scan else None
 
     def accepts_gap(self, target: Cell) -> bool:
@@ -282,7 +285,7 @@ class Driver:
         front_gap = float("inf")
         req_front = d  # no leader: standstill spacing suffices
         if leader and leader.cell is not None:
-            front_gap = (abs(leader.cell.idx - target.idx)
+            front_gap = (target.lane.spacing(target.idx, leader.cell.idx)
                          - leader.cells_behind_front_in(target.lane))
             ratio = max(0.0, vehicle.speed - leader.speed) / self._v_max
             req_front = d + (self.lane_change.safety_gap_front - d) * ratio
@@ -290,7 +293,7 @@ class Driver:
         rear_gap = float("inf")
         req_rear = d
         if follower and follower.cell is not None:
-            rear_gap = abs(target.idx - follower.cell.idx)
+            rear_gap = target.lane.spacing(follower.cell.idx, target.idx)
             ratio = max(0.0, follower.speed - vehicle.speed) / self._v_max
             req_rear = d + (self.lane_change.safety_gap_rear - d) * ratio
 
@@ -560,10 +563,12 @@ class Driver:
             or vehicle.initial_distance <= 0
         ):
             return 1.0
-        leg_length = vehicle.destination_cell_idx - vehicle.route_start_idx
+        # around the ring on a ring road (D-2026-11-08-1)
+        leg_length = vehicle.cell.lane.cells_ahead(vehicle.route_start_idx,
+                                                   vehicle.destination_cell_idx)
         if leg_length <= 0:
             return 1.0
-        remaining = max(0, vehicle.destination_cell_idx - vehicle.cell.idx)
+        remaining = max(0, vehicle.cells_to_destination())
         return min(1.0, remaining / leg_length)
 
     def _direction_toward_destination(self) -> Direction:

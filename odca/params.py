@@ -242,6 +242,10 @@ class NetworkConfig:
     # a ring road: every lane's last cell leads to its first, distances to an exit are taken
     # around the ring and every destination is an off-ramp; off by default (D-2026-11-08-1)
     ring: bool = False
+    # ring only: extra laps a vehicle drives to try an exit it missed again; once it misses it
+    # that many more times it takes the next exit ahead. 0 takes the next exit at once
+    # (D-2026-11-08-2)
+    missed_exit_laps: int = 1
 
     @property
     def onramp_cells(self) -> List[int]:

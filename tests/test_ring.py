@@ -4,8 +4,11 @@ lane splits off on a two-lane ring as on a freeway."""
 
 from dataclasses import replace
 
+import pytest
 import simpy
 
+from odca.entity.driver import AutonomousDriver
+from odca.entity.vehicle import Direction
 from odca.infrastructure.freeway import Freeway
 from odca.params import (
     ControllerConfig, DestinationConfig, NetworkConfig, OriginConfig, PlatoonConfig, SimConfig,
@@ -107,6 +110,44 @@ def test_a_missed_exit_on_a_ring_is_a_lap_away_and_counted_once():
     sim.env.run(until=3.0)
     assert vehicle.active and vehicle.count_missed_exits == 1
     assert vehicle.cells_to_destination() > NUM_CELLS - 20
+
+
+def _stuck_outside_its_exit_lane(monkeypatch, missed_exit_laps):
+    """An AV in lane 2 bound for `exit_a` (cell 50, lane 1) that never changes lanes."""
+    monkeypatch.setattr(AutonomousDriver, "evaluate_direction",
+                        lambda self: self.vehicle.request_direction(Direction.FORWARD))
+    config = _config(sim_duration=200.0)
+    network = replace(config.network, missed_exit_laps=missed_exit_laps)
+    sim = Simulation(replace(config, network=network))
+    (vehicle,) = _place(sim, [(True, 2, 40, "exit_a")])
+    sim.env.process(sim.controller.run())
+    sim.env.run(until=200.0)
+    return vehicle
+
+
+def test_missed_exit_laps_defaults_to_one():
+    assert _network().missed_exit_laps == 1
+
+
+def test_one_more_lap_then_the_next_exit_by_default(monkeypatch):
+    vehicle = _stuck_outside_its_exit_lane(monkeypatch, 1)
+    assert vehicle.count_missed_exits == 2          # cell 50 missed twice
+    assert vehicle.destination_cell_idx == 100      # then exit_any, the next one ahead
+    assert vehicle.time_exited is not None and vehicle.trajectory[-1].cell_idx == 99
+    passes_of_cell_50 = sum(1 for r in vehicle.trajectory if r.cell_idx == 50)
+    assert passes_of_cell_50 == 2
+
+
+def test_zero_laps_takes_the_next_exit_at_once(monkeypatch):
+    vehicle = _stuck_outside_its_exit_lane(monkeypatch, 0)
+    assert vehicle.count_missed_exits == 1
+    assert vehicle.time_exited is not None and vehicle.trajectory[-1].cell_idx == 99
+    assert sum(1 for r in vehicle.trajectory if r.cell_idx == 50) == 1
+
+
+def test_a_negative_lap_limit_is_refused():
+    with pytest.raises(ValueError, match="missed_exit_laps"):
+        Freeway(simpy.Environment(), replace(_network(), missed_exit_laps=-1))
 
 
 def test_a_platoon_forms_across_cell_0_with_the_front_member_leading():

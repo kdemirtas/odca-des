@@ -29,7 +29,7 @@ GOLDEN_DIR = TESTS_DIR / "golden"
 # config lines of fields the change adds, at their off value: the config echo of a run gains
 # them, nothing else does, so they are left out to compare with a base that lacks the field.
 # Empty this set once the base has the field.
-NEW_FIELDS_AT_DEFAULT = {"ring: false"}
+NEW_FIELDS_AT_DEFAULT = {"ring: false", "missed_exit_laps: 1"}
 
 
 def digest(result) -> dict:

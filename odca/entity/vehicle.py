@@ -137,6 +137,7 @@ class Vehicle:
         self.count_lane_changes: int = 0
         self.count_lc_patience_failures: int = 0  # lateral requests not granted within the patience
         self.count_missed_exits: int = 0
+        self._misses_of_this_exit: int = 0  # ring only: laps driven for the present exit
 
         self.driver = driver
         driver.attach(self)
@@ -371,7 +372,8 @@ class Vehicle:
     def _advance_on_ring(self, target: Cell):
         """Move to `target` on a ring road. A vehicle that moves on from the last cell its exit
         can be taken from (its exit cell index, as on an open road) misses the exit and is a
-        lap away from it (D-2026-11-08-1).
+        lap away from it (D-2026-11-08-1); after `missed_exit_laps` such laps it takes the
+        next exit ahead instead (D-2026-11-08-2).
 
         Args:
             target: the next cell.
@@ -381,6 +383,23 @@ class Vehicle:
         if missed:
             self.route_start_idx = self.cell.idx
             self.count_missed_exits += 1
+            self._misses_of_this_exit += 1
+            if self._misses_of_this_exit > self.cell.lane.freeway.network.missed_exit_laps:
+                self._take_next_ring_exit()
+
+    def _take_next_ring_exit(self):
+        """Head for the exit nearest ahead other than the one missed; keep the missed one if
+        the ring has no other (D-2026-11-08-2)."""
+        lane = self.cell.lane
+        missed = (self.destination_cell_idx, self.destination_lane)
+        others = [d for d in lane.freeway.destinations.values()
+                  if (d.cell_idx, d.lane) != missed]
+        if not others:
+            return
+        nearest = min(others, key=lambda d: (lane.cells_ahead(self.cell.idx, d.cell_idx),
+                                             d.name))
+        self.destination_cell_idx, self.destination_lane = nearest.cell_idx, nearest.lane
+        self._misses_of_this_exit = 0
 
     def cells_to_destination(self) -> Optional[int]:
         """Cells from the front's cell to its destination's cell index: the vehicle leaves at

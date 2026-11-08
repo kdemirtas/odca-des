@@ -105,6 +105,9 @@ class Freeway:
         self.num_lanes = network.num_lanes
         self.num_cells = network.num_cells
         self.ring = network.ring
+        if network.missed_exit_laps < 0:
+            raise ValueError(
+                f"missed_exit_laps must be 0 or more, got {network.missed_exit_laps}")
         self.speed_limit = network.speed_limit
         self.onramp_cells: Set[int] = set(network.onramp_cells)
         self.offramp_cells: Set[int] = set(network.offramp_cells)

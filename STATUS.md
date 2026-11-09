@@ -3,7 +3,7 @@
 > older than the current wave are in `STATUS_ARCHIVE.md`. Last updated **2026-11-09**.
 > **Current wave:** extraction and refactor, since 2026-09-19
 
-> **2026-11-09: release 0.3.0 prepared, not yet tagged. Shipped as PR #? (Kerem's OK 2026-11-09)**
+> **2026-11-09: release 0.3.0 prepared, not yet tagged. Shipped as PR #46 (Kerem's OK 2026-11-09)**
 > Kerem (via Claudine): "Release odca-des 0.3.0 and cite it": "fine". `pyproject.toml`, `uv.lock` and `.zenodo.json` say 0.3.0 (the description now names the platooning manuscript); CHANGELOG 0.3.0 section covers PR #42 to #45, and the PR #42 line now starts "PR #42:"; D-2026-11-09-1. Package code at `5e89801` equals `ef26dd4`, the commit paper-odca-platoon's runs used (they differ in CHANGELOG, HANDOVER, STATUS only).
 > Proof: no number moved since PR #45. `uv run pytest -n 8` on the bumped tree: 188 passed, 3 skipped (viewer extra absent), all three goldens exact. CHANGELOG check: 45 merged PRs on GitHub, 45 `- PR #n:` lines, one each (read through the GitHub API; `changelog_check.py` itself needs `gh`, not allowed in this session).
 > Kerem said OK; merged. ⏳ Tag `v0.3.0` on the merge commit, publish the GitHub release `odca-des 0.3.0`; check that Zenodo adds the version under concept 23117203 (the current webhook was re-created at 16:38 UTC on 2026-11-03, 39 min after the v0.2.0 release, and has no deliveries yet).

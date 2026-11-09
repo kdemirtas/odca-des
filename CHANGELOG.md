@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## 0.3.0 (tag `v0.3.0` on the merge of the release PR, D-2026-11-09-1)
+- PR #46: Release 0.3.0: version bump, CHANGELOG, .zenodo.json (D-2026-11-09-1) (2026-11-09)
 - PR #45: Platoon formation fixes and ring m-bar count (D-2026-11-08-5 to -7) (2026-11-09)
 - PR #44: Ring roads with exits, off by default (D-2026-11-08-1 to -4) (2026-11-08)
 - PR #43: Golden: paper_odca_platoon scenarios.py with the demand-scale option (2026-11-07)

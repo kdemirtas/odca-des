@@ -7,6 +7,7 @@
 
 | Id | Decided | What | Source | Replaces |
 |---|---|---|---|---|
+| D-2026-11-09-1 | 2026-11-09 | Release 0.3.0 from `main` at `5e89801` (PR #42 to #45: train platooning, ring roads with exits, the platoon formation fixes and the ring m-bar count), so paper-odca-platoon cites the version its results come from. No paper-odca-des or paper-lc-logistic number moves; those papers keep citing 0.2.0. Release step as for 0.2.0: `v0.3.0` tag and a published GitHub release after Kerem has seen this change; the Zenodo GitHub link adds 0.3.0 under concept 23117203, metadata from `.zenodo.json` | Kerem, 2026-11-09, relayed by Claudine ("Release odca-des 0.3.0 and cite it": "fine") | none; a new release under D-2026-10-03-7 |
 | D-2026-11-08-7 | 2026-11-08 | The section count of m-bar (`count_av_units`) counts every passage of the section cell after the warm-up: once per vehicle on an open road, once per lap on a ring; a platoon passing is one unit, and a new unit starts when one of its members passes again. A lane change into a cell of the same index is the same passage | Kerem, 2026-11-08, relayed by Claudine (fix the all-AV ring count); paper-odca-platoon finding of 2026-11-08 | D-2026-11-05-5 in part (each vehicle counted at its first arrival ever, then dropped if that was before the warm-up) |
 | D-2026-11-08-6 | 2026-11-08 | A solo vehicle joins a platoon next to it: just behind the tail it becomes the new tail, just ahead of the leader the new leader, within `formation_gap` cells with no vehicle between, within `max_platoon_size`, and under the formation checks (speed difference, compatibility, shared path, against the joining vehicle when it leads). A new phase between formation and merges; counted as `PlatoonStatistics.total_joins`, not as a formation or a merge. No switch: the paper_odca_platoon golden is re-recorded with D-2026-11-08-5 | Kerem, 2026-11-08, relayed by Claudine ("proactive, look into them and fix"); paper-odca-platoon finding of 2026-11-08 (blocks from rest form pairs only) | D-2026-11-05-1 in part (a solo vehicle could join only another solo vehicle) |
 | D-2026-11-08-5 | 2026-11-08 | Formation (and joins, D-2026-11-08-6) leave out a vehicle the split phase would take out: one within `split_lookahead` cells of its destination and outside its destination lane. A member that splits off for its exit stays solo until it reaches its exit lane. No switch: the old behaviour is a bug, and the paper_odca_platoon golden is re-recorded | Kerem, 2026-11-08, relayed by Claudine ("proactive, look into them and fix"); paper-odca-platoon finding of 2026-11-08 (about 11 formations per platoon with train lane changes off) | D-2026-11-05-1 in part (formation grouped any solo vehicle) |
@@ -90,6 +91,16 @@
 | D-2026-09-19-2 | 2026-09-19 | Parameter types live in `odca/params.py`; nothing in `odca` imports a paper's `config` | inherited: paper-odca-des D-2026-09-19-2 | none |
 | D-2026-09-19-1 | 2026-09-19 | Package created from paper-odca-des `code/odca/`, history kept, under this doc set | Kerem (paper-odca-des D-2026-09-19-6 to -10) | none |
 | D-2026-03-14-1 | 2026-03-14 | Randomness comes from one `SeedSequence` stream per source, shared by all vehicles, not one per vehicle | inherited: paper-odca-des D-2026-03-14-1 | none |
+
+## D-2026-11-09-1: release 0.3.0
+
+**What.** odca-des 0.3.0 is `main` as of `5e89801` (the merge of PR #45) plus the version bump: `pyproject.toml`, `uv.lock` and `.zenodo.json` say `0.3.0`, and `CHANGELOG.md` lists what changed since 0.2.0 (train platooning, ring roads with exits and destination splits with `missed_exit_laps` default 1, the platoon formation fixes, the ring m-bar count). paper-odca-platoon cites 0.3.0; its runs used `ef26dd4`, whose package code is what `5e89801` holds. paper-odca-des and paper-lc-logistic keep citing 0.2.0, which reproduces their results as 0.3.0 does. The release step, after Kerem's OK on this change, is the one of D-2026-11-03-1: merge, tag `v0.3.0` on the merge commit, publish a GitHub release named `odca-des 0.3.0` from that tag; the Zenodo GitHub link adds the version under concept 23117203. The `.zenodo.json` description now names the platooning manuscript as the one this version produced, and the two earlier manuscripts as reproduced unchanged.
+
+**Evidence.** Kerem, 2026-11-09, relayed by Claudine: "Release odca-des 0.3.0 and cite it": "fine". Full-output digests of the paper-odca-des and paper-lc-logistic runs are identical across PR #44 and PR #45 (STATUS, 2026-11-08); the full suite passes on the bumped tree.
+
+**Replaces.** nothing; a new release under D-2026-10-03-7.
+
+**Cited by.** `pyproject.toml` (`version`), `.zenodo.json`, `CHANGELOG.md` (0.3.0).
 
 ## D-2026-11-08-7: the section count counts every lap on a ring
 

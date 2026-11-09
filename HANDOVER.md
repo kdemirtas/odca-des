@@ -2,10 +2,10 @@
 Type: generic
 Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in `ARCHITECTURE.md`.
 
-## CURRENT: release 0.3.0 prepared on a branch, not shipped (2026-11-09)
-- Branch `claudine/2026-11-09-180709-odca-des`: `pyproject.toml`, `uv.lock`, `.zenodo.json` say
-  0.3.0; CHANGELOG 0.3.0 section (PR #42 to #45); D-2026-11-09-1. Waits for Kerem's OK, then:
-  merge, tag `v0.3.0` on the merge commit, publish the GitHub release `odca-des 0.3.0`, check the
+## CURRENT: release 0.3.0 merged, not yet tagged (2026-11-09)
+- `main` is 0.3.0: `pyproject.toml`, `uv.lock`, `.zenodo.json`; CHANGELOG 0.3.0 section (PR #42
+  to #45 and the release PR); D-2026-11-09-1. Still to do: tag `v0.3.0` on the release PR's merge commit, publish
+  the GitHub release `odca-des 0.3.0`, add `## Unreleased` back to CHANGELOG, check the
   Zenodo version appears under concept 23117203 (the webhook has not fired since it was
   re-created on 2026-11-03), and paper-odca-platoon cites the new version DOI.
 
@@ -20,11 +20,12 @@ Resume point. Full detail in `STATUS.md` (top blockquote); shape of the code in 
   `stops_for_offramp`, demand through origins, `train_lane_changes` across cell 0.
 - Releases: 0.1.0 tagged at `23bbe99` (Zenodo 10.5281/zenodo.23117204); 0.2.0 tagged at `b7ba611`
   (Zenodo 10.5281/zenodo.23923633, D-2026-11-03-1), cited by two papers under review and must not
-  move; 0.3.0 is on the branch above (D-2026-11-09-1).
+  move; 0.3.0 merged, tag pending (D-2026-11-09-1).
 - paper-odca-des and paper-lc-logistic install this package editable, so they follow `main`;
   their goldens in `tests/golden/` hold their numbers. Vehicle length is `VehicleConfig.length`,
   default 1 (D-2026-10-03-8 to -10).
-**RESUME:** on Kerem's OK, ship the 0.3.0 branch and do the release step above. Still open:
+**RESUME:** tag `v0.3.0` on the release PR's merge commit and publish the GitHub release
+`odca-des 0.3.0`; check Zenodo, then paper-odca-platoon cites the version DOI. Still open:
 A-2026-10-03-3 to -5, A-2026-11-05-1, -2.
 BACKLOG: B15, B12, B1; B16 and B17 ready to promote; B3 (PyPI) last.
 

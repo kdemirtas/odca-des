@@ -140,6 +140,24 @@ class Platoon:
             member.driver.platoon = self
         self._members.extend(joining)
 
+    def join_at_tail(self, vehicle: Vehicle):
+        """A solo vehicle just behind the tail becomes the new tail (D-2026-11-08-6).
+
+        Args:
+            vehicle: a solo vehicle driven by a `PlatoonDriver`.
+        """
+        self._members.append(vehicle)
+        vehicle.driver.platoon = self
+
+    def join_at_front(self, vehicle: Vehicle):
+        """A solo vehicle just ahead of the leader becomes the new leader (D-2026-11-08-6).
+
+        Args:
+            vehicle: a solo vehicle driven by a `PlatoonDriver`.
+        """
+        self._members.insert(0, vehicle)
+        vehicle.driver.platoon = self
+
     def dissolve(self):
         """Every member drives solo again."""
         for member in self._members:

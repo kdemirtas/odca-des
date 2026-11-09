@@ -309,6 +309,35 @@ def test_section_count_counts_a_platoon_once_and_a_solo_av_as_one():
     assert av_unit_size_at(vehicles, [100, 150], 0.0) == pytest.approx(7 / 3)
 
 
+def test_section_count_on_a_ring_counts_every_lap_after_the_warm_up():
+    # all AVs on a make_periodic ring: every vehicle first passes each section before the
+    # warm-up ends, so only later laps are counted (D-2026-11-08-7)
+    num_cells, warmup = 200, 100.0
+    config = replace(_config("naive", num_lanes=1, split_lookahead=0), sim_duration=250.0,
+                     warmup=warmup)
+    sim = Simulation(config)
+    lane = sim.freeway.lane(1)
+    lane.make_periodic()
+    vehicles = []
+    for cell in range(0, num_cells, 3):    # 67 AVs, one every third cell
+        vehicle = sim.factory.build(True, lane.cells[cell], None)
+        sim._seeded_vehicles.append(vehicle)
+        sim.env.process(vehicle.start())
+        vehicles.append(vehicle)
+    result = sim.run()
+    counts = [count_av_units(result.vehicles, cell, warmup) for cell in (0, 50, 100, 150)]
+    assert sum(c.avs for c in counts) > len(vehicles) * len(counts)   # more than one lap each
+    on_road = result.platoons.avg_av_unit_size_on_road
+    assert on_road > 2
+    assert pooled(counts)[0] == pytest.approx(on_road, rel=0.1)
+
+
+def test_a_platoon_passing_a_section_twice_is_two_units():
+    from odca.platoon.measures import _train_passages
+    assert _train_passages([(1.0, 7), (1.2, 8), (1.4, 9)]) == 1
+    assert _train_passages([(1.0, 7), (1.2, 8), (41.0, 7), (41.2, 8)]) == 2
+
+
 def test_train_lane_change_decisions_are_logged_by_size(monkeypatch):
     sim = Simulation(_config(train_lane_changes=True))
     members = _place(sim, [(True, 1, 12 - i, "end") for i in range(3)])

@@ -30,6 +30,18 @@ GOLDEN_DIR = TESTS_DIR / "golden"
 # them, nothing else does, so they are left out to compare with a base that lacks the field.
 # Empty this set once the base has the field.
 NEW_FIELDS_AT_DEFAULT = {"ring: false", "missed_exit_laps: 1"}
+# platoon statistics the change adds, at the value a run without them would give: left out for
+# the same reason. Empty this dict once the base has the field.
+NEW_STATISTICS_AT_DEFAULT = {"total_joins": 0}
+
+
+def _platoon_statistics(statistics) -> dict:
+    """`statistics` as a dict, without the new fields that hold their default."""
+    fields = asdict(statistics)
+    for name, default in NEW_STATISTICS_AT_DEFAULT.items():
+        if fields.get(name) == default:
+            del fields[name]
+    return fields
 
 
 def digest(result) -> dict:
@@ -54,7 +66,8 @@ def digest(result) -> dict:
         "vehicles": vehicles,
         "generated": result.num_generated,
         "counters": repr(asdict(result.counters)),
-        "platoons": repr(asdict(result.platoons)) if result.platoons is not None else None,
+        "platoons": (repr(_platoon_statistics(result.platoons))
+                     if result.platoons is not None else None),
         "config": "".join(line for line in result.config_yaml().splitlines(keepends=True)
                           if line.strip() not in NEW_FIELDS_AT_DEFAULT),
     }

@@ -1,9 +1,9 @@
 """Platoon measures over a run's trajectories (D-2026-11-05-5).
 
-m-bar, the mean AV unit size, is counted at a section, per lane: the AVs whose first arrival in
-the section's cell is in that lane after the warm-up, divided by the AV units among them, where
-a solo AV is a unit of 1 and a platoon, whatever its size, is one unit (its members crossing are
-counted once by its platoon id). The AV share alpha is counted from the same crossings: AVs over
+m-bar, the mean AV unit size, is counted at a section, per lane: the AV passages of the section's
+cell in that lane after the warm-up (once per vehicle on an open road, once per lap on a ring,
+D-2026-11-08-7), divided by the AV units among them, where a solo AV is a unit of 1 and a
+platoon passing, whatever its size, is one unit. The AV share alpha is counted from the same crossings: AVs over
 all vehicles. This section count is the m-bar the paper reports; the controller's on-road time
 average is a diagnostic.
 """
@@ -11,7 +11,7 @@ average is a diagnostic.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from odca.entity.vehicle import Vehicle
 
@@ -39,11 +39,14 @@ class SectionCount:
 
 def count_av_units(vehicles: Iterable[Vehicle], cell_idx: int, start_time: float,
                    lane_idx: Optional[int] = None) -> SectionCount:
-    """The vehicles, AVs and AV units arriving in cell `cell_idx` at or after `start_time`.
+    """The vehicles, AVs and AV units passing cell `cell_idx` at or after `start_time`.
 
-    Each vehicle counts at its first arrival in a cell with that index, in the lane of that
-    arrival. Needs the drivers' membership log, which `PlatoonDriver` keeps; an AV without it
-    counts as solo.
+    Every passage counts, in the lane of its arrival: once per vehicle on an open road, once per
+    lap on a ring (D-2026-11-08-7). A passage is an arrival in a cell with that index; a
+    lane change into a cell with the same index is the same passage. A platoon passing is one
+    unit: the passages of its members are grouped by platoon id, and a new unit starts when a
+    member passes again. Needs the drivers' membership log, which `PlatoonDriver` keeps; an AV
+    without it counts as solo.
 
     Args:
         vehicles: every vehicle of the run.
@@ -51,25 +54,40 @@ def count_av_units(vehicles: Iterable[Vehicle], cell_idx: int, start_time: float
         start_time: the warm-up end.
         lane_idx: count this lane only; None counts every lane.
     """
-    crossing, avs, solo, platoon_ids = 0, 0, 0, set()
+    crossing, avs, solo = 0, 0, 0
+    platoon_passages: Dict[int, List[Tuple[float, int]]] = {}
     for vehicle in vehicles:
-        arrival = _first_arrival(vehicle, cell_idx)
-        if arrival is None:
-            continue
-        time, lane = arrival
-        if time < start_time or (lane_idx is not None and lane != lane_idx):
-            continue
-        crossing += 1
-        if vehicle.kind != "autonomous":
-            continue
-        avs += 1
-        platoon_id = (vehicle.driver.platoon_id_at(time)
-                      if hasattr(vehicle.driver, "platoon_id_at") else None)
-        if platoon_id is None:
-            solo += 1
-        else:
-            platoon_ids.add(platoon_id)
-    return SectionCount(cell_idx, lane_idx, crossing, avs, solo + len(platoon_ids))
+        for time, lane in _passages(vehicle, cell_idx):
+            if time < start_time or (lane_idx is not None and lane != lane_idx):
+                continue
+            crossing += 1
+            if vehicle.kind != "autonomous":
+                continue
+            avs += 1
+            platoon_id = (vehicle.driver.platoon_id_at(time)
+                          if hasattr(vehicle.driver, "platoon_id_at") else None)
+            if platoon_id is None:
+                solo += 1
+            else:
+                platoon_passages.setdefault(platoon_id, []).append((time, vehicle.id))
+    platoon_units = sum(_train_passages(p) for p in platoon_passages.values())
+    return SectionCount(cell_idx, lane_idx, crossing, avs, solo + platoon_units)
+
+
+def _train_passages(passages: List[Tuple[float, int]]) -> int:
+    """How many times one platoon passed: its members' (time, vehicle id) passages in time
+    order, a new passage starting when a vehicle already in the current one passes again.
+
+    Args:
+        passages: the passages of one platoon's members.
+    """
+    count, current = 0, set()
+    for _, vehicle_id in sorted(passages):
+        if not current or vehicle_id in current:
+            count += 1
+            current = set()
+        current.add(vehicle_id)
+    return count
 
 
 def section_counts(vehicles: List[Vehicle], cells: Iterable[int], lanes: Iterable[int],
@@ -111,14 +129,17 @@ def av_unit_size_at(vehicles: List[Vehicle], cells: Iterable[int], start_time: f
     return pooled(count_av_units(vehicles, cell, start_time) for cell in cells)[0]
 
 
-def _first_arrival(vehicle: Vehicle, cell_idx: int) -> Optional[Tuple[float, int]]:
-    """(time, lane) of `vehicle`'s first arrival in a cell with index `cell_idx`, or None.
+def _passages(vehicle: Vehicle, cell_idx: int) -> List[Tuple[float, int]]:
+    """(time, lane) of each of `vehicle`'s passages of cell index `cell_idx`: every arrival in
+    a cell with that index whose previous record was in another cell index.
 
     Args:
         vehicle: a vehicle.
         cell_idx: the cell index.
     """
+    passages, previous = [], None
     for record in vehicle.trajectory:
-        if record.cell_idx == cell_idx:
-            return record.time, record.lane_idx
-    return None
+        if record.cell_idx == cell_idx and previous != cell_idx:
+            passages.append((record.time, record.lane_idx))
+        previous = record.cell_idx
+    return passages

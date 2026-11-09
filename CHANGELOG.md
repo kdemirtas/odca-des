@@ -4,6 +4,7 @@
 > until a version is cut.
 
 ## Unreleased
+- PR #45: Platoon formation fixes and ring m-bar count (D-2026-11-08-5 to -7) (2026-11-09)
 - PR #44: Ring roads with exits, off by default (D-2026-11-08-1 to -4) (2026-11-08)
 - PR #43: Golden: paper_odca_platoon scenarios.py with the demand-scale option (2026-11-07)
 - Add train platooning, off by default, and the paper-odca-platoon golden (D-2026-11-05-1 to -6) (2026-11-05, PR #42)

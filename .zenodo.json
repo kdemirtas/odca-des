@@ -1,7 +1,7 @@
 {
   "title": "odca-des: Object-Driven Cellular Automata discrete event traffic simulator",
   "upload_type": "software",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "mit",
   "creators": [
     {
@@ -10,7 +10,7 @@
       "orcid": "0000-0002-7458-5350"
     }
   ],
-  "description": "The ODCA-DES simulator (Object-Driven Cellular Automata on a discrete-event engine) at the version that produced every result in the manuscripts Discrete Event Traffic Simulation Framework using Object-Driven Cellular Automata and Probabilistic Lane Changing Models based on Logistic Functions (Demirtaş, Mirchandani, Zhou). MIT licence.",
+  "description": "The ODCA-DES simulator (Object-Driven Cellular Automata on a discrete-event engine) at the version that produced every result in the manuscript Destination-Based AV Platooning in Mixed Traffic using Object-Driven Cellular Automata. It reproduces the results of the manuscripts Discrete Event Traffic Simulation Framework using Object-Driven Cellular Automata and Probabilistic Lane Changing Models based on Logistic Functions (Demirtaş, Mirchandani, Zhou) unchanged; those cite version 0.2.0. MIT licence.",
   "keywords": [
     "discrete event simulation",
     "traffic microsimulation",

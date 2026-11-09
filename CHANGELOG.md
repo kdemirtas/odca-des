@@ -3,11 +3,30 @@
 > title and number. A version is a tagged odca-des release (a paper records the tag it ran on at submission). Unreleased work sits under `## Unreleased`
 > until a version is cut.
 
-## Unreleased
+## 0.3.0 (tag `v0.3.0` on the merge of the release PR, D-2026-11-09-1)
 - PR #45: Platoon formation fixes and ring m-bar count (D-2026-11-08-5 to -7) (2026-11-09)
 - PR #44: Ring roads with exits, off by default (D-2026-11-08-1 to -4) (2026-11-08)
 - PR #43: Golden: paper_odca_platoon scenarios.py with the demand-scale option (2026-11-07)
-- Add train platooning, off by default, and the paper-odca-platoon golden (D-2026-11-05-1 to -6) (2026-11-05, PR #42)
+- PR #42: Add train platooning, off by default, and the paper-odca-platoon golden (D-2026-11-05-1 to -6) (2026-11-05)
+
+### What changed since 0.2.0
+As a user of the package sees it. Every new capability is off by default, and the
+paper-odca-des and paper-lc-logistic goldens recorded under 0.2.0 still pass unchanged (full-output
+digests identical over their 28 runs, `tests/output_digest.py`).
+- Train platooning: `odca.platoon` (`PlatoonConfig` on `ControllerConfig.platoon`, None by
+  default), with whole-train lane changes behind `train_lane_changes`, off by default, that move
+  no member away from its exit lane (D-2026-11-05-1, -3, -4, -6). m-bar and the AV share alpha are
+  section counts per lane (D-2026-11-05-5). A third golden, `tests/golden/paper_odca_platoon/`,
+  guards paper-odca-platoon (D-2026-11-05-2).
+- Ring roads with exits and destination splits: `NetworkConfig.ring`, off by default, joins every
+  lane end to end, measures distances to an exit around the ring and makes every destination an
+  off-ramp, so a platoon member outside its exit lane splits off on a ring as on a freeway
+  (D-2026-11-08-1, -3, -4). A missed ring exit is retried for at most `missed_exit_laps` more laps,
+  default 1, then the next exit ahead is taken (D-2026-11-08-2).
+- Platoon formation fixes: a member split off for its exit is not grouped again before its exit
+  lane (D-2026-11-08-5); a solo vehicle joins a platoon next to it, counted as `total_joins`
+  (D-2026-11-08-6). The m-bar section count counts every passage after the warm-up, once per lap
+  on a ring (D-2026-11-08-7).
 
 ## 0.2.0 (tag `v0.2.0` on the merge of the release PR, D-2026-11-03-1)
 - PR #41: Release 0.2.0: version bump, CHANGELOG, .zenodo.json (D-2026-11-03-1) (2026-11-03)
